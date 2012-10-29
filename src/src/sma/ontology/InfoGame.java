@@ -12,7 +12,7 @@ import java.util.*;
  * <p><b>Copyright:</b> Copyright (c) 2011</p>
  * <p><b>Company:</b> Universitat Rovira i Virgili (<a
  * href="http://www.urv.cat">URV</a>)</p>
- * @author David Isern & Joan Albert López
+ * @author David Isern & Joan Albert Lï¿½pez
  * @see sma.CoordinatorAgent
  * @see sma.CentralAgent
  */
@@ -94,7 +94,7 @@ public class InfoGame implements java.io.Serializable {
 	{
 		this.info.setPortTypesQuantity(PortType.values()[counter], Integer.parseInt(qty));
 		InfoAgent agent = new InfoAgent(AgentType.Port);
-		agent.setAgentType(AgentType.Boat);
+		agent.setAgentType(AgentType.Port);
 		agent.setPortType(PortType.values()[counter]);
 		agent.setQuantityOfLobster(info.getCapacityPorts());
 		agent.setQuantityOfOctopus(info.getCapacityPorts());
@@ -133,6 +133,7 @@ public class InfoGame implements java.io.Serializable {
 		this.info.map[rndRow][rndCol].addAgent(agent);
 		initialPositions.add(this.info.map[rndRow][rndCol]);
 	}
+        this.info.fillAgentsInitialPositions(initialPositions);
 	
   }
 }
