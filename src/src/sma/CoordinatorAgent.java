@@ -41,6 +41,8 @@ private AuxInfo info;
   
   //The boat coordinator identifier
   private AID BoatsCoordinator;
+  
+  private AuxInfo gameInfo;
 
  
   public CoordinatorAgent() {
@@ -54,6 +56,9 @@ private AuxInfo info;
     System.out.println(getLocalName() + ": " + str);
   }
 
+  public void setGameInfo(AuxInfo gI){
+      this.gameInfo = gI;
+  }
 
   /**
    * Agent setup method - called when it first come on-line. Configuration
@@ -163,7 +168,8 @@ private AuxInfo info;
     protected void handleInform(ACLMessage msg) {
     	showMessage("INFORM received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
         try {
-          info = (AuxInfo)msg.getContentObject(); 
+          info = (AuxInfo)msg.getContentObject();
+          setGameInfo(info);
           if (info instanceof AuxInfo) {
             for (InfoAgent ia : info.getAgentsInitialPosition().keySet()){                  
           	showMessage("Agent ID: " + ia.getName());          	  
@@ -217,6 +223,5 @@ private AuxInfo info;
 
 
   /*************************************************************************/
-
-
+  
 } //endof class CoordinatorAgent

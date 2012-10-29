@@ -30,6 +30,8 @@ public class BoatCoordinator extends Agent{
     
     private AID centralAgent;
     
+    private jade.util.leap.List listOfBoats;
+    
     public BoatCoordinator(){
         super();
     }
@@ -69,5 +71,36 @@ public class BoatCoordinator extends Agent{
         ServiceDescription searchBoatCoordCriteria = new ServiceDescription();
         searchBoatCoordCriteria.setType(UtilsAgents.CENTRAL_AGENT);
         this.centralAgent = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
+    }
+    
+    private jade.util.leap.List buscarAgents(String type,String name) { 
+        jade.util.leap.List results = new jade.util.leap.ArrayList();
+        DFAgentDescription dfd = new DFAgentDescription();
+        ServiceDescription sd = new ServiceDescription();
+        if(type!=null) sd.setType(type);
+        if(name!=null) sd.setName(name);
+        dfd.addServices(sd);
+        try {
+            SearchConstraints c = new SearchConstraints(); c.setMaxResults(new Long(-1));
+            DFAgentDescription[] DFAgents = DFService.search(this,dfd,c); int i=0;
+            while ((DFAgents != null) && (i<DFAgents.length)) {
+                DFAgentDescription agent = DFAgents[i];
+                i++;
+                Iterator services = agent.getAllServices();
+                boolean found = false;
+                ServiceDescription service = null;
+                while (services.hasNext() && !found) {
+                    service = (ServiceDescription)services.next();
+                    found = (service.getType().equals(type) || service.getName().equals(name));
+                }
+                if (found) {
+                      results.add((AID)agent.getName());
+                      //System.out.println(agent.getName()+"\n");
+                }
+            }
+        } catch (FIPAException e) {
+            System.out.println("ERROR: "+e.toString());
+        }
+        return results;
     }
 }
