@@ -1,6 +1,5 @@
 # Package Files #
-nbproject/
+./nbproject/
 ./build/
-src/bin/
+./src/bin/
 *.DS_Store
-.DS_Store
