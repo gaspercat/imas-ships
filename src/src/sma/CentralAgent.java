@@ -65,14 +65,14 @@ public class CentralAgent extends Agent {
 
     showMessage("Agent (" + getLocalName() + ") .... [OK]");
     try {
-    // Register the agent to the DF
-    ServiceDescription sd1 = new ServiceDescription();
-    sd1.setType(UtilsAgents.CENTRAL_AGENT);
-    sd1.setName(getLocalName());
-    sd1.setOwnership(UtilsAgents.OWNER);
-    DFAgentDescription dfd = new DFAgentDescription();
-    dfd.addServices(sd1);
-    dfd.setName(getAID());
+      // Register the agent to the DF
+      ServiceDescription sd1 = new ServiceDescription();
+      sd1.setType(UtilsAgents.CENTRAL_AGENT);
+      sd1.setName(getLocalName());
+      sd1.setOwnership(UtilsAgents.OWNER);
+      DFAgentDescription dfd = new DFAgentDescription();
+      dfd.addServices(sd1);
+      dfd.setName(getAID());
 
       DFService.register(this, dfd);
       showMessage("Registered to the DF");
