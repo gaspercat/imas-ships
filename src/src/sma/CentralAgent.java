@@ -43,7 +43,10 @@ public class CentralAgent extends Agent {
 
   /**
    * A message is shown in the log area of the GUI
-   * @param str String to show
+ private void showMessage(String str) {
+    if (gui!=null) gui.showLog(str + "\n");
+    System.out.println(getLocalName() + ": " + str);
+  }  * @param str String to show
    */
   private void showMessage(String str) {
     if (gui!=null) gui.showLog(str + "\n");
@@ -131,7 +134,7 @@ public class CentralAgent extends Agent {
    * <p><b>Copyright:</b> Copyright (c) 2009</p>
    * <p><b>Company:</b> Universitat Rovira i Virgili (<a
    * href="http://www.urv.cat">URV</a>)</p>
-   * @author David Isern and Joan Albert López
+   * @author David Isern and Joan Albert Lï¿½pez
    * @see sma.ontology.Cell
    * @see sma.ontology.InfoGame
    */
