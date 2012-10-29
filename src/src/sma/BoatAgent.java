@@ -30,6 +30,9 @@ import java.util.*;
 public class BoatAgent extends Agent{
     private int posX, posY,mapDimX, mapDimY;
     private AID boatCoordinator;
+    
+    //First delivery generator of movement
+    Random generator = new Random();
 
     
     public BoatAgent(){
@@ -52,7 +55,6 @@ public class BoatAgent extends Agent{
         this.posY = new Integer(arguments[1].toString());
         this.mapDimX = new Integer(arguments[2].toString());
         this.mapDimY = new Integer(arguments[3].toString());
-
         
         //Accept jave objects as messages
         this.setEnabledO2ACommunication(true, 0);
@@ -109,6 +111,26 @@ public class BoatAgent extends Agent{
     }
     
     public int[] move(){
+        
+        Boolean moved = false;
+        
+        while (!moved){
+            int movementDirection = Math.abs(this.generator.nextInt() % 4);
+            
+            if (movementDirection == 0 & this.posY != 0){
+                this.posY -= 1;
+                moved = true;
+            }else if(movementDirection == 1 & this.posX != this.mapDimX){
+                this.posX += 1;
+                moved = true;
+            }else if (movementDirection == 2 & this.posY != this.mapDimY){
+                this.posY += 1;
+                moved = true;
+            }else if(movementDirection == 3 & this.posX != 0){
+                this.posX -= 1;
+                moved = true;
+            }
+        }
         
         return this.getPosition();
     }
