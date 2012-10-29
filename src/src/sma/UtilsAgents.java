@@ -22,7 +22,7 @@ import jade.wrapper.StaleProxyException;
  * <p><b>Copyright:</b> Copyright (c) 2009</p>
  * <p><b>Company:</b> Universitat Rovira i Virgili (<a
  * href="http://www.urv.cat">URV</a>)</p>
- * @author David Isern & Joan Albert López
+ * @author David Isern & Joan Albert Lï¿½pez
  * @version 2.0
  */
 public class UtilsAgents {
@@ -30,6 +30,9 @@ public class UtilsAgents {
 
   public static String CENTRAL_AGENT = "central-agent";
   public static String COORDINATOR_AGENT = "coordinator-agent";
+  
+  public static String BOAT_COORDINATOR = "boat_coordinator";
+  public static String PORT_COORDINATOR = "port_coordinator";
 
   public static String PORT_AGENT = "port";
   public static String BOAT_AGENT = "boat";
@@ -54,7 +57,7 @@ public class UtilsAgents {
    * To search an agent of a certain type
    * @param parent Agent
    * @param sd ServiceDescription search criterion
-   * @return AID of the agent if it is foun, it is a *blocking* method
+   * @return AID of the agent if it is found, it is a *blocking* method
    */
   public static AID searchAgent( Agent parent, ServiceDescription sd ) {
     /** Searching an agent of the specified type **/
@@ -89,7 +92,7 @@ public class UtilsAgents {
   * @param className String Agent class
   * @param arguments Object[] Arguments; null, if they are not needed
   */
- public void createAgent(AgentContainer container, String agentName, String className, Object[] arguments) {
+ public static void createAgent(AgentContainer container, String agentName, String className, Object[] arguments) {
    try {
      AgentController controller = container.createNewAgent(agentName,className,arguments);
      controller.start();
@@ -106,13 +109,13 @@ public class UtilsAgents {
    * @param className String Class
    * @param arguments Object[] Arguments
    */
-  public void createAgent(String agentName, String className, Object[] arguments) {
+  public static void createAgent(String agentName, String className, Object[] arguments) {
     try {
       AgentContainer container = null;
       Runtime rt = Runtime.instance();
       Profile p = new ProfileImpl();
       container = rt.createAgentContainer(p);
-
+      
       AgentController controller = container.createNewAgent(agentName,className, arguments);
       controller.start();
 
