@@ -38,6 +38,9 @@ public class CoordinatorAgent extends Agent {
 private AuxInfo info;
 
   private AID centralAgent;
+  
+  //The boat coordinator identifier
+  private AID BoatsCoordinator;
 
  
   public CoordinatorAgent() {
@@ -103,7 +106,13 @@ private AuxInfo info;
     // setup finished. When we receive the last inform, the agent itself will add
     // a behaviour to send/receive actions
     
+    //Add a boat coordinator agent
+    UtilsAgents.createAgent(this.getContainerController(), "BoatCoordinator", "sma.BoatCoordinator", null);
    
+    //Search for the BoatCoordinator
+    ServiceDescription searchBoatCoordCriteria = new ServiceDescription();
+    searchBoatCoordCriteria.setName("BoatCoordinator");
+    this.BoatsCoordinator = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
 
   } //endof setup
 
@@ -125,7 +134,7 @@ private AuxInfo info;
     * <p><b>Copyright:</b> Copyright (c) 2011</p>
     * <p><b>Company:</b> Universitat Rovira i Virgili (<a
     * href="http://www.urv.cat">URV</a>)</p>
-    * @author David Isern and Joan Albert López
+    * @author David Isern and Joan Albert Lï¿½pez
     * @see sma.ontology.Cell
     * @see sma.ontology.InfoGame
    */
@@ -154,20 +163,25 @@ private AuxInfo info;
     protected void handleInform(ACLMessage msg) {
     	showMessage("INFORM received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
         try {
-          info = (AuxInfo)msg.getContentObject();
+          info = (AuxInfo)msg.getContentObject(); 
           if (info instanceof AuxInfo) {
-            
-            for (InfoAgent ia : info.getAgentsInitialPosition().keySet()){  
-          	  showMessage("Agent ID: " + ia.getName());
+            for (InfoAgent ia : info.getAgentsInitialPosition().keySet()){                  
+          	showMessage("Agent ID: " + ia.getName());          	  
+                if (ia.getAgentType() == AgentType.Boat){
+                    showMessage("Agent type: " + ia.getAgentType().toString());
+                    Object[] position = new Object[4];
+                    position[0] = info.getAgentsInitialPosition().get(ia).getRow();
+                    position[1] = info.getAgentsInitialPosition().get(ia).getColumn();
+                    position[2] = info.getMap()[0].length;
+                    position[3] = info.getMap().length;
+                    UtilsAgents.createAgent(this.myAgent.getContainerController(),ia.getName(), "sma.BoatAgent", position);
+                }else showMessage("no agent type");
           	  
-          	  if (ia.getAgentType() != null)
-          		  showMessage("Agent type: " + ia.getAgentType().toString());
-          	  else showMessage("no agent type");
-          	  
-              Cell pos = (Cell)info.getAgentsInitialPosition().get(ia);
-              showMessage("pos: " + pos);  
-            }  
+                Cell pos = (Cell)info.getAgentsInitialPosition().get(ia);
+                showMessage("pos: " + pos);
+                
             }
+          }
             
         //@todo Add a new behaviour which initiates the turns of the game 
         } catch (Exception e) {
