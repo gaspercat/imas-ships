@@ -86,6 +86,7 @@ public class BoatAgent extends Agent{
 
     }
     
+    
     public void setPosX(int posX){
         this.posX = posX;
     }
@@ -189,7 +190,8 @@ public class BoatAgent extends Agent{
 
       try {
           move();
-          reply.setContent(getPosX() +","+getPosY());
+          reply.setContent("BOAT POSITION");
+          reply.setContentObject(new BoatPosition(getAID(), posX, posY));
       } catch (Exception e) {
         reply.setPerformative(ACLMessage.FAILURE);
         System.err.println(e.toString());

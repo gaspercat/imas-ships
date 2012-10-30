@@ -183,6 +183,7 @@ public class CentralAgent extends Agent {
       /* method called when the message has been received. If the message to send
        * is an AGREE the behaviour will continue with the method prepareResultNotification. */
       ACLMessage reply = msg.createReply();
+      showMessage("MSG from "+ msg.getSender());
       try {
         Object contentRebut = (Object)msg.getContent();
         if(contentRebut.equals("Initial request")) {

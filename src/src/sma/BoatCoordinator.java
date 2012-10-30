@@ -22,6 +22,8 @@ import jade.proto.AchieveREInitiator;
 import jade.proto.AchieveREResponder;
 import sma.ontology.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 /**
  *
  * @author joan
@@ -77,7 +79,9 @@ public class BoatCoordinator extends Agent{
         this.coordinatorAgent = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
 
         // Register response behaviours
-        this.addBehaviour(new RequestResponseBehaviour(this, null));
+        //TODO canviar i posar l'altra content
+        MessageTemplate mt = MessageTemplate.MatchContent("Movement request");
+        this.addBehaviour(new RequestResponseBehaviour(this,mt ));
     }
     
     private jade.util.leap.List buscarAgents(String type,String name) { 
@@ -98,6 +102,7 @@ public class BoatCoordinator extends Agent{
                 ServiceDescription service = null;
                 while (services.hasNext() && !found) {
                     service = (ServiceDescription)services.next();
+                    showMessage("SERVICE "+service.getType()+" , "+service.getName());
                     found = (service.getType().equals(type) || service.getName().equals(name));
                 }
                 if (found) {
@@ -134,6 +139,7 @@ public class BoatCoordinator extends Agent{
       ACLMessage reply = msg.createReply();
       try {
         Object contentRebut = (Object)msg.getContent();
+        showMessage("RECIEVED "+msg.getSender().getName() + ", "+msg.getPerformative());
         if(contentRebut.equals("Movement request")) {
           showMessage("Movement request received");
           reply.setPerformative(ACLMessage.AGREE);
@@ -141,7 +147,7 @@ public class BoatCoordinator extends Agent{
       } catch (Exception e) {
         e.printStackTrace();
       }
-      showMessage("Answer sent"); //: \n"+reply.toString());
+      showMessage("Answer sent Movement requet recieved"); //: \n"+reply.toString());
       return reply;
     } //endof prepareResponse   
 
@@ -169,17 +175,28 @@ public class BoatCoordinator extends Agent{
           
       }
       
-      showMessage("Answer sent"); //+reply.toString());
+      showMessage("Answer sent inform movement"); //+reply.toString());
       return reply;
 
     } //endof prepareResultNotification
 
     private void prepareMovementResultNotitication(ACLMessage reply){
         // TODO: COMMUNICATE WITH SHIPS AND ASK TO MOVE
-        
+        showMessage("Prepare movement result");
+        ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+        msg.setContent("Move");
+        jade.util.leap.List recievers = buscarAgents("boat", null); 
+        showMessage("SIZE "+ recievers.size());
+        for(int i = 0; i < recievers.size() ;i++){
+            AID rec = (AID)recievers.get(i);
+            msg.addReceiver(rec);
+            showMessage("ADDING RECIVER "+rec.getName());
+        }
+        addBehaviour(new MoveBoatsBehaviour(myAgent, msg));
+        showMessage("Final Boat Position Message sent");
         // Notify boat positions to the coordinaor agent
         try {
-            reply.setContentObject(this.receiver.getBoatsPosition());
+            reply.setContentObject(getBoatsPosition());
         } catch (Exception e) {
             reply.setPerformative(ACLMessage.FAILURE);
             System.err.println(e.toString());
@@ -195,4 +212,86 @@ public class BoatCoordinator extends Agent{
     }
 
   } //end of RequestResponseBehaviour
+  
+  
+  
+  
+  
+  
+  
+  
+  class MoveBoatsBehaviour extends AchieveREInitiator {
+    private Agent      sender  = null;
+    private ACLMessage msgSent = null;
+    
+    public MoveBoatsBehaviour(Agent myAgent, ACLMessage requestMsg) {
+      super(myAgent, requestMsg);
+      showMessage("AchieveREInitiator MoveBoats starts...");
+      
+      sender = myAgent;
+      msgSent = requestMsg;
+    }
+
+    protected void handleAgree(ACLMessage msg) {
+      showMessage("AGREE received from "+ ( (AID)msg.getSender()).getLocalName());
+    }
+
+    protected void handleAllResponses(Vector responses){
+      showMessage("ALL RESPONSES "+responses.size());
+      for (int i = 0; i < responses.size(); i++){
+        ACLMessage msg = (ACLMessage) responses.get(i);
+        try {
+           if(msg.getPerformative() == ACLMessage.INFORM){
+            BoatPosition pos = (BoatPosition) msg.getContentObject();
+            showMessage("PORCESSING BOAT "+ pos.getAID() + " POS "+pos.getRow()+","+pos.getColumn());
+            setBoatPosition(pos);
+           }
+        } catch (UnreadableException ex) {
+            Logger.getLogger(BoatCoordinator.class.getName()).log(Level.SEVERE, null, ex);
+        }         
+      }
+    } 
+    
+   /* protected void handleInform(ACLMessage msg) {
+    	showMessage("INFORM received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
+        try {
+          info = (AuxInfo)msg.getContentObject();
+          setGameInfo(info);
+          if (info instanceof AuxInfo) {
+            for (InfoAgent ia : info.getAgentsInitialPosition().keySet()){                  
+          	showMessage("Agent ID: " + ia.getName());          	  
+                if (ia.getAgentType() == AgentType.Boat){
+                    showMessage("Agent type: " + ia.getAgentType().toString());
+                    Object[] position = new Object[4];
+                    position[0] = info.getAgentsInitialPosition().get(ia).getRow();
+                    position[1] = info.getAgentsInitialPosition().get(ia).getColumn();
+                    position[2] = info.getMap()[0].length;
+                    position[3] = info.getMap().length;
+                    UtilsAgents.createAgent(this.myAgent.getContainerController(),ia.getName(), "sma.BoatAgent", position);
+                }else showMessage("no agent type");
+          	  
+                Cell pos = (Cell)info.getAgentsInitialPosition().get(ia);
+                showMessage("pos: " + pos);
+                
+            }
+          }
+        } catch (Exception e) {
+          showMessage("Incorrect content: "+e.toString());
+        }
+    }*/
+
+    protected void handleNotUnderstood(ACLMessage msg) {
+      showMessage("This message NOT UNDERSTOOD. \n");
+    }
+
+    protected void handleFailure(ACLMessage msg) {
+      showMessage("The action has failed.");
+
+    } //End of handleFailure
+
+    protected void handleRefuse(ACLMessage msg) {
+      showMessage("Action refused.");
+    }
+  } //Endof class StateRequestBehaviour
+  
 }

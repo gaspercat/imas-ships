@@ -100,7 +100,7 @@ public class CoordinatorAgent extends Agent {
     ServiceDescription searchCriterion = new ServiceDescription();
     searchCriterion.setType(UtilsAgents.CENTRAL_AGENT);
     this.centralAgent = UtilsAgents.searchAgent(this, searchCriterion);
-    
+
     // Execute the finite state automata
     this.currentState = STATE_INITIAL_REQUEST;
     finiteStateAutomata();
@@ -126,7 +126,7 @@ public class CoordinatorAgent extends Agent {
               // TODO: INFORM CENTRAL AGENT OF NEW BOATS POSITIONS
               break;
                 
-        }
+      }
   }
   
   private void stateInitialRequest(){
@@ -196,7 +196,7 @@ public class CoordinatorAgent extends Agent {
     
     public StateRequestBehaviour(Agent myAgent, ACLMessage requestMsg) {
       super(myAgent, requestMsg);
-      showMessage("AchieveREInitiator starts...");
+      showMessage("AchieveREInitiator StateRequest starts...");
       
       sender = myAgent;
       msgSent = requestMsg;
@@ -207,7 +207,7 @@ public class CoordinatorAgent extends Agent {
     }
 
     protected void handleInform(ACLMessage msg) {
-    	showMessage("INFORM received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
+    	showMessage("INFORM COORD AGENT received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
         try {
           AuxInfo info = (AuxInfo)msg.getContentObject();
           setGameInfo(info);
