@@ -7,7 +7,7 @@ package sma.ontology;
 import java.util.List;
 import java.util.ArrayList;
 
-/**
+/*
  *
  * @author gaspercat
  */

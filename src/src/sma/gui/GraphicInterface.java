@@ -24,7 +24,7 @@ import sma.ontology.*;
  * <p><b>Copyright:</b> Copyright (c) 2011</p>
  * <p><b>Company:</b> Universitat Rovira i Virgili (<a
  * href="http://www.urv.cat">URV</a>)</p>
- * @author David Isern & Joan Albert López
+ * @author David Isern & Joan Albert Lï¿½pez
  * @version 2.0
  */
 public class GraphicInterface extends JFrame {
@@ -186,7 +186,7 @@ public class GraphicInterface extends JFrame {
     {
     	GraphicAgentPanelInfo boat = new GraphicAgentPanelInfo(AgentPanelType.Boat);
     	boat.setName("Boat" + boatCounter);
-    	boat.setMaxQuantityOfSeafood(info.getCapacityPorts());
+    	boat.setMaxQuantityOfSeafood(info.getCapacityBoats());
     	boat.setCurrentQuantityOfSeafood(0d, 0d, 0d, 0d);
     	//Set the values in the labels
     	boat.setInfo();
@@ -204,7 +204,7 @@ public class GraphicInterface extends JFrame {
 
 
   /**
-   * Mostra una cadena en el panell destinat a stadístiques
+   * Mostra una cadena en el panell destinat a stadï¿½stiques
    * @param msg String per mostrar
    */
   public void showStatistics(String msg) {

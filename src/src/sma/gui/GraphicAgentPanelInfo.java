@@ -185,7 +185,7 @@ public class GraphicAgentPanelInfo extends JPanel {
 		
 		if (_isPort)
 		{
-			lblAvMoney.setText("€: " + Double.toString(getAvailableMoney()));
+			lblAvMoney.setText("Eur: " + Double.toString(getAvailableMoney()));
 			lblPortType.setText(_portType);
 		}
 	}
