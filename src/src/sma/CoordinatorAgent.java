@@ -29,25 +29,28 @@ import java.util.*;
  * @version 2.0
  */
 public class CoordinatorAgent extends Agent {
+  private static final long serialVersionUID = 1L;
+  
+  private static final int STATE_INITIAL_REQUEST = 0;
+  private static final int STATE_MOVE_BOATS = 1;
+  private static final int STATE_UPDATE_MAP = 2;
+  private static final int STATE_END = -1;
 
-  /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-
-private AuxInfo info;
+  private AuxInfo info;
 
   private AID centralAgent;
-  
-  //The boat coordinator identifier
   private AID BoatsCoordinator;
   
   private AuxInfo gameInfo;
-
- 
-  public CoordinatorAgent() {
-  }
-
+  
+  // Data of interest during game
+  private BoatsPosition boatsPosition;
+  
+  // Game state
+  private int currentNegotiation;
+  private int currentTurn;
+  private int currentState;
+  
   /**
    * A message is shown in the log area of the GUI
    * @param str String to show
@@ -59,16 +62,26 @@ private AuxInfo info;
   public void setGameInfo(AuxInfo gI){
       this.gameInfo = gI;
   }
+  
+  public void setBoatsPosition(BoatsPosition positions){
+      this.boatsPosition = positions;
+  }
 
   /**
    * Agent setup method - called when it first come on-line. Configuration
    * of language to use, ontology and initialization of behaviours.
    */
   protected void setup() {
-
+    // Initialize game states
+    this.currentNegotiation = 0;
+    this.currentTurn = 0;
+    this.currentState = STATE_INITIAL_REQUEST;
+      
+      
     /**** Very Important Line (VIL) *********/
     this.setEnabledO2ACommunication(true, 1);
     /****************************************/
+    
     // Register the agent to the DF
     ServiceDescription sd1 = new ServiceDescription();
     sd1.setType(UtilsAgents.COORDINATOR_AGENT);
@@ -82,89 +95,121 @@ private AuxInfo info;
       showMessage("Registered to the DF");
     }
     catch (FIPAException e) {
-      System.err.println(getLocalName() + " registration with DF " + "unsucceeded. Reason: " + e.getMessage());
+      System.err.println(getLocalName() + " registration with DF " + "failed. Reason: " + e.getMessage());
       doDelete();
     }
 
-    // search CentralAgent
+    // Search for the CentralAgent
     ServiceDescription searchCriterion = new ServiceDescription();
     searchCriterion.setType(UtilsAgents.CENTRAL_AGENT);
     this.centralAgent = UtilsAgents.searchAgent(this, searchCriterion);
-    // searchAgent is a blocking method, so we will obtain always a correct AID
 
-   /**************************************************/
+    // Execute the finite state automata
+    finiteStateAutomata();
+  } //endof setup
+
+  /**************************************************************************/
+  /**************************************************************************/
+
+  public void finiteStateAutomata(){
+      while(this.currentState != STATE_END){
+        switch(this.currentState){ 
+
+            case STATE_INITIAL_REQUEST:
+                stateInitialRequest();
+                this.currentState = STATE_MOVE_BOATS;
+                break;
+
+            case STATE_MOVE_BOATS:
+                stateMoveBoats();
+                this.currentState = STATE_UPDATE_MAP;
+                break;
+
+            case STATE_UPDATE_MAP:
+                // TODO: INFORM CENTRAL AGENT OF NEW BOATS POSITIONS
+                break;
+                
+        }
+      }
+  }
+  
+  private void stateInitialRequest(){
+      // Request initial state to the central agent
+      ACLMessage message = buildInitialRequest();
+      this.addBehaviour(new StateRequestBehaviour(this, message));
+
+      // Create boats coordinator
+      UtilsAgents.createAgent(this.getContainerController(), "BoatCoordinator", "sma.BoatCoordinator", null);
+
+      //Search for the BoatCoordinator
+      ServiceDescription searchBoatCoordCriteria = new ServiceDescription();
+      searchBoatCoordCriteria.setName("BoatCoordinator");
+      this.BoatsCoordinator = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
+  }
+  
+  private void stateMoveBoats(){
+      // Request boats movement to boats coordinator
+      ACLMessage message = buildInitialRequest();
+      this.addBehaviour(new StateRequestBehaviour(this, message));
+  }
+  
+  /**************************************************************************/
+  /**************************************************************************/
+  
+  private ACLMessage buildInitialRequest(){
     ACLMessage requestInicial = new ACLMessage(ACLMessage.REQUEST);
+    
     requestInicial.clearAllReceiver();
     requestInicial.addReceiver(this.centralAgent);
     requestInicial.setProtocol(InteractionProtocol.FIPA_REQUEST);
     showMessage("Message OK");
+    
     try {
       requestInicial.setContent("Initial request");
       showMessage("Content OK" + requestInicial.getContent());
     } catch (Exception e) {
       e.printStackTrace();
     }
-
-    //we add a behaviour that sends the message and waits for an answer
-    this.addBehaviour(new RequesterBehaviour(this, requestInicial));
-
-    // setup finished. When we receive the last inform, the agent itself will add
-    // a behaviour to send/receive actions
     
-    //Add a boat coordinator agent
-    UtilsAgents.createAgent(this.getContainerController(), "BoatCoordinator", "sma.BoatCoordinator", null);
-   
-    //Search for the BoatCoordinator
-    ServiceDescription searchBoatCoordCriteria = new ServiceDescription();
-    searchBoatCoordCriteria.setName("BoatCoordinator");
-    this.BoatsCoordinator = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
-
-  } //endof setup
-
-
-
-
-  /*************************************************************************/
-
-  /**
-    * <p><B>Title:</b> IA2-SMA</p>
-    * <p><b>Description:</b> Practical exercise 2011-12. Recycle swarm.</p>
-    * This class lets send the REQUESTs for any agent. Concretely it is used in the 
-    * initialization of the game. The Coordinator Agent sends a REQUEST for the information
-    * of the game (instance of <code>AuxInfo</code> containing parameters, coordenates of 
-    * the agents and the recycling centers and visual range of each agent). The Central Agent
-    * sends an AGREE and then it informs of this information which is stored by the Coordinator
-    * Agent. The game is processed by another behaviour that we add after the INFORM has been 
-    * processed.
-    * <p><b>Copyright:</b> Copyright (c) 2011</p>
-    * <p><b>Company:</b> Universitat Rovira i Virgili (<a
-    * href="http://www.urv.cat">URV</a>)</p>
-    * @author David Isern and Joan Albert L�pez
-    * @see sma.ontology.Cell
-    * @see sma.ontology.InfoGame
-   */
-  class RequesterBehaviour extends AchieveREInitiator {
-	  
-	private ACLMessage msgSent = null;
+    return requestInicial;
+  }
+  
+  private ACLMessage buildMovementRequest(){
+    ACLMessage movementRequest = new ACLMessage(ACLMessage.REQUEST);
     
-    public RequesterBehaviour(Agent myAgent, ACLMessage requestMsg) {
+    movementRequest.clearAllReceiver();
+    movementRequest.addReceiver(this.BoatsCoordinator);
+    movementRequest.setProtocol(InteractionProtocol.FIPA_REQUEST);
+    movementRequest.setContent("Movement request");
+    
+    return movementRequest;
+  }
+
+  /**************************************************************************/
+  /**************************************************************************/
+
+  // ************************************
+  // ** INITIATOR :: STATE REQUEST
+  // **   SENDER   -> THIS
+  // **   RECEIVER -> CENTRAL AGENT
+  // ************************************
+  
+  class StateRequestBehaviour extends AchieveREInitiator {
+    private Agent      sender  = null;
+    private ACLMessage msgSent = null;
+    
+    public StateRequestBehaviour(Agent myAgent, ACLMessage requestMsg) {
       super(myAgent, requestMsg);
       showMessage("AchieveREInitiator starts...");
+      
+      sender = myAgent;
       msgSent = requestMsg;
     }
 
-    /**
-     * Handle AGREE messages
-     * @param msg Message to handle
-     */
     protected void handleAgree(ACLMessage msg) {
       showMessage("AGREE received from "+ ( (AID)msg.getSender()).getLocalName());
     }
 
-    /**
-     * Handle INFORM messages
-     * @param msg Message
-     */
     protected void handleInform(ACLMessage msg) {
     	showMessage("INFORM received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
         try {
@@ -188,40 +233,77 @@ private AuxInfo info;
                 
             }
           }
-            
-        //@todo Add a new behaviour which initiates the turns of the game 
         } catch (Exception e) {
           showMessage("Incorrect content: "+e.toString());
         }
     }
 
-    /**
-     * Handle NOT-UNDERSTOOD messages
-     * @param msg Message
-     */
     protected void handleNotUnderstood(ACLMessage msg) {
       showMessage("This message NOT UNDERSTOOD. \n");
     }
 
-    /**
-     * Handle FAILURE messages
-     * @param msg Message
-     */
     protected void handleFailure(ACLMessage msg) {
       showMessage("The action has failed.");
 
     } //End of handleFailure
 
-    /**
-     * Handle REFUSE messages
-     * @param msg Message
-     */
     protected void handleRefuse(ACLMessage msg) {
       showMessage("Action refused.");
     }
-  } //Endof class RequesterBehaviour
+  } //Endof class StateRequestBehaviour
+  
+  // ************************************
+  // ** INITIATOR :: MOVEMENT REQUEST
+  // **   SENDER   -> THIS
+  // **   RECEIVER -> BOATS COORDINATOR
+  // ************************************
+  
+  class MovementRequestBehaviour extends AchieveREInitiator {
+    private Agent      sender = null;
+    private ACLMessage msgSent = null;
+    
+    public MovementRequestBehaviour(Agent myAgent, ACLMessage requestMsg) {
+      super(myAgent, requestMsg);
+      showMessage("AchieveREInitiator starts...");
+      
+      sender = myAgent;
+      msgSent = requestMsg;
+    }
+    
+    protected void handleAgree(ACLMessage msg) {
+      showMessage("AGREE received from "+ ( (AID)msg.getSender()).getLocalName());
+    }
+    
+    protected void handleInform(ACLMessage msg) {
+    	showMessage("INFORM received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
+        try {
+            
+          BoatsPosition info = (BoatsPosition)msg.getContentObject();
+          if (info instanceof BoatsPosition) {
+            // Update position of boats
+            ((CoordinatorAgent)sender).setBoatsPosition(info);
+          }
 
+        } catch (Exception e) {
+          showMessage("Incorrect content: "+e.toString());
+        }
+    }
+    
+    protected void handleNotUnderstood(ACLMessage msg) {
+      showMessage("This message NOT UNDERSTOOD. \n");
+    }
 
-  /*************************************************************************/
+    protected void handleFailure(ACLMessage msg) {
+      showMessage("The action has failed.");
+
+    }
+
+    protected void handleRefuse(ACLMessage msg) {
+      showMessage("Action refused.");
+    }
+  }
+
+  /**************************************************************************/
+  /**************************************************************************/
   
 } //endof class CoordinatorAgent

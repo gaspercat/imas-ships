@@ -170,9 +170,7 @@ public class CentralAgent extends Agent {
     /**
      * This method is called after the response has been sent and only when
      * one of the following two cases arise: the response was an agree message
-     * OR no response message was sent. This default implementation return null
-     * which has the effect of sending no result notification. Programmers
-     * should override the method in case they need to react to this event.
+     * OR no response message was sent.
      * @param msg ACLMessage the received message
      * @param response ACLMessage the previously sent response message
      * @return ACLMessage to be sent as a result notification (i.e. one of

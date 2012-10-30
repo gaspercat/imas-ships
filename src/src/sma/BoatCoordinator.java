@@ -27,20 +27,24 @@ import java.util.*;
  * @author joan
  */
 public class BoatCoordinator extends Agent{
-    
     private AID coordinatorAgent;
     
-    private jade.util.leap.List listOfBoats;
+    private BoatsPosition boatsPosition;
     
     public BoatCoordinator(){
         super();
+        
+        this.boatsPosition = new BoatsPosition();
     }
     
+    public BoatsPosition getBoatsPosition(){
+        return this.boatsPosition;
+    }
     
-      /**
-   * A message is shown in the log area of the GUI
-   * @param str String to show
-   */
+    public void setBoatPosition(BoatPosition boat){
+        this.boatsPosition.setBoatPosition(boat);
+    }
+    
     private void showMessage(String str) {
         System.out.println(getLocalName() + ": " + str);
     }
@@ -71,6 +75,9 @@ public class BoatCoordinator extends Agent{
         ServiceDescription searchBoatCoordCriteria = new ServiceDescription();
         searchBoatCoordCriteria.setType(UtilsAgents.COORDINATOR_AGENT);
         this.coordinatorAgent = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
+
+        // Register response behaviours
+        this.addBehaviour(new RequestResponseBehaviour(this, null));
     }
     
     private jade.util.leap.List buscarAgents(String type,String name) { 
@@ -103,4 +110,89 @@ public class BoatCoordinator extends Agent{
         }
         return results;
     }
+    
+  /**************************************************************************/
+  /**************************************************************************/
+    
+  private class RequestResponseBehaviour extends AchieveREResponder {
+    BoatCoordinator receiver;
+
+    /**
+     * Constructor for the <code>RequestResponseBehaviour</code> class.
+     * @param myAgent The agent owning this behaviour
+     * @param mt Template to receive future responses in this conversation
+     */
+    public RequestResponseBehaviour(BoatCoordinator myAgent, MessageTemplate mt) {
+      super(myAgent, mt);
+      showMessage("Waiting REQUESTs from authorized agents");
+      this.receiver = receiver;
+    }
+
+    protected ACLMessage prepareResponse(ACLMessage msg) {
+      /* method called when the message has been received. If the message to send
+       * is an AGREE the behaviour will continue with the method prepareResultNotification. */
+      ACLMessage reply = msg.createReply();
+      try {
+        Object contentRebut = (Object)msg.getContent();
+        if(contentRebut.equals("Movement request")) {
+          showMessage("Movement request received");
+          reply.setPerformative(ACLMessage.AGREE);
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      showMessage("Answer sent"); //: \n"+reply.toString());
+      return reply;
+    } //endof prepareResponse   
+
+    /**
+     * This method is called after the response has been sent and only when
+     * one of the following two cases arise: the response was an agree message
+     * OR no response message was sent.
+     * @param msg ACLMessage the received message
+     * @param response ACLMessage the previously sent response message
+     * @return ACLMessage to be sent as a result notification (i.e. one of
+     * inform, failure).
+     */
+    protected ACLMessage prepareResultNotification(ACLMessage msg, ACLMessage response) {
+      ACLMessage reply = msg.createReply();
+      reply.setPerformative(ACLMessage.INFORM);
+      
+      Object content = (Object)msg.getContent();
+        
+      // Prepare response for a ships movement request
+      if(content.equals("Movement request")){
+          prepareMovementResultNotitication(reply);
+            
+      // Prepare response for a start negotiation requests
+      }else if(content.equals("Negotiation request")){
+          
+      }
+      
+      showMessage("Answer sent"); //+reply.toString());
+      return reply;
+
+    } //endof prepareResultNotification
+
+    private void prepareMovementResultNotitication(ACLMessage reply){
+        // TODO: COMMUNICATE WITH SHIPS AND ASK TO MOVE
+        
+        // Notify boat positions to the coordinaor agent
+        try {
+            reply.setContentObject(this.receiver.getBoatsPosition());
+        } catch (Exception e) {
+            reply.setPerformative(ACLMessage.FAILURE);
+            System.err.println(e.toString());
+            e.printStackTrace();
+        }
+    }
+    
+
+    /**
+     *  No need for any specific action to reset this behaviour
+     */
+    public void reset() {
+    }
+
+  } //end of RequestResponseBehaviour
 }
