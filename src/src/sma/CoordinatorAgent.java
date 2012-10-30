@@ -131,15 +131,14 @@ public class CoordinatorAgent extends Agent {
 
           case STATE_UPDATE_MAP:
               stateUpdateMap();
-              this.currentState = STATE_UPDATE_MAP;
-
-              // TODO: INFORM CENTRAL AGENT OF NEW BOATS POSITIONS
               this.currentState = STATE_TURNS_INTERVAL;
               break;
                 
           case STATE_TURNS_INTERVAL:
-              
+              stateTurnsInterval();
+              this.currentState = STATE_MOVE_BOATS;
               break;
+              
       }
   }
   
@@ -168,6 +167,12 @@ public class CoordinatorAgent extends Agent {
       // Requests central agent from coordinator agent
       ACLMessage message = buildUpdateRequest();
       this.addBehaviour(new UpdateRequestBehaviour(this, message));
+  }
+  
+  private void stateTurnsInterval(){
+      try{
+          Thread.sleep(1000); 
+      }catch(Exception e){}
   }
   
   /**************************************************************************/
