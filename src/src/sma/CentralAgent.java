@@ -147,10 +147,31 @@ public class CentralAgent extends Agent {
       // Place boats to map
       BoatPosition[] boats = this.boats.getBoatsPositions();
       for(int i=0;i<boats.length;i++){
-          BoatPosition boat = boats[i];
-          Cell cell = map[boat.getRow()][boat.getColumn()];
-          cell.setType(CellType.Boat);
-       //   cell.addAgent(boat);
+          try{
+            BoatPosition boat = boats[i];  
+            
+            InfoAgent agent = new InfoAgent(AgentType.Boat);
+          
+            agent.setAgentType(AgentType.Boat);
+            agent.setAID(boat.getAID());
+            agent.setName(AgentType.Boat.toString() + i, i +"");       
+            
+            map[boat.getRow()][boat.getColumn()].setType(CellType.Boat);
+            map[boat.getRow()][boat.getColumn()].addAgent(agent);
+                    
+          }catch(Exception e){
+              this.showMessage("Error updating the map");
+          }
+      }
+      
+      this.moveFishes();
+      
+      for(int i = 0; i < this.sfList.length; i++){
+          SeaFood sf = this.sfList[i];
+          if(sf.onTheMap()){
+              map[sf.getPosX()][sf.getPosY()].setType(CellType.Seafood);
+              map[sf.getPosX()][sf.getPosY()].setSeaFoodType(sf.getType());
+          }
       }
       
       // Refresh map
@@ -250,7 +271,11 @@ public class CentralAgent extends Agent {
   } //end of RequestResponseBehaviour
 
   
-
+  protected void moveFishes(){
+      for(int i = 0; i < this.sfList.length; i++){
+          sfList[i].move();
+      }
+  }
   /*************************************************************************/
   
 } //endof class AgentCentral

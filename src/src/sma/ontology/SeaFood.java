@@ -46,15 +46,15 @@ public class SeaFood implements java.io.Serializable{
         distances[2] = this.mapY - this.posY;
         distances[3] = this.posX;
         
-        int minIndx = 0;
+        int maxIndx = 0;
         
         for(int i = 0; i < distances.length; i++){
-            if (distances[i] < distances[minIndx]){
-                minIndx = i;
+            if (distances[i] > distances[maxIndx]){
+                maxIndx = i;
             }
         }
         
-        return minIndx;
+        return maxIndx;
     }
     
     public int getMovementDirection(){

@@ -136,6 +136,7 @@ public class InfoGame implements java.io.Serializable {
         this.info.fillAgentsInitialPositions(initialPositions);
 
         SeaFood[] sfList = new SeaFood[info.getNumSeafoodGroups()];
+        
         //Add fishes
         for (int fish = 0; fish < info.getNumSeafoodGroups(); fish++){
             int rndRow = (int)  (Math.random() * ( (NROWS - 1) - 0 ));
