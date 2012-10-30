@@ -46,6 +46,10 @@ public class BoatCoordinator extends Agent{
     public void setBoatPosition(BoatPosition boat){
         this.boatsPosition.setBoatPosition(boat);
     }
+
+    public AID getCoordinatorAgent() {
+        return coordinatorAgent;
+    }
     
     private void showMessage(String str) {
         System.out.println(getLocalName() + ": " + str);
@@ -207,14 +211,8 @@ public class BoatCoordinator extends Agent{
             showMessage("ADDING RECIVER "+rec.getName());
         }
         
-        MoveBoatsBehaviour be = new MoveBoatsBehaviour(myAgent, msg, this);
+        MoveBoatsBehaviour be = new MoveBoatsBehaviour(myAgent, msg);
         addBehaviour(be);
-        /*while (!be.done()){
-            showMessage("Entering Block");
-            block();
-            showMessage("Leaving Block " +getBoatsPosition().toString());
-        }*/
-        
         
         //waitUntilBoatCompletion();
         showMessage("Final Boat Position Message sent");
@@ -250,10 +248,9 @@ public class BoatCoordinator extends Agent{
     private ACLMessage msgSent = null;
     private Behaviour parent = null;
     
-    public MoveBoatsBehaviour(Agent myAgent, ACLMessage requestMsg, Behaviour parent) {
+    public MoveBoatsBehaviour(Agent myAgent, ACLMessage requestMsg) {
       super(myAgent, requestMsg);
       showMessage("AchieveREInitiator MoveBoats starts...");
-      this.parent = parent;
       sender = myAgent;
       msgSent = requestMsg;
     }
@@ -262,7 +259,7 @@ public class BoatCoordinator extends Agent{
       showMessage("AGREE received from "+ ( (AID)msg.getSender()).getLocalName());
     }
 
-    protected void handleAllResponses(Vector responses){
+    protected void handleAllResultNotifications(Vector responses){
       showMessage("ALL RESPONSES "+responses.size());
       for (int i = 0; i < responses.size(); i++){
         ACLMessage msg = (ACLMessage) responses.get(i);
@@ -279,36 +276,24 @@ public class BoatCoordinator extends Agent{
             Logger.getLogger(BoatCoordinator.class.getName()).log(Level.SEVERE, null, ex);
         }         
       }
-      this.parent.restart();
-      showMessage("FAAAIL "+getBoatsPosition().toString());
+      showMessage("FINAL BOATS POSITION "+getBoatsPosition().toString());
+      
+      ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+      msg.setContent("UpdateBoatPosition");
+        try {
+            msg.setContentObject(getBoatsPosition());
+        } catch (IOException ex) {
+            Logger.getLogger(BoatCoordinator.class.getName()).log(Level.SEVERE, null, ex);
+        }
+      msg.addReceiver(getCoordinatorAgent());
+      UpdateBoatPositionBehaviour ubp = new UpdateBoatPositionBehaviour(myAgent, msg);
+      addBehaviour(ubp);
+      
     } 
     
-   /* protected void handleInform(ACLMessage msg) {
+    /*protected void handleInform(ACLMessage msg) {
     	showMessage("INFORM received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
-        try {
-          info = (AuxInfo)msg.getContentObject();
-          setGameInfo(info);
-          if (info instanceof AuxInfo) {
-            for (InfoAgent ia : info.getAgentsInitialPosition().keySet()){                  
-          	showMessage("Agent ID: " + ia.getName());          	  
-                if (ia.getAgentType() == AgentType.Boat){
-                    showMessage("Agent type: " + ia.getAgentType().toString());
-                    Object[] position = new Object[4];
-                    position[0] = info.getAgentsInitialPosition().get(ia).getRow();
-                    position[1] = info.getAgentsInitialPosition().get(ia).getColumn();
-                    position[2] = info.getMap()[0].length;
-                    position[3] = info.getMap().length;
-                    UtilsAgents.createAgent(this.myAgent.getContainerController(),ia.getName(), "sma.BoatAgent", position);
-                }else showMessage("no agent type");
-          	  
-                Cell pos = (Cell)info.getAgentsInitialPosition().get(ia);
-                showMessage("pos: " + pos);
-                
-            }
-          }
-        } catch (Exception e) {
-          showMessage("Incorrect content: "+e.toString());
-        }
+        
     }*/
 
     protected void handleNotUnderstood(ACLMessage msg) {
@@ -324,5 +309,40 @@ public class BoatCoordinator extends Agent{
       showMessage("Action refused.");
     }
   } //Endof class StateRequestBehaviour
+  
+  
+  class UpdateBoatPositionBehaviour extends AchieveREInitiator {
+    private Agent      sender  = null;
+    private ACLMessage msgSent = null;
+    
+    public UpdateBoatPositionBehaviour(Agent myAgent, ACLMessage requestMsg) {
+      super(myAgent, requestMsg);
+      showMessage("AchieveREInitiator Update starts...");
+      sender = myAgent;
+      msgSent = requestMsg;
+    }
+
+    protected void handleAgree(ACLMessage msg) {
+      showMessage("AGREE update received from "+ ( (AID)msg.getSender()).getLocalName());
+    }
+
+    protected void handleInform(ACLMessage msg) {
+    	showMessage("INFORM update received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");       
+    }
+
+    protected void handleNotUnderstood(ACLMessage msg) {
+      showMessage("This message NOT UNDERSTOOD. \n");
+    }
+
+    protected void handleFailure(ACLMessage msg) {
+      showMessage("The action has failed.");
+
+    } //End of handleFailure
+
+    protected void handleRefuse(ACLMessage msg) {
+      showMessage("Action refused.");
+    }
+  } //Endof class StateRequestBehaviour
+  
   
 }

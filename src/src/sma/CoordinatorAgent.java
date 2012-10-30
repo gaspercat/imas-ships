@@ -108,6 +108,10 @@ public class CoordinatorAgent extends Agent {
     searchCriterion.setType(UtilsAgents.CENTRAL_AGENT);
     this.centralAgent = UtilsAgents.searchAgent(this, searchCriterion);
 
+    MessageTemplate mt  = MessageTemplate.MatchContent("UpdateBoatPosition");
+    addBehaviour(new UpdateBoatMapBehaviour(this, mt));
+    
+    
     // Execute the finite state automata
     this.currentState = STATE_INITIAL_REQUEST;
     finiteStateAutomata();
@@ -307,7 +311,7 @@ public class CoordinatorAgent extends Agent {
     
     public MovementRequestBehaviour(Agent myAgent, ACLMessage requestMsg) {
       super(myAgent, requestMsg);
-      showMessage("AchieveREInitiator starts...");
+      showMessage("AchieveREInitiator movement starts...");
       
       sender = myAgent;
       msgSent = requestMsg;
@@ -360,7 +364,7 @@ public class CoordinatorAgent extends Agent {
 
     public UpdateRequestBehaviour(Agent myAgent, ACLMessage requestMsg) {
       super(myAgent, requestMsg);
-      showMessage("AchieveREInitiator starts...");
+      showMessage("AchieveREInitiator update central starts...");
 
       sender = myAgent;
       msgSent = requestMsg;
@@ -390,4 +394,70 @@ public class CoordinatorAgent extends Agent {
       showMessage("Action refused.");
     }
   }
+  
+    class UpdateBoatMapBehaviour extends AchieveREResponder{
+
+    /**
+     * Constructor for the <code>RequestResponseBehaviour</code> class.
+     * @param myAgent The agent owning this behaviour
+     * @param mt Template to receive future responses in this conversation
+     */
+    public UpdateBoatMapBehaviour(CoordinatorAgent myAgent, MessageTemplate mt) {
+      super(myAgent, mt);
+      showMessage("Waiting REQUESTs from authorized agents");
+    }
+
+    protected ACLMessage prepareResponse(ACLMessage msg) {
+      /* method called when the message has been received. If the message to send
+       * is an AGREE the behaviour will continue with the method prepareResultNotification. */
+      ACLMessage reply = msg.createReply();
+      showMessage("Update coord "+msg.getSender().getName());
+      try {
+        Object contentRebut = (Object)msg.getContent();
+        if(contentRebut.equals("UpdateBoatPosition")) {
+          showMessage("Update request received");
+          BoatsPosition bp = (BoatsPosition)msg.getContentObject();
+          setBoatsPosition(bp);
+          reply.setPerformative(ACLMessage.AGREE);
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      
+      showMessage("Answer sent"); //: \n"+reply.toString());
+      return reply;
+    } //endof prepareResponse   
+
+    /**
+     * This method is called after the response has been sent and only when
+     * one of the following two cases arise: the response was an agree message
+     * OR no response message was sent. This default implementation return null
+     * which has the effect of sending no result notification. Programmers
+     * should override the method in case they need to react to this event.
+     * @param msg ACLMessage the received message
+     * @param response ACLMessage the previously sent response message
+     * @return ACLMessage to be sent as a result notification (i.e. one of
+     * inform, failure).
+     */
+    protected ACLMessage prepareResultNotification(ACLMessage msg, ACLMessage response) {
+
+      // it is important to make the createReply in order to keep the same context of
+      // the conversation
+      ACLMessage reply = msg.createReply();
+      reply.setPerformative(ACLMessage.INFORM);
+      
+      showMessage("Answer update sent"); //+reply.toString());
+      return reply;
+
+    } //endof prepareResultNotification
+
+
+    /**
+     *  No need for any specific action to reset this behaviour
+     */
+    public void reset() {
+    }
+
+  } //end of RequestResponseBehaviour
+
 }
