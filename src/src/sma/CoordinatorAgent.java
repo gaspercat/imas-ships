@@ -108,7 +108,7 @@ public class CoordinatorAgent extends Agent {
     searchCriterion.setType(UtilsAgents.CENTRAL_AGENT);
     this.centralAgent = UtilsAgents.searchAgent(this, searchCriterion);
 
-    MessageTemplate mt  = MessageTemplate.MatchContent("UpdateBoatPosition");
+    MessageTemplate mt  = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
     addBehaviour(new UpdateBoatMapBehaviour(this, mt));
     
     
@@ -413,13 +413,12 @@ public class CoordinatorAgent extends Agent {
       ACLMessage reply = msg.createReply();
       showMessage("Update coord "+msg.getSender().getName());
       try {
-        Object contentRebut = (Object)msg.getContent();
-        if(contentRebut.equals("UpdateBoatPosition")) {
-          showMessage("Update request received");
-          BoatsPosition bp = (BoatsPosition)msg.getContentObject();
-          setBoatsPosition(bp);
-          reply.setPerformative(ACLMessage.AGREE);
-        }
+        BoatsPosition contentRebut = (BoatsPosition)msg.getContentObject();
+        showMessage("Update request received");
+        BoatsPosition bp = (BoatsPosition)msg.getContentObject();
+        setBoatsPosition(bp);
+        reply.setPerformative(ACLMessage.AGREE);
+        stateUpdateMap();
       } catch (Exception e) {
         e.printStackTrace();
       }

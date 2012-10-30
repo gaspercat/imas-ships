@@ -50,6 +50,7 @@ public class BoatCoordinator extends Agent{
     public AID getCoordinatorAgent() {
         return coordinatorAgent;
     }
+   
     
     private void showMessage(String str) {
         System.out.println(getLocalName() + ": " + str);
@@ -286,6 +287,7 @@ public class BoatCoordinator extends Agent{
             Logger.getLogger(BoatCoordinator.class.getName()).log(Level.SEVERE, null, ex);
         }
       msg.addReceiver(getCoordinatorAgent());
+      msg.setSender(getAID());
       UpdateBoatPositionBehaviour ubp = new UpdateBoatPositionBehaviour(myAgent, msg);
       addBehaviour(ubp);
       

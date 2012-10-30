@@ -215,12 +215,17 @@ public class CentralAgent extends Agent {
        * is an AGREE the behaviour will continue with the method prepareResultNotification. */
       ACLMessage reply = msg.createReply();
       showMessage("MSG from "+ msg.getSender());
+      //showMessage("LOL "+msg.getContent().toString());
       try {
         Object contentRebut = (Object)msg.getContent();
+        
+        // If initial request
         if(contentRebut.equals("Initial request")) {
             showMessage("Initial request received");
             reply.setPerformative(ACLMessage.AGREE);
-        }else if(contentRebut.equals("Update boats request")){
+            
+        // If boats position update
+        }else{
             showMessage("Update boats request received");
             receiver.setBoatsPosition((BoatsPosition)msg.getContentObject());
             receiver.refreshMap();
