@@ -22,8 +22,14 @@ public class BoatsPosition implements java.io.Serializable{
         this.positions = positions;
     }
     
-    public List<BoatPosition> getBoatsPositions(){
-        return this.positions;
+    public BoatPosition[] getBoatsPositions(){
+        BoatPosition[] ret = new BoatPosition[positions.size()];
+        
+        for(int i=0;i<this.positions.size();i++){
+            ret[i] = this.positions.get(i);
+        }
+        
+        return ret;
     }
     
     public void setBoatPosition(BoatPosition position){

@@ -20,6 +20,7 @@ import jade.proto.AchieveREResponder;
 import sma.ontology.*;
 import sma.gui.*;
 import java.util.*;
+import java.util.ArrayList.*;
 
 /**
  * <p><B>Title:</b> IA2-SMA</p>
@@ -31,10 +32,11 @@ import java.util.*;
  * @version 2.0
  */
 public class CentralAgent extends Agent {
-
   private sma.gui.GraphicInterface gui;
   private sma.ontology.InfoGame game;
 
+  private BoatsPosition boats;
+  
   private AID coordinatorAgent;
   
   private SeaFoodsElements seaFoods;
@@ -97,8 +99,8 @@ public class CentralAgent extends Agent {
     }
     try {
       this.gui = new GraphicInterface(game);
-      
       gui.setVisible(true);
+      
       showMessage("Game loaded ... [OK]");
     } catch (Exception e) {
       e.printStackTrace();
@@ -124,6 +126,33 @@ public class CentralAgent extends Agent {
 
   } //endof setup
 
+  public void refreshMap(){
+      Cell[][] map = game.getInfo().getMap();
+      int rows = map.length;
+      int cols = map[0].length;
+      
+      // Overwrite map
+      map = new Cell[rows][cols];
+      for(int i=0;i<rows;i++){
+          for(int j=0;j<rows;j++) map[i][j] = new Cell(CellType.Sea);
+      }
+      
+      // Place fishes to map
+      
+      
+      // Place boats to map
+      BoatPosition[] boats = this.boats.getBoatsPositions();
+      for(int i=0;i<boats.length;i++){
+          BoatPosition boat = boats[i];
+          Cell cell = map[boat.getRow()][boat.getColumn()];
+          cell.setType(CellType.Boat);
+          cell.addAgent(boat);
+      }
+      
+      // Refresh map
+      gui.showGameMap(map);
+  }
+  
   
   /*************************************************************************/
 
@@ -152,7 +181,7 @@ public class CentralAgent extends Agent {
       super(myAgent, mt);
       showMessage("Waiting REQUESTs from authorized agents");
     }
-
+    
     protected ACLMessage prepareResponse(ACLMessage msg) {
       /* method called when the message has been received. If the message to send
        * is an AGREE the behaviour will continue with the method prepareResultNotification. */
