@@ -44,7 +44,7 @@ public class AuxInfo implements java.io.Serializable {
 	private int numTotalNegotiations;
 	private HashMap<PortType, Integer> portTypeQty = new HashMap<PortType, Integer>();
 	private HashMap<InfoAgent, Cell> agentsInitialPosition = new HashMap<InfoAgent, Cell>();
-        private SeaFoodsElements seaFoods = new SeaFoodsElements();
+        private SeaFood[] seaFoods;
 	// For each InfoAgent it contains its initial cell
 	
 	private List<InfoAgent> ports = new ArrayList<InfoAgent>();
@@ -175,11 +175,11 @@ public class AuxInfo implements java.io.Serializable {
 		return this.moneyPorts;
 	}
         
-        public void setSeaFoods(SeaFoodsElements sf){
+        public void setSeaFoods(SeaFood[] sf){
             this.seaFoods = sf;
         }
         
-        public SeaFoodsElements getSeaFoods(){
+        public SeaFood[] getSeaFoods(){
             return this.seaFoods;
         }
 }

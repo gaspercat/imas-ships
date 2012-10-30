@@ -39,8 +39,6 @@ public class CentralAgent extends Agent {
   
   private AID coordinatorAgent;
   
-  private SeaFoodsElements seaFoods;
-
   public CentralAgent() {
     super();
   }
@@ -92,7 +90,6 @@ public class CentralAgent extends Agent {
     try {
       this.game = new InfoGame(); //object with the game data
       this.game.readGameFile("game.txt");
-      this.seaFoods = this.game.getInfo().getSeaFoods();
     } catch(Exception e) {
       e.printStackTrace();
       System.err.println("Game NOT loaded ... [KO]");
