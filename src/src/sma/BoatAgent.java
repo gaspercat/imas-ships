@@ -187,7 +187,11 @@ public class BoatAgent extends Agent{
       // the conversation
       ACLMessage reply = msg.createReply();
       reply.setPerformative(ACLMessage.INFORM);
-
+      Iterator it = reply.getAllReceiver();
+      while(it.hasNext()){
+          AID rec = (AID)it.next();
+          showMessage("REC "+rec.getName());
+      }
       try {
           move();
           reply.setContent("BOAT POSITION");

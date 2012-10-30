@@ -84,6 +84,20 @@ public class BoatCoordinator extends Agent{
         this.addBehaviour(new RequestResponseBehaviour(this,mt ));
     }
     
+    private void waitUntilBoatCompletion() {
+        synchronized (this){
+            try { 
+                this.wait();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(BoatCoordinator.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+    
+    private synchronized void notifyBoatCompletion(){
+        this.notify();
+    }
+    
     private jade.util.leap.List buscarAgents(String type,String name) { 
         jade.util.leap.List results = new jade.util.leap.ArrayList();
         DFAgentDescription dfd = new DFAgentDescription();
@@ -192,10 +206,21 @@ public class BoatCoordinator extends Agent{
             msg.addReceiver(rec);
             showMessage("ADDING RECIVER "+rec.getName());
         }
-        addBehaviour(new MoveBoatsBehaviour(myAgent, msg));
+        
+        MoveBoatsBehaviour be = new MoveBoatsBehaviour(myAgent, msg, this);
+        addBehaviour(be);
+        /*while (!be.done()){
+            showMessage("Entering Block");
+            block();
+            showMessage("Leaving Block " +getBoatsPosition().toString());
+        }*/
+        
+        
+        //waitUntilBoatCompletion();
         showMessage("Final Boat Position Message sent");
         // Notify boat positions to the coordinaor agent
         try {
+            showMessage(getBoatsPosition().toString());
             reply.setContentObject(getBoatsPosition());
         } catch (Exception e) {
             reply.setPerformative(ACLMessage.FAILURE);
@@ -223,11 +248,12 @@ public class BoatCoordinator extends Agent{
   class MoveBoatsBehaviour extends AchieveREInitiator {
     private Agent      sender  = null;
     private ACLMessage msgSent = null;
+    private Behaviour parent = null;
     
-    public MoveBoatsBehaviour(Agent myAgent, ACLMessage requestMsg) {
+    public MoveBoatsBehaviour(Agent myAgent, ACLMessage requestMsg, Behaviour parent) {
       super(myAgent, requestMsg);
       showMessage("AchieveREInitiator MoveBoats starts...");
-      
+      this.parent = parent;
       sender = myAgent;
       msgSent = requestMsg;
     }
@@ -240,16 +266,21 @@ public class BoatCoordinator extends Agent{
       showMessage("ALL RESPONSES "+responses.size());
       for (int i = 0; i < responses.size(); i++){
         ACLMessage msg = (ACLMessage) responses.get(i);
+        showMessage("PERF "+msg.getPerformative());
         try {
            if(msg.getPerformative() == ACLMessage.INFORM){
             BoatPosition pos = (BoatPosition) msg.getContentObject();
             showMessage("PORCESSING BOAT "+ pos.getAID() + " POS "+pos.getRow()+","+pos.getColumn());
             setBoatPosition(pos);
+            showMessage("PUT "+getBoatsPosition().toString());
            }
+           
         } catch (UnreadableException ex) {
             Logger.getLogger(BoatCoordinator.class.getName()).log(Level.SEVERE, null, ex);
         }         
       }
+      this.parent.restart();
+      showMessage("FAAAIL "+getBoatsPosition().toString());
     } 
     
    /* protected void handleInform(ACLMessage msg) {

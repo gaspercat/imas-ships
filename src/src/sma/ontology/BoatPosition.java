@@ -44,4 +44,8 @@ public class BoatPosition implements java.io.Serializable{
     public boolean equals(BoatPosition boat){
         return this.id.equals(boat.id);
     }
+    
+    public String toString(){
+        return "(" + this.id.getName() + "=" + this.row + "," + this.column + ")";
+    }
 }

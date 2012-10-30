@@ -45,4 +45,15 @@ public class BoatsPosition implements java.io.Serializable{
         // If boat position not present, add to list
         this.positions.add(position);
     }
+    
+    public String toString(){
+        String ret = "";
+        
+        for(BoatPosition bp : positions){
+            ret = ret + bp.toString();
+        }
+        if(positions.size() == 0) ret = "Empty";
+        
+        return ret;
+    }
 }

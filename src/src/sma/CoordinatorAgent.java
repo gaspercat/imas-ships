@@ -35,6 +35,7 @@ public class CoordinatorAgent extends Agent {
   private static final int STATE_INITIAL_REQUEST = 0;
   private static final int STATE_MOVE_BOATS = 1;
   private static final int STATE_UPDATE_MAP = 2;
+  private static final int STATE_TURNS_INTERVAL = 3;
 
   private AID centralAgent;
   private AID BoatsCoordinator;
@@ -124,8 +125,12 @@ public class CoordinatorAgent extends Agent {
 
           case STATE_UPDATE_MAP:
               // TODO: INFORM CENTRAL AGENT OF NEW BOATS POSITIONS
+              this.currentState = STATE_TURNS_INTERVAL;
               break;
                 
+          case STATE_TURNS_INTERVAL:
+              
+              break;
       }
   }
   
@@ -145,8 +150,8 @@ public class CoordinatorAgent extends Agent {
   
   private void stateMoveBoats(){
       // Request boats movement to boats coordinator
-      ACLMessage message = buildInitialRequest();
-      this.addBehaviour(new StateRequestBehaviour(this, message));
+      ACLMessage message = buildMovementRequest();
+      this.addBehaviour(new MovementRequestBehaviour(this, message));
   }
   
   /**************************************************************************/
