@@ -161,6 +161,7 @@ public class InfoGame implements java.io.Serializable {
                 sf = new SeaFood(SeaFoodType.Shrimp, rndRow, rndCol, this.info.map.length, this.info.map[0].length);
                 this.info.map[rndRow][rndCol].setSeaFoodType(SeaFoodType.Shrimp);
             }
+            this.info.getSeaFoods().addSeaFood(sf);
         }
   }
 }

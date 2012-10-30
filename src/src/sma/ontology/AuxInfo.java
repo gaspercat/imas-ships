@@ -26,7 +26,7 @@ import java.util.*;
  * href="http://www.urv.cat">URV</a>)
  * </p>
  * 
- * @author David Isern & Joan Albert López
+ * @author David Isern & Joan Albert Lï¿½pez
  * @see sma.CoordinatorAgent
  * @see sma.CentralAgent
  */
@@ -43,7 +43,8 @@ public class AuxInfo implements java.io.Serializable {
 	private int numFishingPhasesToNegotiate;
 	private int numTotalNegotiations;
 	private HashMap<PortType, Integer> portTypeQty = new HashMap<PortType, Integer>();
-	private HashMap<InfoAgent, Cell> agentsInitialPosition = new HashMap<InfoAgent, Cell>(); 
+	private HashMap<InfoAgent, Cell> agentsInitialPosition = new HashMap<InfoAgent, Cell>();
+        private SeaFoodsElements seaFoods = new SeaFoodsElements();
 	// For each InfoAgent it contains its initial cell
 	
 	private List<InfoAgent> ports = new ArrayList<InfoAgent>();
@@ -173,4 +174,12 @@ public class AuxInfo implements java.io.Serializable {
 	public double getMoneyPorts() {
 		return this.moneyPorts;
 	}
+        
+        public void setSeaFoods(SeaFoodsElements sf){
+            this.seaFoods = sf;
+        }
+        
+        public SeaFoodsElements getSeaFoods(){
+            return this.seaFoods;
+        }
 }
