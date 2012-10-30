@@ -280,6 +280,9 @@ public class CoordinatorAgent extends Agent {
           if (info instanceof BoatsPosition) {
             // Update position of boats
             ((CoordinatorAgent)sender).setBoatsPosition(info);
+            
+            // Run finite state automata
+            ((CoordinatorAgent)sender).finiteStateAutomata();
           }
 
         } catch (Exception e) {
