@@ -5,12 +5,13 @@
 package sma.ontology;
 
 import jade.core.*;
+import java.io.Serializable;
 
 /**
  *
  * @author joan
  */
-public class SeaFood {
+public class SeaFood implements java.io.Serializable{
     int posX, posY, mapX, mapY, movementDirection;
     SeaFoodType type;
     
@@ -18,8 +19,8 @@ public class SeaFood {
         this.type = type;
         this.posX = posX;
         this.posY = posY;
-        this.mapX = mapX;
-        this.mapY = mapY;
+        this.mapX = mapX-1;
+        this.mapY = mapY-1;
     }
     
     public void setPosX(int posX){
@@ -38,8 +39,22 @@ public class SeaFood {
         return this.posY;
     }
     
-    public void setMovementDirection(int MovementDirection){
-        this.movementDirection = movementDirection;
+    public int setMovementDirection(){
+        int[] distances = new int[4];
+        distances[0] = this.posY;
+        distances[1] = this.mapX - this.posX;
+        distances[2] = this.mapY - this.posY;
+        distances[3] = this.posX;
+        
+        int minIndx = 0;
+        
+        for(int i = 0; i < distances.length; i++){
+            if (distances[i] < distances[minIndx]){
+                minIndx = i;
+            }
+        }
+        
+        return minIndx;
     }
     
     public int getMovementDirection(){
@@ -52,5 +67,25 @@ public class SeaFood {
     
     public SeaFoodType getType(){
         return this.type;
+    }
+    
+    public Boolean onTheMap(){
+        if (posX >= 0 & posY >= 0 & posX < this.mapX & posY < this.mapX){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    
+    public void move(){
+        if(this.movementDirection == 0){
+            this.posY -= 1;
+        }else if(this.movementDirection == 1){
+            this.posX += 1;
+        }else if(this.movementDirection ==2){
+            this.posY += 1;
+        }else{
+            this.posX -= 1;
+        }
     }
 }

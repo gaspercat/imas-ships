@@ -37,6 +37,8 @@ public class CentralAgent extends Agent {
 
   private BoatsPosition boats;
   
+  SeaFood[] sfList;
+  
   private AID coordinatorAgent;
   
   public CentralAgent() {
@@ -90,6 +92,7 @@ public class CentralAgent extends Agent {
     try {
       this.game = new InfoGame(); //object with the game data
       this.game.readGameFile("game.txt");
+      sfList = this.game.getInfo().getSeaFoods();
     } catch(Exception e) {
       e.printStackTrace();
       System.err.println("Game NOT loaded ... [KO]");
@@ -143,7 +146,7 @@ public class CentralAgent extends Agent {
           BoatPosition boat = boats[i];
           Cell cell = map[boat.getRow()][boat.getColumn()];
           cell.setType(CellType.Boat);
-          cell.addAgent(boat);
+       //   cell.addAgent(boat);
       }
       
       // Refresh map
@@ -234,8 +237,8 @@ public class CentralAgent extends Agent {
 
   } //end of RequestResponseBehaviour
 
+  
 
   /*************************************************************************/
-
-
+  
 } //endof class AgentCentral
