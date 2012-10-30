@@ -16,6 +16,8 @@ import jade.content.*;
 import jade.content.onto.*;
 import jade.proto.AchieveREInitiator;
 import jade.proto.AchieveREResponder;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import sma.ontology.*;
 import sma.gui.*;
 import java.util.*;
@@ -49,6 +51,10 @@ public class CoordinatorAgent extends Agent {
   private int currentNegotiation;
   private int currentTurn;
   private int currentState;
+
+  public BoatsPosition getBoatsPosition(){
+      return boatsPosition;
+  }
   
   /**
    * A message is shown in the log area of the GUI
@@ -124,6 +130,9 @@ public class CoordinatorAgent extends Agent {
               break;
 
           case STATE_UPDATE_MAP:
+              stateUpdateMap();
+              this.currentState = STATE_UPDATE_MAP;
+
               // TODO: INFORM CENTRAL AGENT OF NEW BOATS POSITIONS
               this.currentState = STATE_TURNS_INTERVAL;
               break;
@@ -152,6 +161,13 @@ public class CoordinatorAgent extends Agent {
       // Request boats movement to boats coordinator
       ACLMessage message = buildMovementRequest();
       this.addBehaviour(new MovementRequestBehaviour(this, message));
+  }
+
+
+  private void stateUpdateMap(){
+      // Requests central agent from coordinator agent
+      ACLMessage message = buildUpdateRequest();
+      this.addBehaviour(new UpdateRequestBehaviour(this, message));
   }
   
   /**************************************************************************/
@@ -184,6 +200,25 @@ public class CoordinatorAgent extends Agent {
     movementRequest.setContent("Movement request");
     
     return movementRequest;
+  }
+
+  public ACLMessage buildUpdateRequest(){
+    ACLMessage updateRequest = new ACLMessage(ACLMessage.REQUEST);
+
+    updateRequest.clearAllReceiver();
+    updateRequest.addReceiver(this.centralAgent);
+    updateRequest.setProtocol(InteractionProtocol.FIPA_REQUEST);
+    updateRequest.setContent("Update movement request");
+    
+    try {
+        updateRequest.setContentObject(boatsPosition);
+    } catch (Exception e) {
+        updateRequest.setPerformative(ACLMessage.FAILURE);
+        System.err.println(e.toString());
+        e.printStackTrace();
+    }
+    
+    return updateRequest;
   }
 
   /**************************************************************************/
@@ -289,7 +324,6 @@ public class CoordinatorAgent extends Agent {
             // Run finite state automata
             ((CoordinatorAgent)sender).finiteStateAutomata();
           }
-
         } catch (Exception e) {
           showMessage("Incorrect content: "+e.toString());
         }
@@ -309,7 +343,46 @@ public class CoordinatorAgent extends Agent {
     }
   }
 
-  /**************************************************************************/
-  /**************************************************************************/
+  // ************************************
+  // ** INITIATOR :: UPDATE MAP REQUEST
+  // **   SENDER   -> THIS
+  // **   RECEIVER -> CENTRAL AGENT
+  // ************************************
   
-} //endof class CoordinatorAgent
+  class UpdateRequestBehaviour extends AchieveREInitiator {
+    private Agent      sender = null;
+    private ACLMessage msgSent = null;
+
+    public UpdateRequestBehaviour(Agent myAgent, ACLMessage requestMsg) {
+      super(myAgent, requestMsg);
+      showMessage("AchieveREInitiator starts...");
+
+      sender = myAgent;
+      msgSent = requestMsg;
+    }
+
+    protected void handleAgree(ACLMessage msg) {
+      showMessage("AGREE received from "+ ( (AID)msg.getSender()).getLocalName());
+    }
+
+    protected void handleInform(ACLMessage msg) {
+    	showMessage("INFORM received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
+
+        // Update seafood
+        // TODO : Handle seafood data
+    }
+
+    protected void handleNotUnderstood(ACLMessage msg) {
+      showMessage("This message NOT UNDERSTOOD. \n");
+    }
+
+    protected void handleFailure(ACLMessage msg) {
+      showMessage("The action has failed.");
+
+    }
+
+    protected void handleRefuse(ACLMessage msg) {
+      showMessage("Action refused.");
+    }
+  }
+}
