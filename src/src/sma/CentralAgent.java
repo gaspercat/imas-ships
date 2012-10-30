@@ -154,7 +154,7 @@ public class CentralAgent extends Agent {
           
             agent.setAgentType(AgentType.Boat);
             agent.setAID(boat.getAID());
-            agent.setName(AgentType.Boat.toString() + i, i +"");       
+            agent.setName(boat.getAID().getLocalName(),boat.getAID().getLocalName().substring(4));       
             
             map[boat.getRow()][boat.getColumn()].setType(CellType.Boat);
             map[boat.getRow()][boat.getColumn()].addAgent(agent);
