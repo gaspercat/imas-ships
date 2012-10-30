@@ -149,7 +149,7 @@ public class BoatAgent extends Agent{
      */
     public MoveBehaviour(BoatAgent myAgent, MessageTemplate mt) {
       super(myAgent, mt);
-      showMessage("Waiting REQUESTs from authorized agents");
+      showMessage("Waiting REQUESTs from the BoatCoordinator");
     }
 
     protected ACLMessage prepareResponse(ACLMessage msg) {
