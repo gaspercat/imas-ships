@@ -44,6 +44,10 @@ public class CentralAgent extends Agent {
   public CentralAgent() {
     super();
   }
+  
+  public void setBoatsPosition(BoatsPosition positions){
+      boats = positions;
+  }
 
   /**
    * A message is shown in the log area of the GUI
@@ -171,7 +175,8 @@ public class CentralAgent extends Agent {
    * @see sma.ontology.InfoGame
    */
   private class RequestResponseBehaviour extends AchieveREResponder {
-
+    CentralAgent receiver;
+      
     /**
      * Constructor for the <code>RequestResponseBehaviour</code> class.
      * @param myAgent The agent owning this behaviour
@@ -180,6 +185,8 @@ public class CentralAgent extends Agent {
     public RequestResponseBehaviour(CentralAgent myAgent, MessageTemplate mt) {
       super(myAgent, mt);
       showMessage("Waiting REQUESTs from authorized agents");
+      
+      this.receiver = myAgent;
     }
     
     protected ACLMessage prepareResponse(ACLMessage msg) {
@@ -190,8 +197,13 @@ public class CentralAgent extends Agent {
       try {
         Object contentRebut = (Object)msg.getContent();
         if(contentRebut.equals("Initial request")) {
-          showMessage("Initial request received");
-          reply.setPerformative(ACLMessage.AGREE);
+            showMessage("Initial request received");
+            reply.setPerformative(ACLMessage.AGREE);
+        }else if(contentRebut.equals("Update boats request")){
+            showMessage("Update boats request received");
+            receiver.setBoatsPosition((BoatsPosition)msg.getContentObject());
+            receiver.refreshMap();
+            // TODO: Send fishes position
         }
       } catch (Exception e) {
         e.printStackTrace();

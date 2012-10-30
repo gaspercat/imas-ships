@@ -208,7 +208,7 @@ public class CoordinatorAgent extends Agent {
     updateRequest.clearAllReceiver();
     updateRequest.addReceiver(this.centralAgent);
     updateRequest.setProtocol(InteractionProtocol.FIPA_REQUEST);
-    updateRequest.setContent("Update movement request");
+    updateRequest.setContent("Update boats request");
     
     try {
         updateRequest.setContentObject(boatsPosition);
