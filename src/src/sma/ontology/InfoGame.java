@@ -134,6 +134,27 @@ public class InfoGame implements java.io.Serializable {
 		initialPositions.add(this.info.map[rndRow][rndCol]);
 	}
         this.info.fillAgentsInitialPositions(initialPositions);
-	
+
+        
+        //Add fishes
+        for (int fish = 0; fish < info.getNumSeafoodGroups(); fish++){
+            int rndRow = (int)  (Math.random() * ( (NROWS - 1) - 0 ));
+            int rndCol = (int) ( Math.random() * ( (NCOLS - 1) - 0 ));
+            
+            int seaFoodType = new Random().nextInt();
+            seaFoodType = Math.abs(seaFoodType%4);
+            
+            this.info.map[rndRow][rndCol].setType(CellType.Seafood);
+            
+            if (seaFoodType == 0){
+                this.info.map[rndRow][rndCol].setSeaFoodType("Tuna");
+            }else if (seaFoodType == 1){
+                this.info.map[rndRow][rndCol].setSeaFoodType("Octopus");
+            }else if (seaFoodType == 2){
+                this.info.map[rndRow][rndCol].setSeaFoodType("Lobster");
+            }else{
+                this.info.map[rndRow][rndCol].setSeaFoodType("Shrimp");
+            }
+        }
   }
 }

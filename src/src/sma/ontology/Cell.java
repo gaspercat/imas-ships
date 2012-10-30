@@ -28,6 +28,8 @@ public class Cell implements Serializable {
 	private int column = -1;
 	
 	private CellType type;
+        
+        private String seaFoodType;
 
 	public Cell(CellType Type) {
 		agents = new ArrayList<InfoAgent>();
@@ -130,6 +132,13 @@ public class Cell implements Serializable {
 		return type;
 	}
 	
+        public void setSeaFoodType(String type){
+            this.seaFoodType = type;
+        }
+        
+        public String getSeaFoodType(){
+            return this.seaFoodType;
+        }
 	
 
 } // endof class Cell

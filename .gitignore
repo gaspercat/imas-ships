@@ -25,3 +25,4 @@ src/APDescription.txt
 nbproject/project.properties
 
 *.class
+/src/src/sma/sma/

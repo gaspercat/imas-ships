@@ -32,7 +32,7 @@ import sma.ontology.InfoAgent;
  * <p><b>Copyright:</b> Copyright (c) 2011</p>
  * <p><b>Company:</b> Universitat Rovira i Virgili (<a
  * href="http://www.urv.cat">URV</a>)</p>
- * @author David Isern & Joan Albert López
+ * @author David Isern & Joan Albert Lï¿½pez
  */
 public class MapVisualizer extends JPanel {
 
@@ -104,7 +104,37 @@ public class MapVisualizer extends JPanel {
       }
 
     }
+    
+    private void drawSeaFood(Graphics2D g2d, int x, int y, Cell c) {
+      try {
+        if (t[x][y].getSeaFoodType().equalsIgnoreCase("Tuna")){
+            g2d.setPaint(Color.GREEN);
+            g2d.fill(cellBorder);
+            g2d.setPaint(Color.GREEN);
+            g2d.draw(cellBorder);
+        }else if (t[x][y].getSeaFoodType().equalsIgnoreCase("Octopus")){
+            g2d.setPaint(Color.decode("#8D38C9"));
+            g2d.fill(cellBorder);
+            g2d.setPaint(Color.decode("#8D38C9"));
+            g2d.draw(cellBorder);
+        }else if (t[x][y].getSeaFoodType().equalsIgnoreCase("Lobster")){
+            g2d.setPaint(Color.YELLOW);
+            g2d.fill(cellBorder);
+            g2d.setPaint(Color.YELLOW);
+            g2d.draw(cellBorder);
+        }else{
+            g2d.setPaint(Color.RED);
+            g2d.fill(cellBorder);
+            g2d.setPaint(Color.RED);
+            g2d.draw(cellBorder);
+        }
+        
+      } catch(Exception e) {
+        e.printStackTrace();
+      }
 
+    }
+    
 
     public void paintComponent(Graphics g) {
       clear(g);
@@ -114,7 +144,8 @@ public class MapVisualizer extends JPanel {
           g2d.draw(cellBorder);
           if(t[i][j].getCellType()== CellType.Boat)
         	  drawAgent(g2d, i, j, t[i][j]); 
-          
+          else if(t[i][j].getCellType() == CellType.Seafood)
+                  drawSeaFood(g2d,i,j,t[i][j]);
           else
         	  drawSea(g2d, i, j, t[i][j]);
           g2d.translate(dx,0);
