@@ -28,7 +28,7 @@ import java.util.*;
  */
 public class BoatCoordinator extends Agent{
     
-    private AID centralAgent;
+    private AID coordinatorAgent;
     
     private jade.util.leap.List listOfBoats;
     
@@ -69,8 +69,8 @@ public class BoatCoordinator extends Agent{
         
         //Search for the CentralAgent
         ServiceDescription searchBoatCoordCriteria = new ServiceDescription();
-        searchBoatCoordCriteria.setType(UtilsAgents.CENTRAL_AGENT);
-        this.centralAgent = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
+        searchBoatCoordCriteria.setType(UtilsAgents.COORDINATOR_AGENT);
+        this.coordinatorAgent = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
     }
     
     private jade.util.leap.List buscarAgents(String type,String name) { 
