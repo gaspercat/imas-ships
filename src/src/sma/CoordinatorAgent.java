@@ -31,10 +31,10 @@ import java.util.*;
 public class CoordinatorAgent extends Agent {
   private static final long serialVersionUID = 1L;
   
+  private static final int STATE_NONE = -1;
   private static final int STATE_INITIAL_REQUEST = 0;
   private static final int STATE_MOVE_BOATS = 1;
   private static final int STATE_UPDATE_MAP = 2;
-  private static final int STATE_END = -1;
 
   private AuxInfo info;
 
@@ -75,7 +75,6 @@ public class CoordinatorAgent extends Agent {
     // Initialize game states
     this.currentNegotiation = 0;
     this.currentTurn = 0;
-    this.currentState = STATE_INITIAL_REQUEST;
       
       
     /**** Very Important Line (VIL) *********/
@@ -103,8 +102,9 @@ public class CoordinatorAgent extends Agent {
     ServiceDescription searchCriterion = new ServiceDescription();
     searchCriterion.setType(UtilsAgents.CENTRAL_AGENT);
     this.centralAgent = UtilsAgents.searchAgent(this, searchCriterion);
-
+    
     // Execute the finite state automata
+    this.currentState = STATE_INITIAL_REQUEST;
     finiteStateAutomata();
   } //endof setup
 
@@ -112,25 +112,23 @@ public class CoordinatorAgent extends Agent {
   /**************************************************************************/
 
   public void finiteStateAutomata(){
-      while(this.currentState != STATE_END){
-        switch(this.currentState){ 
+      switch(this.currentState){ 
+          
+          case STATE_INITIAL_REQUEST:
+              stateInitialRequest();
+              this.currentState = STATE_MOVE_BOATS;
+              break;
 
-            case STATE_INITIAL_REQUEST:
-                stateInitialRequest();
-                this.currentState = STATE_MOVE_BOATS;
-                break;
+          case STATE_MOVE_BOATS:
+              stateMoveBoats();
+              this.currentState = STATE_UPDATE_MAP;
+              break;
 
-            case STATE_MOVE_BOATS:
-                stateMoveBoats();
-                this.currentState = STATE_UPDATE_MAP;
-                break;
-
-            case STATE_UPDATE_MAP:
-                // TODO: INFORM CENTRAL AGENT OF NEW BOATS POSITIONS
-                break;
+          case STATE_UPDATE_MAP:
+              // TODO: INFORM CENTRAL AGENT OF NEW BOATS POSITIONS
+              break;
                 
         }
-      }
   }
   
   private void stateInitialRequest(){
@@ -166,7 +164,7 @@ public class CoordinatorAgent extends Agent {
     
     try {
       requestInicial.setContent("Initial request");
-      showMessage("Content OK" + requestInicial.getContent());
+      showMessage("Content OK: " + requestInicial.getContent());
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -216,7 +214,7 @@ public class CoordinatorAgent extends Agent {
           info = (AuxInfo)msg.getContentObject();
           setGameInfo(info);
           if (info instanceof AuxInfo) {
-            for (InfoAgent ia : info.getAgentsInitialPosition().keySet()){                  
+            for (InfoAgent ia : info.getAgentsInitialPosition().keySet()){  
           	showMessage("Agent ID: " + ia.getName());          	  
                 if (ia.getAgentType() == AgentType.Boat){
                     showMessage("Agent type: " + ia.getAgentType().toString());
@@ -231,6 +229,8 @@ public class CoordinatorAgent extends Agent {
                 Cell pos = (Cell)info.getAgentsInitialPosition().get(ia);
                 showMessage("pos: " + pos);
                 
+                // Update state machine
+                ((CoordinatorAgent)sender).finiteStateAutomata();
             }
           }
         } catch (Exception e) {
