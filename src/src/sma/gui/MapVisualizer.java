@@ -21,6 +21,7 @@ import sma.ontology.AgentType;
 import sma.ontology.Cell;
 import sma.ontology.CellType;
 import sma.ontology.InfoAgent;
+import sma.ontology.SeaFoodType;
 /**
  * <p><B>Title:</b> IA2-SMA</p>
  * <p><b>Description:</b> Practical exercise 2011-12. Recycle swarm.</p>
@@ -107,17 +108,17 @@ public class MapVisualizer extends JPanel {
     
     private void drawSeaFood(Graphics2D g2d, int x, int y, Cell c) {
       try {
-        if (t[x][y].getSeaFoodType().equalsIgnoreCase("Tuna")){
+        if (t[x][y].getSeaFoodType() == SeaFoodType.Tuna){
             g2d.setPaint(Color.GREEN);
             g2d.fill(cellBorder);
             g2d.setPaint(Color.GREEN);
             g2d.draw(cellBorder);
-        }else if (t[x][y].getSeaFoodType().equalsIgnoreCase("Octopus")){
+        }else if (t[x][y].getSeaFoodType() ==  SeaFoodType.Octopus){
             g2d.setPaint(Color.decode("#8D38C9"));
             g2d.fill(cellBorder);
             g2d.setPaint(Color.decode("#8D38C9"));
             g2d.draw(cellBorder);
-        }else if (t[x][y].getSeaFoodType().equalsIgnoreCase("Lobster")){
+        }else if (t[x][y].getSeaFoodType() ==  SeaFoodType.Lobster){
             g2d.setPaint(Color.YELLOW);
             g2d.fill(cellBorder);
             g2d.setPaint(Color.YELLOW);

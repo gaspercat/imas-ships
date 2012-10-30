@@ -29,7 +29,7 @@ public class Cell implements Serializable {
 	
 	private CellType type;
         
-        private String seaFoodType;
+        private SeaFoodType seaFoodType;
 
 	public Cell(CellType Type) {
 		agents = new ArrayList<InfoAgent>();
@@ -132,11 +132,11 @@ public class Cell implements Serializable {
 		return type;
 	}
 	
-        public void setSeaFoodType(String type){
+        public void setSeaFoodType(SeaFoodType type){
             this.seaFoodType = type;
         }
         
-        public String getSeaFoodType(){
+        public SeaFoodType getSeaFoodType(){
             return this.seaFoodType;
         }
 	

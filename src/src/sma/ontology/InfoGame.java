@@ -144,16 +144,22 @@ public class InfoGame implements java.io.Serializable {
             int seaFoodType = new Random().nextInt();
             seaFoodType = Math.abs(seaFoodType%4);
             
+            SeaFood sf;
+            
             this.info.map[rndRow][rndCol].setType(CellType.Seafood);
             
             if (seaFoodType == 0){
-                this.info.map[rndRow][rndCol].setSeaFoodType("Tuna");
+                sf = new SeaFood(SeaFoodType.Tuna, rndRow, rndCol, this.info.map.length, this.info.map[0].length);
+                this.info.map[rndRow][rndCol].setSeaFoodType(SeaFoodType.Tuna);
             }else if (seaFoodType == 1){
-                this.info.map[rndRow][rndCol].setSeaFoodType("Octopus");
+                sf = new SeaFood(SeaFoodType.Octopus, rndRow, rndCol, this.info.map.length, this.info.map[0].length);
+                this.info.map[rndRow][rndCol].setSeaFoodType(SeaFoodType.Octopus);
             }else if (seaFoodType == 2){
-                this.info.map[rndRow][rndCol].setSeaFoodType("Lobster");
+                sf = new SeaFood(SeaFoodType.Lobster, rndRow, rndCol, this.info.map.length, this.info.map[0].length);
+                this.info.map[rndRow][rndCol].setSeaFoodType(SeaFoodType.Lobster);
             }else{
-                this.info.map[rndRow][rndCol].setSeaFoodType("Shrimp");
+                sf = new SeaFood(SeaFoodType.Shrimp, rndRow, rndCol, this.info.map.length, this.info.map[0].length);
+                this.info.map[rndRow][rndCol].setSeaFoodType(SeaFoodType.Shrimp);
             }
         }
   }
