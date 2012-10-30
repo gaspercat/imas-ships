@@ -36,8 +36,6 @@ public class CoordinatorAgent extends Agent {
   private static final int STATE_MOVE_BOATS = 1;
   private static final int STATE_UPDATE_MAP = 2;
 
-  private AuxInfo info;
-
   private AID centralAgent;
   private AID BoatsCoordinator;
   
@@ -211,7 +209,7 @@ public class CoordinatorAgent extends Agent {
     protected void handleInform(ACLMessage msg) {
     	showMessage("INFORM received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
         try {
-          info = (AuxInfo)msg.getContentObject();
+          AuxInfo info = (AuxInfo)msg.getContentObject();
           setGameInfo(info);
           if (info instanceof AuxInfo) {
             for (InfoAgent ia : info.getAgentsInitialPosition().keySet()){  
