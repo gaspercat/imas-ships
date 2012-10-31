@@ -1,26 +1,14 @@
 package sma;
 
-import java.lang.*;
 import java.io.*;
-import java.sql.SQLException;
-import java.sql.ResultSet;
-import jade.util.leap.ArrayList;
-import jade.util.leap.List;
 import jade.core.*;
 import jade.core.behaviours.*;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
-import jade.domain.FIPANames.InteractionProtocol;
 import jade.lang.acl.*;
-import jade.content.*;
-import jade.content.onto.*;
-import jade.proto.AchieveREInitiator;
-import jade.proto.AchieveREResponder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import sma.ontology.*;
-import sma.gui.*;
-import java.util.*;
 /**
  * <p><B>Title:</b> IA2-SMA</p>
  * <p><b>Description:</b> Practical exercise 2011-12. Recycle swarm.</p>
@@ -40,7 +28,7 @@ public class CoordinatorAgent extends Agent {
   private static final int STATE_TURNS_INTERVAL = 3;
 
   private AID centralAgent;
-  private AID BoatsCoordinator;
+  private AID boatsCoordinator;
   
   private AuxInfo gameInfo;
   
@@ -107,155 +95,87 @@ public class CoordinatorAgent extends Agent {
     ServiceDescription searchCriterion = new ServiceDescription();
     searchCriterion.setType(UtilsAgents.CENTRAL_AGENT);
     this.centralAgent = UtilsAgents.searchAgent(this, searchCriterion);
-
-    MessageTemplate mt  = MessageTemplate.MatchContent("UpdateBoatPosition");
-    addBehaviour(new UpdateBoatMapBehaviour(this, mt));
     
-    
-    // Execute the finite state automata
-    this.currentState = STATE_INITIAL_REQUEST;
-    finiteStateAutomata();
-  } //endof setup
-
-  /**************************************************************************/
-  /**************************************************************************/
-
-  public void finiteStateAutomata(){
-      switch(this.currentState){ 
-          
-          case STATE_INITIAL_REQUEST:
-              stateInitialRequest();
-              this.currentState = STATE_MOVE_BOATS;
-              break;
-
-          case STATE_MOVE_BOATS:
-              stateMoveBoats();
-              this.currentState = STATE_UPDATE_MAP;
-              break;
-
-          case STATE_UPDATE_MAP:
-              stateUpdateMap();
-              this.currentState = STATE_TURNS_INTERVAL;
-              break;
-                
-          case STATE_TURNS_INTERVAL:
-              stateTurnsInterval();
-              this.currentState = STATE_MOVE_BOATS;
-              break;
-              
-      }
-  }
-  
-  private void stateInitialRequest(){
-      // Request initial state to the central agent
-      ACLMessage message = buildInitialRequest();
-      this.addBehaviour(new StateRequestBehaviour(this, message));
-
-      // Create boats coordinator
+    // Create boats coordinator
       UtilsAgents.createAgent(this.getContainerController(), "BoatCoordinator", "sma.BoatCoordinator", null);
 
       //Search for the BoatCoordinator
       ServiceDescription searchBoatCoordCriteria = new ServiceDescription();
       searchBoatCoordCriteria.setName("BoatCoordinator");
-      this.BoatsCoordinator = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
-  }
-  
-  private void stateMoveBoats(){
-      // Request boats movement to boats coordinator
-      ACLMessage message = buildMovementRequest();
-      this.addBehaviour(new MovementRequestBehaviour(this, message));
-  }
+      this.boatsCoordinator = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
 
-
-  private void stateUpdateMap(){
-      // Requests central agent from coordinator agent
-      ACLMessage message = buildUpdateRequest();
-      this.addBehaviour(new UpdateRequestBehaviour(this, message));
-  }
-  
-  private void stateTurnsInterval(){
-      try{
-          Thread.sleep(1000); 
-      }catch(Exception e){}
-  }
-  
-  /**************************************************************************/
-  /**************************************************************************/
-  
-  private ACLMessage buildInitialRequest(){
-    ACLMessage requestInicial = new ACLMessage(ACLMessage.REQUEST);
+    MessageTemplate mt  = MessageTemplate.MatchContent("UpdateBoatPosition");
+    addBehaviour(new mainBehaviour(this));
     
-    requestInicial.clearAllReceiver();
-    requestInicial.addReceiver(this.centralAgent);
-    requestInicial.setProtocol(InteractionProtocol.FIPA_REQUEST);
-    showMessage("Message OK");
     
-    try {
-      requestInicial.setContent("Initial request");
-      showMessage("Content OK: " + requestInicial.getContent());
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
     
-    return requestInicial;
-  }
-  
-  private ACLMessage buildMovementRequest(){
-    ACLMessage movementRequest = new ACLMessage(ACLMessage.REQUEST);
-    
-    movementRequest.clearAllReceiver();
-    movementRequest.addReceiver(this.BoatsCoordinator);
-    movementRequest.setProtocol(InteractionProtocol.FIPA_REQUEST);
-    movementRequest.setContent("Movement request");
-    
-    return movementRequest;
-  }
-
-  public ACLMessage buildUpdateRequest(){
-    ACLMessage updateRequest = new ACLMessage(ACLMessage.REQUEST);
-
-    updateRequest.clearAllReceiver();
-    updateRequest.addReceiver(this.centralAgent);
-    updateRequest.setProtocol(InteractionProtocol.FIPA_REQUEST);
-    updateRequest.setContent("Update boats request");
-    
-    try {
-        updateRequest.setContentObject(boatsPosition);
-    } catch (Exception e) {
-        updateRequest.setPerformative(ACLMessage.FAILURE);
-        System.err.println(e.toString());
-        e.printStackTrace();
-    }
-    
-    return updateRequest;
-  }
+    // Execute the finite state automata
+    this.currentState = STATE_INITIAL_REQUEST;
+  } //endof setup
 
   /**************************************************************************/
   /**************************************************************************/
 
-  // ************************************
-  // ** INITIATOR :: STATE REQUEST
-  // **   SENDER   -> THIS
-  // **   RECEIVER -> CENTRAL AGENT
-  // ************************************
   
-  class StateRequestBehaviour extends AchieveREInitiator {
-    private Agent      sender  = null;
-    private ACLMessage msgSent = null;
-    
-    public StateRequestBehaviour(Agent myAgent, ACLMessage requestMsg) {
-      super(myAgent, requestMsg);
-      showMessage("AchieveREInitiator StateRequest starts...");
+  private class mainBehaviour extends Behaviour{
+      Agent myAgent;
       
-      sender = myAgent;
-      msgSent = requestMsg;
-    }
+      public mainBehaviour(Agent myAgent){
+          this.myAgent = myAgent;
+      }
+      
+      public void action(){
+          int state = 0;
+          
+          ACLMessage incomingMessage;
+          ACLMessage outMessage;
+          
+          switch(state){
+              case 0:
+                  outMessage = new ACLMessage(ACLMessage.REQUEST);
+                  outMessage.addReceiver(centralAgent);
+                  outMessage.setSender(myAgent.getAID());
+                  outMessage.setContent("Initial request");
+                  myAgent.send(outMessage);
+                  incomingMessage = myAgent.blockingReceive();
+                  computeInitialMessage(incomingMessage);
+                  state ++;
+              case 1:
+                  outMessage = new ACLMessage(ACLMessage.REQUEST);
+                  outMessage.addReceiver(boatsCoordinator);
+                  outMessage.setSender(myAgent.getAID());
+                  myAgent.send(outMessage);
+                  state++;
+              case 2:
+                  incomingMessage = myAgent.blockingReceive();                  
+                  ACLMessage out2Message = new ACLMessage(ACLMessage.REQUEST);
+                  out2Message.addReceiver(centralAgent);
+                  out2Message.setSender(myAgent.getAID());
+            try {
+                BoatsPosition bp = (BoatsPosition) incomingMessage.getContentObject();
+                out2Message.setContentObject(bp);
+                myAgent.send(out2Message);
+            } catch (UnreadableException ex) {
+                Logger.getLogger(CoordinatorAgent.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException e){
+                
+            }
+                  state = 1;
+                  myAgent.doWait(1000);
 
-    protected void handleAgree(ACLMessage msg) {
-      showMessage("AGREE received from "+ ( (AID)msg.getSender()).getLocalName());
-    }
-
-    protected void handleInform(ACLMessage msg) {
+          }
+      }
+      
+      public boolean done(){
+          return false;
+      }
+  }
+  
+ 
+  /**************************************************************************/
+  /**************************************************************************/
+  
+  private void computeInitialMessage(ACLMessage msg) {
     	showMessage("INFORM COORD AGENT received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
         try {
           AuxInfo info = (AuxInfo)msg.getContentObject();
@@ -270,194 +190,15 @@ public class CoordinatorAgent extends Agent {
                     position[1] = info.getAgentsInitialPosition().get(ia).getColumn();
                     position[2] = info.getMap()[0].length;
                     position[3] = info.getMap().length;
-                    UtilsAgents.createAgent(this.myAgent.getContainerController(),ia.getName(), "sma.BoatAgent", position);
+                    UtilsAgents.createAgent(this.getContainerController(),ia.getName(), "sma.BoatAgent", position);
                 }else showMessage("no agent type");
           	  
                 Cell pos = (Cell)info.getAgentsInitialPosition().get(ia);
                 showMessage("pos: " + pos);
-                
-                // Update state machine
-                ((CoordinatorAgent)sender).finiteStateAutomata();
-            }
+             }
           }
         } catch (Exception e) {
           showMessage("Incorrect content: "+e.toString());
         }
-    }
-
-    protected void handleNotUnderstood(ACLMessage msg) {
-      showMessage("This message NOT UNDERSTOOD. \n");
-    }
-
-    protected void handleFailure(ACLMessage msg) {
-      showMessage("The action has failed.");
-
-    } //End of handleFailure
-
-    protected void handleRefuse(ACLMessage msg) {
-      showMessage("Action refused.");
-    }
-  } //Endof class StateRequestBehaviour
-  
-  // ************************************
-  // ** INITIATOR :: MOVEMENT REQUEST
-  // **   SENDER   -> THIS
-  // **   RECEIVER -> BOATS COORDINATOR
-  // ************************************
-  
-  class MovementRequestBehaviour extends AchieveREInitiator {
-    private Agent      sender = null;
-    private ACLMessage msgSent = null;
-    
-    public MovementRequestBehaviour(Agent myAgent, ACLMessage requestMsg) {
-      super(myAgent, requestMsg);
-      showMessage("AchieveREInitiator movement starts...");
-      
-      sender = myAgent;
-      msgSent = requestMsg;
-    }
-    
-    protected void handleAgree(ACLMessage msg) {
-      showMessage("AGREE received from "+ ( (AID)msg.getSender()).getLocalName());
-    }
-    
-    protected void handleInform(ACLMessage msg) {
-    	showMessage("INFORM received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
-        try {
-            
-          BoatsPosition info = (BoatsPosition)msg.getContentObject();
-          if (info instanceof BoatsPosition) {
-            // Update position of boats
-            ((CoordinatorAgent)sender).setBoatsPosition(info);
-            
-            // Run finite state automata
-            ((CoordinatorAgent)sender).finiteStateAutomata();
-          }
-        } catch (Exception e) {
-          showMessage("Incorrect content: "+e.toString());
-        }
-    }
-    
-    protected void handleNotUnderstood(ACLMessage msg) {
-      showMessage("This message NOT UNDERSTOOD. \n");
-    }
-
-    protected void handleFailure(ACLMessage msg) {
-      showMessage("The action has failed.");
-
-    }
-
-    protected void handleRefuse(ACLMessage msg) {
-      showMessage("Action refused.");
-    }
   }
-
-  // ************************************
-  // ** INITIATOR :: UPDATE MAP REQUEST
-  // **   SENDER   -> THIS
-  // **   RECEIVER -> CENTRAL AGENT
-  // ************************************
-  
-  class UpdateRequestBehaviour extends AchieveREInitiator {
-    private Agent      sender = null;
-    private ACLMessage msgSent = null;
-
-    public UpdateRequestBehaviour(Agent myAgent, ACLMessage requestMsg) {
-      super(myAgent, requestMsg);
-      showMessage("AchieveREInitiator update central starts...");
-
-      sender = myAgent;
-      msgSent = requestMsg;
-    }
-
-    protected void handleAgree(ACLMessage msg) {
-      showMessage("AGREE received from "+ ( (AID)msg.getSender()).getLocalName());
-    }
-
-    protected void handleInform(ACLMessage msg) {
-    	showMessage("INFORM received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
-
-        // Update seafood
-        // TODO : Handle seafood data
-    }
-
-    protected void handleNotUnderstood(ACLMessage msg) {
-      showMessage("This message NOT UNDERSTOOD. \n");
-    }
-
-    protected void handleFailure(ACLMessage msg) {
-      showMessage("The action has failed.");
-
-    }
-
-    protected void handleRefuse(ACLMessage msg) {
-      showMessage("Action refused.");
-    }
-  }
-  
-    class UpdateBoatMapBehaviour extends AchieveREResponder{
-
-    /**
-     * Constructor for the <code>RequestResponseBehaviour</code> class.
-     * @param myAgent The agent owning this behaviour
-     * @param mt Template to receive future responses in this conversation
-     */
-    public UpdateBoatMapBehaviour(CoordinatorAgent myAgent, MessageTemplate mt) {
-      super(myAgent, mt);
-      showMessage("Waiting REQUESTs from authorized agents");
-    }
-
-    protected ACLMessage prepareResponse(ACLMessage msg) {
-      /* method called when the message has been received. If the message to send
-       * is an AGREE the behaviour will continue with the method prepareResultNotification. */
-      ACLMessage reply = msg.createReply();
-      showMessage("Update coord "+msg.getSender().getName());
-      try {
-        Object contentRebut = (Object)msg.getContent();
-        if(contentRebut.equals("UpdateBoatPosition")) {
-          showMessage("Update request received");
-          BoatsPosition bp = (BoatsPosition)msg.getContentObject();
-          setBoatsPosition(bp);
-          reply.setPerformative(ACLMessage.AGREE);
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-      
-      showMessage("Answer sent"); //: \n"+reply.toString());
-      return reply;
-    } //endof prepareResponse   
-
-    /**
-     * This method is called after the response has been sent and only when
-     * one of the following two cases arise: the response was an agree message
-     * OR no response message was sent. This default implementation return null
-     * which has the effect of sending no result notification. Programmers
-     * should override the method in case they need to react to this event.
-     * @param msg ACLMessage the received message
-     * @param response ACLMessage the previously sent response message
-     * @return ACLMessage to be sent as a result notification (i.e. one of
-     * inform, failure).
-     */
-    protected ACLMessage prepareResultNotification(ACLMessage msg, ACLMessage response) {
-
-      // it is important to make the createReply in order to keep the same context of
-      // the conversation
-      ACLMessage reply = msg.createReply();
-      reply.setPerformative(ACLMessage.INFORM);
-      
-      showMessage("Answer update sent"); //+reply.toString());
-      return reply;
-
-    } //endof prepareResultNotification
-
-
-    /**
-     *  No need for any specific action to reset this behaviour
-     */
-    public void reset() {
-    }
-
-  } //end of RequestResponseBehaviour
-
 }

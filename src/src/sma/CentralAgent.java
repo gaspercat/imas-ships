@@ -21,6 +21,8 @@ import sma.ontology.*;
 import sma.gui.*;
 import java.util.*;
 import java.util.ArrayList.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * <p><B>Title:</b> IA2-SMA</p>
@@ -123,7 +125,7 @@ public class CentralAgent extends Agent {
    // we wait for the initialization of the game
     MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchProtocol(InteractionProtocol.FIPA_REQUEST), MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
     
-   this.addBehaviour(new RequestResponseBehaviour(this, null));
+   this.addBehaviour(new mainBehaviour(this));
 
    // Setup finished. When the last inform is received, the agent itself will add
    // a behavious to send/receive actions
@@ -136,9 +138,8 @@ public class CentralAgent extends Agent {
       int cols = map[0].length;
       
       // Overwrite map
-      map = new Cell[rows][cols];
       for(int i=0;i<rows;i++){
-          for(int j=0;j<rows;j++) map[i][j] = new Cell(CellType.Sea);
+          for(int j=0;j<rows;j++) map[j][i].clean();
       }
       
       // Place fishes to map
@@ -149,6 +150,7 @@ public class CentralAgent extends Agent {
       for(int i=0;i<boats.length;i++){
           try{
             BoatPosition boat = boats[i];  
+            showMessage("GUI "+boat.getColumn()+" "+boat.getRow());
             
             InfoAgent agent = new InfoAgent(AgentType.Boat);
           
@@ -174,10 +176,60 @@ public class CentralAgent extends Agent {
           }
       }
       
+      try {
+          gui.showGameMap(map);
+          gui.showPanelInfo(this.game.getInfo());
+      
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+      
       // Refresh map
-      gui.showGameMap(map);
+      
   }
   
+  private class mainBehaviour extends Behaviour{
+      private Agent myAgent;
+      
+      public mainBehaviour(Agent myAgent){
+          this.myAgent = myAgent;
+      }
+      
+      public void action(){
+          int state = 0;
+          
+          ACLMessage inMsg;
+          ACLMessage outMsg;
+          
+          switch(state){
+              case 0:
+                  inMsg = myAgent.blockingReceive();
+                  outMsg = new ACLMessage(ACLMessage.INFORM);
+                  outMsg.addReceiver(coordinatorAgent);
+                  outMsg.setSender(myAgent.getAID());
+                try {
+                    outMsg.setContentObject(game.getInfo());
+                } catch (IOException ex) {
+                    Logger.getLogger(CentralAgent.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                state++;
+                  myAgent.send(outMsg);
+                  case 1:
+                  inMsg = myAgent.blockingReceive();
+                try {
+                    boats = (BoatsPosition) inMsg.getContentObject();
+                    showMessage("Arrived");
+                    refreshMap();
+                } catch (UnreadableException ex) {
+                    Logger.getLogger(CentralAgent.class.getName()).log(Level.SEVERE, null, ex);
+                }
+          }
+      }
+      
+      public boolean done(){
+          return false;
+      }
+  }
   
   /*************************************************************************/
 

@@ -140,6 +140,11 @@ public class Cell implements Serializable {
             return this.seaFoodType;
         }
 	
+        public void clean(){
+            this.setType(CellType.Sea);
+            this.agents.clear();
+        }
+        
 
 } // endof class Cell
 

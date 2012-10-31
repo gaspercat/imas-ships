@@ -46,6 +46,10 @@ public class BoatsPosition implements java.io.Serializable{
         this.positions.add(position);
     }
     
+    public void addPosition(BoatPosition bp){
+        this.positions.add(bp);
+    }
+    
     public String toString(){
         String ret = "";
         

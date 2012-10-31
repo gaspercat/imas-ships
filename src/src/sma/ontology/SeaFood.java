@@ -21,6 +21,7 @@ public class SeaFood implements java.io.Serializable{
         this.posY = posY;
         this.mapX = mapX-1;
         this.mapY = mapY-1;
+        this.movementDirection = this.setMovementDirection();
     }
     
     public void setPosX(int posX){
