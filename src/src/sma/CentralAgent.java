@@ -1,28 +1,14 @@
 package sma;
 
-import java.lang.*;
 import java.io.*;
-import java.sql.SQLException;
-import java.sql.ResultSet;
-import jade.util.leap.ArrayList;
-import jade.util.leap.List;
 import jade.core.*;
-import jade.core.behaviours.*;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
-import jade.domain.FIPANames.InteractionProtocol;
 import jade.lang.acl.*;
-import jade.content.*;
-import jade.content.onto.*;
-import jade.proto.AchieveREInitiator;
-import jade.proto.AchieveREResponder;
+import jade.proto.SimpleAchieveREResponder;
 
 import sma.ontology.*;
 import sma.gui.*;
-import java.util.*;
-import java.util.ArrayList.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * <p><B>Title:</b> IA2-SMA</p>
@@ -123,15 +109,69 @@ public class CentralAgent extends Agent {
    // add behaviours
 
    // we wait for the initialization of the game
-    MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchProtocol(InteractionProtocol.FIPA_REQUEST), MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
-    
-   this.addBehaviour(new mainBehaviour(this));
+   MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
+   
+   this.addBehaviour(new ResponderBehaviour(this,mt));
 
    // Setup finished. When the last inform is received, the agent itself will add
    // a behavious to send/receive actions
 
   } //endof setup
-
+  
+  private class ResponderBehaviour extends SimpleAchieveREResponder{
+      Agent myAgent;
+      MessageTemplate mt;
+      
+      public ResponderBehaviour(Agent myAgent, MessageTemplate mt){
+          super(myAgent, mt);
+          this.myAgent = myAgent;
+      }
+      
+      //Return an agree message to the boats coordinator informing that the message has been recived
+      protected ACLMessage prepareResponse(ACLMessage request){
+          ACLMessage reply = request.createReply();
+          reply.setPerformative(ACLMessage.AGREE);
+          showMessage("Message Recived from coordinator coordinator, processing...");
+          return reply;
+      }
+      
+      //Return an inform message with the info of the actions requested by the coordinator agent
+      protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException{
+            ACLMessage reply = request.createReply();
+            reply.setPerformative(ACLMessage.INFORM);
+            try{
+                if(request.getContent().equalsIgnoreCase("Initial request")){
+                    showMessage("Initial Request recived");
+                    reply.setOntology("AuxInfo");
+                    reply.setContentObject(game.getInfo());
+                }else if(request.getOntology().equalsIgnoreCase("BoatsPosition")){
+                    showMessage("New positions recived");
+                    boats = (BoatsPosition)request.getContentObject();
+                    refreshMap();
+                    myAgent.doWait(1000);
+                    reply.setContent("Map reloaded");
+                }else{
+                    reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
+                }
+            }catch(IOException e){
+                showMessage(e.toString());
+            }catch(UnreadableException e){
+                showMessage(e.toString());
+            }
+            return reply;
+      }
+  }
+  
+  
+  //Move the fishes to a determined direction
+  protected void moveFishes(){
+      for(int i = 0; i < this.sfList.length; i++){
+          sfList[i].move();
+      }
+  }
+  
+  
+  //Refresh the map with the new info
   public void refreshMap(){
       Cell[][] map = game.getInfo().getMap();
       int rows = map.length;
@@ -182,152 +222,7 @@ public class CentralAgent extends Agent {
       
     } catch (Exception e) {
       e.printStackTrace();
-    }
-      
-      // Refresh map
-      
+    }      
   }
-  
-  private class mainBehaviour extends Behaviour{
-      private Agent myAgent;
-      
-      public mainBehaviour(Agent myAgent){
-          this.myAgent = myAgent;
-      }
-      
-      public void action(){
-          int state = 0;
-          
-          ACLMessage inMsg;
-          ACLMessage outMsg;
-          
-          switch(state){
-              case 0:
-                  inMsg = myAgent.blockingReceive();
-                  outMsg = new ACLMessage(ACLMessage.INFORM);
-                  outMsg.addReceiver(coordinatorAgent);
-                  outMsg.setSender(myAgent.getAID());
-                try {
-                    outMsg.setContentObject(game.getInfo());
-                } catch (IOException ex) {
-                    Logger.getLogger(CentralAgent.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                state++;
-                  myAgent.send(outMsg);
-                  case 1:
-                  inMsg = myAgent.blockingReceive();
-                try {
-                    boats = (BoatsPosition) inMsg.getContentObject();
-                    showMessage("Arrived");
-                    refreshMap();
-                } catch (UnreadableException ex) {
-                    Logger.getLogger(CentralAgent.class.getName()).log(Level.SEVERE, null, ex);
-                }
-          }
-      }
-      
-      public boolean done(){
-          return false;
-      }
-  }
-  
-  /*************************************************************************/
-
-  /**
-   * <p><B>Title:</b> IA2-SMA</p>
-   * <p><b>Description:</b> Practical exercise 2011-12. Recycle swarm.</p>
-   * Class that receives the REQUESTs from any agent. Concretely it is used 
-   * at the beginning of the game. The Coordinator Agent sends a REQUEST for all
-   * the information of the game and the CentralAgent sends an AGREE and then
-   * it sends all the required information.
-   * <p><b>Copyright:</b> Copyright (c) 2009</p>
-   * <p><b>Company:</b> Universitat Rovira i Virgili (<a
-   * href="http://www.urv.cat">URV</a>)</p>
-   * @author David Isern and Joan Albert L�pez
-   * @see sma.ontology.Cell
-   * @see sma.ontology.InfoGame
-   */
-  private class RequestResponseBehaviour extends AchieveREResponder {
-    CentralAgent receiver;
-      
-    /**
-     * Constructor for the <code>RequestResponseBehaviour</code> class.
-     * @param myAgent The agent owning this behaviour
-     * @param mt Template to receive future responses in this conversation
-     */
-    public RequestResponseBehaviour(CentralAgent myAgent, MessageTemplate mt) {
-      super(myAgent, mt);
-      showMessage("Waiting REQUESTs from authorized agents");
-      
-      this.receiver = myAgent;
-    }
-    
-    protected ACLMessage prepareResponse(ACLMessage msg) {
-      /* method called when the message has been received. If the message to send
-       * is an AGREE the behaviour will continue with the method prepareResultNotification. */
-      ACLMessage reply = msg.createReply();
-      showMessage("MSG from "+ msg.getSender());
-      try {
-        Object contentRebut = (Object)msg.getContent();
-        if(contentRebut.equals("Initial request")) {
-            showMessage("Initial request received");
-            reply.setPerformative(ACLMessage.AGREE);
-        }else if(contentRebut.equals("Update boats request")){
-            showMessage("Update boats request received");
-            receiver.setBoatsPosition((BoatsPosition)msg.getContentObject());
-            receiver.refreshMap();
-            // TODO: Send fishes position
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-      showMessage("Answer sent"); //: \n"+reply.toString());
-      return reply;
-    } //endof prepareResponse   
-
-    /**
-     * This method is called after the response has been sent and only when
-     * one of the following two cases arise: the response was an agree message
-     * OR no response message was sent.
-     * @param msg ACLMessage the received message
-     * @param response ACLMessage the previously sent response message
-     * @return ACLMessage to be sent as a result notification (i.e. one of
-     * inform, failure).
-     */
-    protected ACLMessage prepareResultNotification(ACLMessage msg, ACLMessage response) {
-
-      // it is important to make the createReply in order to keep the same context of
-      // the conversation
-      ACLMessage reply = msg.createReply();
-      reply.setPerformative(ACLMessage.INFORM);
-
-      try {
-        reply.setContentObject(game.getInfo());
-      } catch (Exception e) {
-        reply.setPerformative(ACLMessage.FAILURE);
-        System.err.println(e.toString());
-        e.printStackTrace();
-      }
-      showMessage("Answer sent"); //+reply.toString());
-      return reply;
-
-    } //endof prepareResultNotification
-
-
-    /**
-     *  No need for any specific action to reset this behaviour
-     */
-    public void reset() {
-    }
-
-  } //end of RequestResponseBehaviour
-
-  
-  protected void moveFishes(){
-      for(int i = 0; i < this.sfList.length; i++){
-          sfList[i].move();
-      }
-  }
-  /*************************************************************************/
   
 } //endof class AgentCentral

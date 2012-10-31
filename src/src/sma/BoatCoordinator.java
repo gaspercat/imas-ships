@@ -6,14 +6,14 @@ package sma;
 
 import java.io.*;
 import jade.core.*;
-import jade.core.behaviours.*;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
 import jade.lang.acl.*;
 import sma.ontology.*;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import jade.proto.AchieveREInitiator;
+import jade.proto.SimpleAchieveREInitiator;
+import jade.proto.SimpleAchieveREResponder;
 
 /**
  *
@@ -74,10 +74,133 @@ public class BoatCoordinator extends Agent {
         this.coordinatorAgent = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
 
         // Register response behaviours
-        //TODO canviar i posar l'altra content
-        this.addBehaviour(new seqBehaviour(this));        
+        //Template form REQUEST Messages from the coordinatorAgent
+        MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.REQUEST), MessageTemplate.MatchSender(coordinatorAgent));
+        
+        //Register a responder behavior to deal with the messages from the coordinatorAgent
+        this.addBehaviour(new ResponderBehaviour(this,mt));        
     }
+    
+    //Behaviour to deal with the requestes from the coordinator agent
+    class ResponderBehaviour extends SimpleAchieveREResponder{
+        Agent myAgent;
+        MessageTemplate mt;
+        
+        public ResponderBehaviour(Agent myAgent, MessageTemplate mt){
+            super(myAgent,mt);
+            this.myAgent = myAgent;
+            this.mt = mt;
+        }
+        
+        //Return an AGREE message confirming the reception of the message.
+        protected ACLMessage prepareResponse(ACLMessage request){
+            ACLMessage reply = request.createReply();
+            reply.setPerformative(ACLMessage.AGREE);
+            showMessage("Message Recived from coordinator agent, processing...");
+            return reply;
+        }
+        
+        //Return a message INFORM with the information about the actions taken.
+        protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException{
+            ACLMessage reply = request.createReply();
+            reply.setPerformative(ACLMessage.INFORM);
+            reply.setContent("Movement Message recieved");
+            
+            //Add a initiator behaviour that sends a request to boats asking them to move
+            myAgent.addBehaviour(new boatsInitiatorBehaviour(myAgent,prepareMessageToBoats()));
+            return reply;
+        }
+        
+        //Return a message to send to the boats
+        private ACLMessage prepareMessageToBoats(){
+            jade.util.leap.List boats = buscarAgents("boat",null);
+            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+            Iterator itr = boats.iterator();
+            while(itr.hasNext()){
+                AID boat = (AID)itr.next();
+                msg.addReceiver(boat);
+            }
+            msg.setContent("Move");
+            return msg;
+        }
 
+    }
+    
+    
+    //Implements a SimpleInitiator that deals with the cominication with the CoordinatorAgent
+    class SInitiatorBehaviour extends SimpleAchieveREInitiator{
+        Agent myAgent;
+        ACLMessage msg;
+        
+        public SInitiatorBehaviour(Agent myAgent, ACLMessage msg){
+            super(myAgent,msg);
+            this.myAgent = myAgent;
+            this.msg = msg;
+        }
+        
+        //Handle agree messages
+        public void handleAgree(ACLMessage msg){
+            showMessage("AGREE message recived from "+msg.getSender().getLocalName());
+        }
+        
+        //handle Inform Messages
+        public void handleInform(ACLMessage msg){
+            showMessage("Informative message from CoordAgent: "+msg.getContent());
+        }
+    }
+    
+    //Initiates the petiotion to move all boats
+    class boatsInitiatorBehaviour extends AchieveREInitiator{
+        Agent myAgent;
+        ACLMessage msg;
+        
+        public boatsInitiatorBehaviour(Agent myAgent, ACLMessage msg){
+            super(myAgent, msg);
+            this.myAgent = myAgent;
+            this.msg = msg;
+        }
+        
+        //Handle agree messages
+        public void handleAgree(ACLMessage msg){
+            showMessage("AGREE message recived from "+msg.getSender().getLocalName());
+        }
+        
+        //Handle all the messages from boats in order to send that result to the CoordinatorAgent
+        protected void handleAllResultNotifications(java.util.Vector resultNotifications){
+            Iterator itr = resultNotifications.iterator();
+            
+            //Boats positions that we have to send to the Coordinator agent
+            BoatsPosition boatsPos = new BoatsPosition();
+            
+            //iterate over all the responses
+            while(itr.hasNext()){
+               ACLMessage msg = (ACLMessage)itr.next(); 
+               if(msg.getPerformative() == ACLMessage.INFORM){
+                   try{
+                       BoatPosition bp = (BoatPosition) msg.getContentObject();
+                       boatsPos.addPosition(bp);
+                   }catch(UnreadableException e){
+                       showMessage(e.toString());
+                   }
+               }
+            }
+            try{
+                //Prepare the message to the Coordinator agents
+                ACLMessage outMessage = new ACLMessage(ACLMessage.REQUEST);
+                outMessage.addReceiver(coordinatorAgent);
+                outMessage.setSender(myAgent.getAID());
+                outMessage.setContentObject(boatsPos);
+                
+                //Add a behaviour that initiate a conversation with the coordinator agents
+                myAgent.addBehaviour(new SInitiatorBehaviour(myAgent,outMessage));
+            }catch(IOException e){
+                showMessage(e.toString());
+            }
+        }
+
+    }
+    
+    //Find all the agents with by name or/and type
     private jade.util.leap.List buscarAgents(String type, String name) {
         jade.util.leap.List results = new jade.util.leap.ArrayList();
         DFAgentDescription dfd = new DFAgentDescription();
@@ -116,76 +239,4 @@ public class BoatCoordinator extends Agent {
         return results;
     }
 
-    
-    class seqBehaviour extends Behaviour {
-
-        private Agent myAgent;
-        int step = 1;
-        
-        public seqBehaviour(Agent myAgent) {
-            super(myAgent);
-            this.myAgent = myAgent;
-        }
-
-        public void action(){
-            
-            BoatsPosition boatsPos = new BoatsPosition();
-            jade.util.leap.List recievers = buscarAgents("boat", null);
-
-            switch(step){
-                case 1:
-                    MessageTemplate mt = MessageTemplate.MatchContent("Movement request");
-                    ACLMessage reqMsg = myAgent.blockingReceive();
-                    step += 1;
-                case 2:
-                    showMessage("Prepare movement result");
-                    ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-                    msg.setContent("Move");
-                    showMessage("SIZE " + recievers.size());
-                    for (int i = 0; i < recievers.size(); i++) {
-                        AID rec = (AID) recievers.get(i);
-                        msg.addReceiver(rec);
-                        showMessage("ADDING RECIVER " + rec.getName());
-                    }
-                    myAgent.send(msg);
-                    step += 1;
-                case 3:
-                    int receivedMsg = 0;
-                    boatsPos = new BoatsPosition();
-                    while(receivedMsg < recievers.size()){
-                        ACLMessage incomingMsg = myAgent.blockingReceive();
-                        try {
-                            BoatPosition bp = (BoatPosition) incomingMsg.getContentObject();
-                            boatsPos.addPosition(bp);
-                        } catch (UnreadableException ex) {
-                            Logger.getLogger(BoatCoordinator.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                        
-                        receivedMsg ++;                        
-                    }
-                    step++;
-                case 4:
-                    ACLMessage outMsg = new ACLMessage(ACLMessage.INFORM);
-                    outMsg.addReceiver(coordinatorAgent);
-                    try {
-                        outMsg.setContentObject(boatsPos);
-                    } catch (IOException ex) {
-                        Logger.getLogger(BoatCoordinator.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    myAgent.send(outMsg);
-                    step = 1;
-            }
-        }
-        
-        public boolean done(){
-            return step == 5;
-        }
-        
-        public int onEnd() {
-            reset();
-            myAgent.addBehaviour(this);
-            return super.onEnd();
-        }
-    }
-    
 }

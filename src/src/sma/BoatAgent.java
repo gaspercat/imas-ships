@@ -4,27 +4,14 @@
  */
 package sma;
 
-import java.lang.*;
-import java.io.*;
-import java.sql.SQLException;
-import java.sql.ResultSet;
-import jade.util.leap.ArrayList;
-import jade.util.leap.List;
 import jade.core.*;
-import jade.core.behaviours.*;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
-import jade.domain.FIPANames.InteractionProtocol;
 import jade.lang.acl.*;
-import jade.content.*;
-import jade.content.onto.*;
-import jade.proto.AchieveREInitiator;
-import jade.proto.AchieveREResponder;
+import jade.proto.SimpleAchieveREResponder;
 import sma.ontology.*;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import java.io.*;
 /**
  *
  * @author joan
@@ -82,34 +69,49 @@ public class BoatAgent extends Agent{
         ServiceDescription searchBoatCoordCriteria = new ServiceDescription();
         searchBoatCoordCriteria.setType(UtilsAgents.BOAT_COORDINATOR);
         this.boatCoordinator = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
-        MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchProtocol(InteractionProtocol.FIPA_REQUEST), MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
-    
-        this.addBehaviour(new Move2Behaviour(this));
+        
+        
+        //Message Template Preformative filter
+        MessageTemplate preformativeMT = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
+        
+        //Message Template of Content
+        MessageTemplate contentMT = MessageTemplate.MatchContent("Move");
+        
+        //Adding both message templates as a conditions
+        MessageTemplate mt = MessageTemplate.and(preformativeMT, contentMT);
+        
+        //Add a new behaviour to respond this particular message
+        this.addBehaviour(new ResponderBehaviour(this,mt));
 
     }
     
-    
+    //PosX setter
     public void setPosX(int posX){
         this.posX = posX;
     }
     
+    //PosY setter
     public void setPosY(int posY){
         this.posY = posY;
     }
     
+    //Position setter
     public void setPosition(int posX, int posY){
         this.posX = posX;
         this.posY = posY;
     }
     
+    //PosX getter
     public int getPosX(){
         return this.posX;
     }
     
+    //PosY getter
     public int getPosY(){
         return this.posY;
     }
     
+    //Position getter
     public int[] getPosition(){
         int[] position = new int[2];
         position[0] = this.posX;
@@ -117,6 +119,7 @@ public class BoatAgent extends Agent{
         return position;
     }
     
+    //Move the boat one position randomly()
     public int[] move(){
         
         Boolean moved = false;
@@ -127,10 +130,10 @@ public class BoatAgent extends Agent{
             if (movementDirection == 0 & this.posY > 0){
                 this.posY -= 1;
                 moved = true;
-            }else if(movementDirection == 1 & this.posX < this.mapDimX){
+            }else if(movementDirection == 1 & this.posX < this.mapDimX-1){
                 this.posX += 1;
                 moved = true;
-            }else if (movementDirection == 2 & this.posY < this.mapDimY){
+            }else if (movementDirection == 2 & this.posY < this.mapDimY-1){
                 this.posY += 1;
                 moved = true;
             }else if(movementDirection == 3 & this.posX > 0){
@@ -142,39 +145,44 @@ public class BoatAgent extends Agent{
         return this.getPosition();
     }
     
-  private class Move2Behaviour extends Behaviour{
-      Agent myAgent;
-      
-      public Move2Behaviour(Agent myAgent){
-          this.myAgent = myAgent;
-      }
-      
-      public void action(){
-          int step = 0;
-          ACLMessage incMessage = new ACLMessage();
-          
-          switch(step){
-              case 0:
-                  incMessage = myAgent.blockingReceive();
-                  move();
-                  step++;
-              case 1:
-                  ACLMessage outMessage = new ACLMessage(ACLMessage.INFORM);
-                  outMessage.addReceiver(incMessage.getSender());
-                  try {
-                      outMessage.setContentObject(new BoatPosition(myAgent.getAID(),getPosX(), getPosY()));
-                  } catch (IOException ex) {
-                      Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
-                  }
-                  myAgent.send(outMessage);
-                  step = 0;
-                  
-              
-          }
-      }
-      
-      public boolean done(){
-          return false;
-      }
-  }
+    
+    //Given a particular request, handles it;
+    private class ResponderBehaviour extends SimpleAchieveREResponder{
+        
+        Agent myAgent;
+        MessageTemplate mt;
+        
+        //Consturctor of the Behaviour
+        public ResponderBehaviour(Agent myAgent, MessageTemplate mt){
+            super(myAgent, mt);
+            this.myAgent = myAgent;
+            this.mt = mt;
+        }
+        
+        //Send an AGREE message to the sender
+        protected ACLMessage prepareResponse(ACLMessage request){
+            ACLMessage reply = request.createReply();
+            reply.setPerformative(ACLMessage.AGREE);
+            
+            showMessage("Petition to move recived from "+request.getSender().getLocalName());
+            
+            return reply;
+        }
+        
+        //Return the result of the movement in a INFORM Message
+        protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException{
+            ACLMessage reply = request.createReply();
+            reply.setPerformative(ACLMessage.INFORM);
+            move();
+            try{
+                BoatPosition pb = new BoatPosition(myAgent.getAID(),getPosX(),getPosY());
+                showMessage("New position send to BoatCoordinator");
+                reply.setContentObject(pb);
+            }catch (IOException e){
+                showMessage(e.toString());
+            }
+
+            return reply;
+        }
+    }      
 }

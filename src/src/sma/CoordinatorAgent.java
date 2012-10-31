@@ -9,6 +9,10 @@ import jade.lang.acl.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import sma.ontology.*;
+
+import jade.proto.SimpleAchieveREInitiator;
+import jade.proto.SimpleAchieveREResponder;
+
 /**
  * <p><B>Title:</b> IA2-SMA</p>
  * <p><b>Description:</b> Practical exercise 2011-12. Recycle swarm.</p>
@@ -103,9 +107,21 @@ public class CoordinatorAgent extends Agent {
       ServiceDescription searchBoatCoordCriteria = new ServiceDescription();
       searchBoatCoordCriteria.setName("BoatCoordinator");
       this.boatsCoordinator = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
-
-    MessageTemplate mt  = MessageTemplate.MatchContent("UpdateBoatPosition");
-    addBehaviour(new mainBehaviour(this));
+    
+    //Set the message template to deal with all the messages from boats coordinator
+    MessageTemplate mt  = MessageTemplate.and(MessageTemplate.MatchSender(boatsCoordinator),MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
+    
+    //add a behaviour to deal with the messages
+    addBehaviour(new ResponderBehaviour(this,mt));
+    
+    //Set up a new message to central agent asking for the initial information
+    ACLMessage initiatorMsg = new ACLMessage(ACLMessage.REQUEST);
+    initiatorMsg.addReceiver(centralAgent);
+    initiatorMsg.setSender(this.getAID());
+    initiatorMsg.setContent("Initial request");
+    
+    //Add a behaviour that ask the initial information to the Central agent
+    addBehaviour(new InitiatorBehaviour(this,initiatorMsg));
     
     
     
@@ -113,74 +129,103 @@ public class CoordinatorAgent extends Agent {
     this.currentState = STATE_INITIAL_REQUEST;
   } //endof setup
 
-  /**************************************************************************/
-  /**************************************************************************/
-
-  
-  private class mainBehaviour extends Behaviour{
+  //Implements a responder to deal with the messages from boatsCoordinator
+  private class ResponderBehaviour extends SimpleAchieveREResponder{
       Agent myAgent;
+      MessageTemplate mt;
       
-      public mainBehaviour(Agent myAgent){
+      public ResponderBehaviour(Agent myAgent, MessageTemplate mt){
+          super(myAgent, mt);
           this.myAgent = myAgent;
+          this.mt = mt;
       }
       
-      public void action(){
-          int state = 0;
-          
-          ACLMessage incomingMessage;
-          ACLMessage outMessage;
-          
-          switch(state){
-              case 0:
-                  outMessage = new ACLMessage(ACLMessage.REQUEST);
-                  outMessage.addReceiver(centralAgent);
-                  outMessage.setSender(myAgent.getAID());
-                  outMessage.setContent("Initial request");
-                  myAgent.send(outMessage);
-                  incomingMessage = myAgent.blockingReceive();
-                  computeInitialMessage(incomingMessage);
-                  state ++;
-              case 1:
-                  outMessage = new ACLMessage(ACLMessage.REQUEST);
-                  outMessage.addReceiver(boatsCoordinator);
-                  outMessage.setSender(myAgent.getAID());
-                  myAgent.send(outMessage);
-                  state++;
-              case 2:
-                  incomingMessage = myAgent.blockingReceive();                  
-                  ACLMessage out2Message = new ACLMessage(ACLMessage.REQUEST);
-                  out2Message.addReceiver(centralAgent);
-                  out2Message.setSender(myAgent.getAID());
-            try {
-                BoatsPosition bp = (BoatsPosition) incomingMessage.getContentObject();
-                out2Message.setContentObject(bp);
-                myAgent.send(out2Message);
-            } catch (UnreadableException ex) {
-                Logger.getLogger(CoordinatorAgent.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (IOException e){
-                
-            }
-                  state = 1;
-                  myAgent.doWait(1000);
+      //Return an agree message to the boats coordinator informing that the message has been recived
+      protected ACLMessage prepareResponse(ACLMessage request){
+          ACLMessage reply = request.createReply();
+          reply.setPerformative(ACLMessage.AGREE);
+          showMessage("Message Recived from boats coordinator, processing...");
+          return reply;
+      }
+      
+      //Return an inform message to boats coordintor informing them that the message has been sended to the central agent
+      protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException{
+          ACLMessage reply = request.createReply();
+          reply.setPerformative(ACLMessage.INFORM);
+            try{
+                //prepare the message to send to centralagent
+                ACLMessage outMsg = new ACLMessage(ACLMessage.REQUEST);
+                outMsg.addReceiver(centralAgent);
+                outMsg.setSender(myAgent.getAID());
+                outMsg.setOntology("BoatsPosition");
+                BoatsPosition bp = (BoatsPosition)request.getContentObject();
 
+                outMsg.setContentObject(bp);
+                
+                //Add a behaviour to initiate a comunication with the centralagent
+                myAgent.addBehaviour(new InitiatorBehaviour(myAgent,outMsg));
+            }catch(IOException e){
+                showMessage(e.toString());
+            }catch(UnreadableException e){
+                showMessage("HERE "+e.toString());
+            }
+            reply.setContent("Boats Positions Recieved and sended to the central agent");
+
+          return reply;
+      }
+      
+  }
+  
+  //Behaviour that iniciate a comunication with a given agent
+  private class InitiatorBehaviour extends SimpleAchieveREInitiator{
+      Agent myAgent;
+      ACLMessage msg;
+      
+      public InitiatorBehaviour(Agent myAgent, ACLMessage msg){
+          super(myAgent, msg);
+          this.myAgent = myAgent;
+          this.msg = msg;
+      }
+      
+      //Handle agree messages
+      public void handleAgree(ACLMessage msg){
+          showMessage("AGREE message recived from "+msg.getSender().getLocalName());
+      }
+      
+      //Handle an information message
+      public void handleInform(ACLMessage msg){
+          //If message comes from centralAgent
+          if(msg.getSender().equals(centralAgent)){
+              if(msg.getOntology().equalsIgnoreCase("AuxInfo")){
+                  computeInitialMessage(msg);
+                  showMessage("AuxInfo recived from central Agent");
+              }else{
+                  showMessage("Message From Central Agent: "+msg.getContent());
+              }
+              //prepare a message to sent to the boats coordinator
+              ACLMessage boatMove = new ACLMessage(ACLMessage.REQUEST);
+              boatMove.setSender(myAgent.getAID());
+              boatMove.addReceiver(boatsCoordinator);
+              boatMove.setContent("Movement request");
+              
+              //Add a behaviour to initiate a comunication with the boats coordinator
+              myAgent.addBehaviour(new InitiatorBehaviour(myAgent,boatMove));
+          }else if(msg.getSender().equals(boatsCoordinator)){  
+                  showMessage("Message from Boats Coordinator: "+msg.getContent());
           }
       }
       
-      public boolean done(){
-          return false;
-      }
   }
   
- 
-  /**************************************************************************/
-  /**************************************************************************/
   
+  //Computes the initial message with the info of the game sended by the central agent
   private void computeInitialMessage(ACLMessage msg) {
     	showMessage("INFORM COORD AGENT received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
         try {
           AuxInfo info = (AuxInfo)msg.getContentObject();
           setGameInfo(info);
           if (info instanceof AuxInfo) {
+            //Creates as many boats as auxInfo contain
             for (InfoAgent ia : info.getAgentsInitialPosition().keySet()){  
           	showMessage("Agent ID: " + ia.getName());          	  
                 if (ia.getAgentType() == AgentType.Boat){
