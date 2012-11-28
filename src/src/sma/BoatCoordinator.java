@@ -26,6 +26,7 @@ public class BoatCoordinator extends Agent {
 
     private AID coordinatorAgent;
     private BoatsPosition boatsPosition;
+    private ArrayList<AID> leaders;
     
     private int actualGroups, numGroups;
 
@@ -80,7 +81,8 @@ public class BoatCoordinator extends Agent {
 
         // Register response behaviours
         //Template form REQUEST Messages from the coordinatorAgent
-        MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.REQUEST), MessageTemplate.MatchSender(coordinatorAgent));
+        MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
+
         
         //Register a responder behavior to deal with the messages from the coordinatorAgent
         this.addBehaviour(new ResponderBehaviour(this,mt));        
@@ -101,7 +103,7 @@ public class BoatCoordinator extends Agent {
         protected ACLMessage prepareResponse(ACLMessage request){
             ACLMessage reply = request.createReply();
             reply.setPerformative(ACLMessage.AGREE);
-            showMessage("Message Recived from coordinator agent, processing...");
+            showMessage("Message Recived from "+request.getSender().getName()+", processing...");
             return reply;
         }
         
@@ -118,14 +120,16 @@ public class BoatCoordinator extends Agent {
                 reply.setContent("New fishing turn message recived");
                 //Add a initiator behaviour that sends a request to boats asking them to move
                 myAgent.addBehaviour(new boatsInitiatorBehaviour(myAgent,prepareRankFishMessageToBoats()));
+                leaders = new ArrayList<AID>();
             }else if(mt2.match(request)){
                 actualGroups++;
                 if(actualGroups == numGroups){
-                    addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareMoveMessageToBoats()));
+                    //addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareMoveMessageToBoats()));
                 }
             }else if(mt3.match(request)){
                 actualGroups--;
             }
+            System.out.println("Number of groups Formed: "+actualGroups);
             return reply;
         }
         
@@ -174,10 +178,19 @@ public class BoatCoordinator extends Agent {
         
         //handle Inform Messages
         public void handleInform(ACLMessage msg){
-            showMessage("Informative message from CoordAgent: "+msg.getContent());
+            showMessage("Informative message from "+msg.getSender().getLocalName()+": "+msg.getContent());
+            
+            MessageTemplate mt1 = MessageTemplate.MatchContent("Prepared to form groups");
+            
+            if(mt1.match(msg)){
+                ACLMessage iniGMsg = new ACLMessage(ACLMessage.REQUEST);
+                iniGMsg.addReceiver(msg.getSender());
+                iniGMsg.setContent("Initiate grouping");
+                myAgent.addBehaviour(new SInitiatorBehaviour(myAgent, iniGMsg));
+            }
         }
     }
-    
+
     //Initiates the petiotion to move all boats
     class boatsInitiatorBehaviour extends AchieveREInitiator{
         Agent myAgent;
@@ -329,18 +342,22 @@ public class BoatCoordinator extends Agent {
                 l++;
                 rankings.get(bestRankIndex).setLeader(bestRank);
                 for(int i = 0; i < rankings.size();i++){
-                    rankings.get(i).removeBoat(bestRank.getBoat());
+                    rankings.get(i).removeBoat(bestRank.getBoat(), rankings.get(i).seaFoodsBoatsBlockersRanking);
                 }
             }
+            System.out.println(l);
         }
         
-        ACLMessage initiateGrouping = new ACLMessage(ACLMessage.REQUEST);
-        initiateGrouping.setContent("Initiate grouping");
+        this.numGroups = rankings.size();
+        this.actualGroups = 0;
         
         for (int i = 0; i < rankings.size();i++){
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
             msg.addReceiver(rankings.get(i).leader.getBoat().getAID());
-            initiateGrouping.addReceiver(rankings.get(i).leader.getBoat().getAID());
+            leaders.add(rankings.get(i).leader.getBoat().getAID());
+            for (int j = 0; j < rankings.size();j++){
+                rankings.get(j).removeBoat(rankings.get(i).leader.getBoat(), rankings.get(j).seaFoodsBoatsRanking);
+            }
             msg.setOntology("Ranking");
             try {
                 msg.setContentObject(rankings.get(i).seaFoodsBoatsRanking);
@@ -350,9 +367,7 @@ public class BoatCoordinator extends Agent {
 
             this.addBehaviour(new SInitiatorBehaviour(this,msg));
         }
-        this.numGroups = rankings.size();
-        this.actualGroups = 0;
-        this.addBehaviour(new boatsInitiatorBehaviour(this, initiateGrouping));
+        
     }
     
     /**
@@ -431,10 +446,10 @@ public class BoatCoordinator extends Agent {
          * Remove a boat from the blockers ranking.
          * @param boat The boat to be deleted.
          */
-        public void removeBoat(BoatAgent boat){
-            int indxBoat = this.indexBoatInRanking(boat);
+        public void removeBoat(BoatAgent boat, ArrayList<FishRank> ranking){
+            int indxBoat = this.indexBoatInRanking(boat, ranking);
             if (indxBoat >= 0){
-                this.seaFoodsBoatsBlockersRanking.remove(indxBoat);
+                ranking.remove(indxBoat);
             }
         }
         
@@ -443,9 +458,9 @@ public class BoatCoordinator extends Agent {
          * @param boatToFind The boat to find
          * @return The index of the boat in the blockersRanking. If no exist returns -1.
          */
-        private int indexBoatInRanking(BoatAgent boatToFind){
-            for(int i = 0; i < this.seaFoodsBoatsBlockersRanking.size();i++){
-                FishRank fr= this.seaFoodsBoatsBlockersRanking.get(i);
+        private int indexBoatInRanking(BoatAgent boatToFind, ArrayList<FishRank> ranking){
+            for(int i = 0; i < ranking.size();i++){
+                FishRank fr= ranking.get(i);
                 String boat = fr.getBoat().getLocalName();
                 if(boat.equalsIgnoreCase(boatToFind.getLocalName())){
                     return i;
