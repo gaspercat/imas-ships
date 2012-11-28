@@ -12,13 +12,22 @@ import jade.proto.SimpleAchieveREResponder;
 import sma.ontology.*;
 import java.util.*;
 import java.io.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 /**
  *
  * @author joan
  */
 public class BoatAgent extends Agent{
     private int posX, posY,mapDimX, mapDimY;
+    private double capacityBoats;
+    private DepositsLevel dl;
     private AID boatCoordinator;
+    private SeaFood[] seaFoods;
+    private ArrayList<FishRank> seaFoodRanking = new ArrayList<FishRank>();
+    private Boolean isLeader = false;
+    private ArrayList<FishRank> boatsRanking = new ArrayList<FishRank>();
+
     
     //First delivery generator of movement
     Random generator = new Random();
@@ -44,6 +53,14 @@ public class BoatAgent extends Agent{
         this.posY = new Integer(arguments[1].toString());
         this.mapDimX = new Integer(arguments[2].toString());
         this.mapDimY = new Integer(arguments[3].toString());
+        this.capacityBoats = (Double) arguments[4];
+        this.seaFoods = (SeaFood[]) arguments[5];
+        
+        this.dl = new DepositsLevel(this.capacityBoats);
+        
+        for(int i = 0; i < this.seaFoods.length;i++){
+            this.seaFoodRanking.add(new FishRank(this.seaFoods[i],this));
+        }
         
         //Accept jave objects as messages
         this.setEnabledO2ACommunication(true, 0);
@@ -74,14 +91,8 @@ public class BoatAgent extends Agent{
         //Message Template Preformative filter
         MessageTemplate preformativeMT = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
         
-        //Message Template of Content
-        MessageTemplate contentMT = MessageTemplate.MatchContent("Move");
-        
-        //Adding both message templates as a conditions
-        MessageTemplate mt = MessageTemplate.and(preformativeMT, contentMT);
-        
         //Add a new behaviour to respond this particular message
-        this.addBehaviour(new ResponderBehaviour(this,mt));
+        this.addBehaviour(new ResponderBehaviour(this,preformativeMT));
 
     }
     
@@ -110,6 +121,16 @@ public class BoatAgent extends Agent{
     public int getPosY(){
         return this.posY;
     }
+
+    public Boolean getIsLeader() {
+        return isLeader;
+    }
+
+    public ArrayList<FishRank> getBoatsRanking() {
+        return boatsRanking;
+    }
+    
+    
     
     //Position getter
     public int[] getPosition(){
@@ -118,6 +139,30 @@ public class BoatAgent extends Agent{
         position[1] = this.posY;
         return position;
     }
+    
+    //Boat Deposit getters
+    public DepositsLevel getDL(){
+        return this.dl;
+    }
+   
+    //Boat capacity getter
+    public double getCapacityBoats(){
+        return this.capacityBoats;
+    }
+    
+    public ArrayList<FishRank> getFishRank(){
+        return this.seaFoodRanking;
+    }
+
+    public void setIsLeader(Boolean isLeader) {
+        this.isLeader = isLeader;
+    }
+
+    public void setBoatsRanking(ArrayList<FishRank> boatsRanking) {
+        this.boatsRanking = boatsRanking;
+    }
+    
+    
     
     //Move the boat one position randomly()
     public int[] move(){
@@ -143,8 +188,7 @@ public class BoatAgent extends Agent{
         }
         
         return this.getPosition();
-    }
-    
+    }    
     
     //Given a particular request, handles it;
     private class ResponderBehaviour extends SimpleAchieveREResponder{
@@ -164,7 +208,17 @@ public class BoatAgent extends Agent{
             ACLMessage reply = request.createReply();
             reply.setPerformative(ACLMessage.AGREE);
             
-            showMessage("Petition to move recived from "+request.getSender().getLocalName());
+            String msgContent = request.getContent();
+            
+            if (msgContent.equalsIgnoreCase("Rank fish")){
+                showMessage("Petition to rank fish"+request.getSender().getLocalName());
+            }else if (msgContent.equalsIgnoreCase("Move")){
+                showMessage("Petition to move recived from "+request.getSender().getLocalName());
+            }else if (msgContent.equalsIgnoreCase("Initiate grouping")){
+                showMessage("Order to initiate grouping recived");
+            }else if (request.getOntology().equalsIgnoreCase("Ranking")){
+                showMessage("Ranking recived");
+            }
             
             return reply;
         }
@@ -173,15 +227,36 @@ public class BoatAgent extends Agent{
         protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException{
             ACLMessage reply = request.createReply();
             reply.setPerformative(ACLMessage.INFORM);
-            move();
-            try{
-                BoatPosition pb = new BoatPosition(myAgent.getAID(),getPosX(),getPosY());
-                showMessage("New position send to BoatCoordinator");
-                reply.setContentObject(pb);
-            }catch (IOException e){
-                showMessage(e.toString());
-            }
+            
+            String msgContent = request.getContent();
 
+            if (msgContent.equalsIgnoreCase("Move")){
+                move();
+                try{
+                    BoatPosition pb = new BoatPosition(myAgent.getAID(),getPosX(),getPosY());
+                    showMessage("New position send to BoatCoordinator");
+                    reply.setContentObject(pb);
+                }catch (IOException e){
+                    showMessage(e.toString());
+                }
+            }else if(msgContent.equalsIgnoreCase("Rank fish")){
+                try{
+                    showMessage("Fish rank send to BoatCoordinator");
+                    reply.setContentObject(getFishRank());
+                }catch (IOException e){
+                    showMessage(e.toString());
+                }
+            }else if(msgContent.equalsIgnoreCase("Initiate grouping")){
+                reply.setContent("Grouping...");
+            }else if(request.getOntology().equalsIgnoreCase("Ranking")){
+                setIsLeader(true);
+                try {
+                    setBoatsRanking((ArrayList<FishRank>)request.getContentObject());
+                } catch (UnreadableException ex) {
+                    showMessage("ERROR: "+ex.toString());
+                }
+                reply.setContent("Prepared to form groups");
+            }
             return reply;
         }
     }      

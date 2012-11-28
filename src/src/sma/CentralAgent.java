@@ -148,7 +148,7 @@ public class CentralAgent extends Agent {
                     showMessage("New positions recived");
                     boats = (BoatsPosition)request.getContentObject();
                     refreshMap();
-                    myAgent.doWait(1000);
+                    myAgent.doWait(500);
                     reply.setContent("Map reloaded");
                 }else{
                     reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);

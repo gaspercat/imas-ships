@@ -13,15 +13,17 @@ import java.io.Serializable;
  */
 public class SeaFood implements java.io.Serializable{
     int posX, posY, mapX, mapY, movementDirection;
+    float quantity;
     SeaFoodType type;
     
-    public SeaFood(SeaFoodType type, int posX, int posY, int mapX, int mapY){
+    public SeaFood(SeaFoodType type, int posX, int posY, int mapX, int mapY, float quantity){
         this.type = type;
         this.posX = posX;
         this.posY = posY;
         this.mapX = mapX-1;
         this.mapY = mapY-1;
         this.movementDirection = this.setMovementDirection();
+        this.quantity = quantity;
     }
     
     public void setPosX(int posX){
@@ -70,8 +72,16 @@ public class SeaFood implements java.io.Serializable{
         return this.type;
     }
     
+    public void setQuantity(float quantity){
+        this.quantity = quantity;
+    }
+    
+    public float getQuantity(){
+        return this.quantity;
+    }
+    
     public Boolean onTheMap(){
-        if (posX >= 0 & posY >= 0 & posX < this.mapX & posY < this.mapX){
+        if (posX >= 0 & posY >= 0 & posX <= this.mapX & posY <= this.mapX){
             return true;
         }else{
             return false;

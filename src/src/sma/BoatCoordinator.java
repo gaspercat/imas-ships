@@ -6,6 +6,7 @@ package sma;
 
 import java.io.*;
 import jade.core.*;
+import jade.core.behaviours.SimpleBehaviour;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
 import jade.lang.acl.*;
@@ -14,6 +15,8 @@ import java.util.*;
 import jade.proto.AchieveREInitiator;
 import jade.proto.SimpleAchieveREInitiator;
 import jade.proto.SimpleAchieveREResponder;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -23,6 +26,8 @@ public class BoatCoordinator extends Agent {
 
     private AID coordinatorAgent;
     private BoatsPosition boatsPosition;
+    
+    private int actualGroups, numGroups;
 
     public BoatCoordinator() {
         super();
@@ -104,15 +109,40 @@ public class BoatCoordinator extends Agent {
         protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException{
             ACLMessage reply = request.createReply();
             reply.setPerformative(ACLMessage.INFORM);
-            reply.setContent("Movement Message recieved");
             
-            //Add a initiator behaviour that sends a request to boats asking them to move
-            myAgent.addBehaviour(new boatsInitiatorBehaviour(myAgent,prepareMessageToBoats()));
+            MessageTemplate mt1 = MessageTemplate.MatchContent("New fishing turn");
+            MessageTemplate mt2 = MessageTemplate.MatchContent("Group formed");
+            MessageTemplate mt3 = MessageTemplate.MatchContent("Downgrade group counter");
+            
+            if(mt1.match(request)){
+                reply.setContent("New fishing turn message recived");
+                //Add a initiator behaviour that sends a request to boats asking them to move
+                myAgent.addBehaviour(new boatsInitiatorBehaviour(myAgent,prepareRankFishMessageToBoats()));
+            }else if(mt2.match(request)){
+                actualGroups++;
+                if(actualGroups == numGroups){
+                    addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareMoveMessageToBoats()));
+                }
+            }else if(mt3.match(request)){
+                actualGroups--;
+            }
             return reply;
         }
         
+        private ACLMessage prepareRankFishMessageToBoats(){
+            jade.util.leap.List boats = buscarAgents("boat",null);
+            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+            Iterator itr = boats.iterator();
+            while(itr.hasNext()){
+                AID boat = (AID)itr.next();
+                msg.addReceiver(boat);
+            }
+            msg.setContent("Rank Fish");
+            return msg;
+        }
+        
         //Return a message to send to the boats
-        private ACLMessage prepareMessageToBoats(){
+        private ACLMessage prepareMoveMessageToBoats(){
             jade.util.leap.List boats = buscarAgents("boat",null);
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
             Iterator itr = boats.iterator();
@@ -123,7 +153,6 @@ public class BoatCoordinator extends Agent {
             msg.setContent("Move");
             return msg;
         }
-
     }
     
     
@@ -169,35 +198,58 @@ public class BoatCoordinator extends Agent {
         protected void handleAllResultNotifications(java.util.Vector resultNotifications){
             Iterator itr = resultNotifications.iterator();
             
-            //Boats positions that we have to send to the Coordinator agent
-            BoatsPosition boatsPos = new BoatsPosition();
-            
-            //iterate over all the responses
-            while(itr.hasNext()){
-               ACLMessage msg = (ACLMessage)itr.next(); 
-               if(msg.getPerformative() == ACLMessage.INFORM){
-                   try{
-                       BoatPosition bp = (BoatPosition) msg.getContentObject();
-                       boatsPos.addPosition(bp);
-                   }catch(UnreadableException e){
-                       showMessage(e.toString());
-                   }
-               }
-            }
-            try{
-                //Prepare the message to the Coordinator agents
-                ACLMessage outMessage = new ACLMessage(ACLMessage.REQUEST);
-                outMessage.addReceiver(coordinatorAgent);
-                outMessage.setSender(myAgent.getAID());
-                outMessage.setContentObject(boatsPos);
+            MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
+            MessageTemplate mt2 = MessageTemplate.MatchContent("Rank Fish");
+            MessageTemplate mt3 = MessageTemplate.MatchContent("Initiate grouping");
                 
-                //Add a behaviour that initiate a conversation with the coordinator agents
-                myAgent.addBehaviour(new SInitiatorBehaviour(myAgent,outMessage));
-            }catch(IOException e){
-                showMessage(e.toString());
+            if (mt1.match(msg)){
+                //Boats positions that we have to send to the Coordinator agent
+                BoatsPosition boatsPos = new BoatsPosition();
+
+                //iterate over all the responses
+                while(itr.hasNext()){
+                   ACLMessage msg = (ACLMessage)itr.next(); 
+                   if(msg.getPerformative() == ACLMessage.INFORM){
+                       try{
+                           BoatPosition bp = (BoatPosition) msg.getContentObject();
+                           boatsPos.addPosition(bp);
+                       }catch(UnreadableException e){
+                           showMessage(e.toString());
+                       }
+                   }
+                }
+                
+                try{
+                    //Prepare the message to the Coordinator agents
+                    ACLMessage outMessage = new ACLMessage(ACLMessage.REQUEST);
+                    outMessage.addReceiver(coordinatorAgent);
+                    outMessage.setSender(myAgent.getAID());
+                    outMessage.setContentObject(boatsPos);
+
+                    //Add a behaviour that initiate a conversation with the coordinator agents
+                    myAgent.addBehaviour(new SInitiatorBehaviour(myAgent,outMessage));
+                }catch(IOException e){
+                    showMessage(e.toString());
+                }
+            }else if(mt2.match(msg)){
+                ArrayList<ArrayList<FishRank>> fishRanks = new ArrayList();
+                
+                while(itr.hasNext()){
+                   ACLMessage msg = (ACLMessage)itr.next(); 
+                   if(msg.getPerformative() == ACLMessage.INFORM){
+                       try{
+                           ArrayList<FishRank> fr = (ArrayList<FishRank>) msg.getContentObject();
+                           fishRanks.add(fr);
+                       }catch(UnreadableException e){
+                           showMessage(e.toString());
+                       }
+                   }
+                }             
+                setUPleaders(fishRanks);           
+            }else if(mt3.match(msg)){
+                
             }
         }
-
     }
     
     //Find all the agents with by name or/and type
@@ -238,5 +290,185 @@ public class BoatCoordinator extends Agent {
         }
         return results;
     }
+    
+    
+    /**
+     * Setup the leaders for each fishing group. One for each fish school present on the map. Also generates the descending ranking of boats for each seafood in order to pass it to the leader.
+     * Once the process is complete sends this information to each leader and start the grouping phase.
+     * @param frList An array of arrays containing all the evaluations of each seafood for each boat.
+     */
+    private void setUPleaders(ArrayList<ArrayList<FishRank>> frList){
+        ArrayList<Rankings> rankings= this.getSeaFoodsBoatsRanking(frList);
+        ArrayList<Rankings> tempRankings = rankings;
+        int l = 0;
+        
+        while(l < rankings.size()){                    
+            //Initial Best
+            int bestRankIndex = -1;
+            for(int i = 0; i < rankings.size();i++){
+                if(rankings.get(i).getLeader() == null){
+                    bestRankIndex = i;
+                    break;
+                }
+            }
+            
+            //Get the best rank given the initial best rank index
+            FishRank bestRank = rankings.get(bestRankIndex).seaFoodsBoatsBlockersRanking.get(0);
+            
+            //Iterate over the rankings checking for the best rank.
+            for(int i = 0; i < rankings.size(); i++){              
+                FishRank candidateBestRank = rankings.get(i).seaFoodsBoatsBlockersRanking.get(0);
+                
+                if (bestRank.compareTo(candidateBestRank) == -1 && rankings.get(i).getLeader() == null){
+                    bestRank = candidateBestRank;
+                    bestRankIndex = i;
+                }
+            }
+            
+            if (rankings.get(bestRankIndex).getLeader() == null) {
+                l++;
+                rankings.get(bestRankIndex).setLeader(bestRank);
+                for(int i = 0; i < rankings.size();i++){
+                    rankings.get(i).removeBoat(bestRank.getBoat());
+                }
+            }
+        }
+        
+        ACLMessage initiateGrouping = new ACLMessage(ACLMessage.REQUEST);
+        initiateGrouping.setContent("Initiate grouping");
+        
+        for (int i = 0; i < rankings.size();i++){
+            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+            msg.addReceiver(rankings.get(i).leader.getBoat().getAID());
+            initiateGrouping.addReceiver(rankings.get(i).leader.getBoat().getAID());
+            msg.setOntology("Ranking");
+            try {
+                msg.setContentObject(rankings.get(i).seaFoodsBoatsRanking);
+            } catch (IOException ex) {
+                this.showMessage("ERROR: "+ex.toString());
+            }
 
+            this.addBehaviour(new SInitiatorBehaviour(this,msg));
+        }
+        this.numGroups = rankings.size();
+        this.actualGroups = 0;
+        this.addBehaviour(new boatsInitiatorBehaviour(this, initiateGrouping));
+    }
+    
+    /**
+     * Return an ArrayList of rankings objects given all the utility values of the SeaFoods for each boat
+     * @param frList An array of arrays containing all the evaluations of each seafood for each boat.
+     * @return ArrayList of rankings objects
+     */
+    private ArrayList<Rankings> getSeaFoodsBoatsRanking(ArrayList<ArrayList<FishRank>> frList){
+        //Number of seafood
+        int numSeaFoods = frList.get(0).size();
+        
+        //Array containing the numSeaFoodsRankings
+        ArrayList<Rankings> seaFoodsBoatsRanking = new ArrayList<Rankings>();
+        
+        //Fill the rankings
+        for(int i = 0; i < numSeaFoods; i++){
+            Iterator itFrList = frList.iterator();
+            Rankings sfBoatsRank = new Rankings();
+            seaFoodsBoatsRanking.add(sfBoatsRank);
+            while(itFrList.hasNext()){
+                FishRank fr = ((ArrayList<FishRank>) itFrList.next()).get(i);
+                seaFoodsBoatsRanking.get(i).seaFoodsBoatsRanking.add(fr);
+                //If the seafood is blockable for a determined boad.
+                if (fr.getBlockable()) {
+                    seaFoodsBoatsRanking.get(i).seaFoodsBoatsBlockersRanking.add(fr);
+                }
+            }
+            //Sort both rankings
+            seaFoodsBoatsRanking.get(i).sortRanks();
+        }
+        
+        return seaFoodsBoatsRanking;
+    }
+
+    /**
+     * Class that implements a ranking of boats for each seafood.
+     */
+    private class Rankings{
+        //A ranking of boats for each seafood
+        ArrayList<FishRank> seaFoodsBoatsRanking = new ArrayList<FishRank>();
+        
+        //A ranking of boats capable of catch a seafood group.
+        ArrayList<FishRank> seaFoodsBoatsBlockersRanking = new ArrayList<FishRank>();
+        
+        
+        int othersMembers = 0;
+        
+        //Leader of the seafood
+        FishRank leader;
+        
+        /**
+         * Sort the two ranks in descendent order.
+         */
+        public void sortRanks(){
+            Collections.sort(this.seaFoodsBoatsRanking,Collections.reverseOrder());
+            Collections.sort(this.seaFoodsBoatsBlockersRanking,Collections.reverseOrder());
+        }
+
+        /**
+         * Leader getter.
+         * @return The leader of the seafood group
+         */
+        public FishRank getLeader() {
+            return leader;
+        }
+        
+        /**
+         * Leader setter.
+         * @param leader The leader of the seafood group
+         */
+        public void setLeader(FishRank leader) {
+            this.leader = leader;
+        }
+        
+        /**
+         * Remove a boat from the blockers ranking.
+         * @param boat The boat to be deleted.
+         */
+        public void removeBoat(BoatAgent boat){
+            int indxBoat = this.indexBoatInRanking(boat);
+            if (indxBoat >= 0){
+                this.seaFoodsBoatsBlockersRanking.remove(indxBoat);
+            }
+        }
+        
+        /**
+         * Find the index of the boat in the blockers ranking.
+         * @param boatToFind The boat to find
+         * @return The index of the boat in the blockersRanking. If no exist returns -1.
+         */
+        private int indexBoatInRanking(BoatAgent boatToFind){
+            for(int i = 0; i < this.seaFoodsBoatsBlockersRanking.size();i++){
+                FishRank fr= this.seaFoodsBoatsBlockersRanking.get(i);
+                String boat = fr.getBoat().getLocalName();
+                if(boat.equalsIgnoreCase(boatToFind.getLocalName())){
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        /**
+         * Returns a String showing the information related to the ranking
+         * @return A string containing the representation of the ranking.
+         */
+        @Override
+        public String toString() {
+            StringBuffer msg = new StringBuffer();
+            for (int i = 0; i < this.seaFoodsBoatsBlockersRanking.size();i++){
+                msg.append("Boat:\t"+this.seaFoodsBoatsBlockersRanking.get(i).getBoat().getLocalName());
+                msg.append("\tExpected:\t"+this.seaFoodsBoatsBlockersRanking.get(i).getExpectedValue());
+                msg.append("\tDistance:\t"+this.seaFoodsBoatsBlockersRanking.get(i).getDistance()+"\n");
+            }
+            return msg.toString();
+        }
+        
+        
+    }
 }

@@ -24,12 +24,6 @@ import jade.proto.SimpleAchieveREResponder;
  */
 public class CoordinatorAgent extends Agent {
   private static final long serialVersionUID = 1L;
-  
-  private static final int STATE_NONE = -1;
-  private static final int STATE_INITIAL_REQUEST = 0;
-  private static final int STATE_MOVE_BOATS = 1;
-  private static final int STATE_UPDATE_MAP = 2;
-  private static final int STATE_TURNS_INTERVAL = 3;
 
   private AID centralAgent;
   private AID boatsCoordinator;
@@ -122,11 +116,6 @@ public class CoordinatorAgent extends Agent {
     
     //Add a behaviour that ask the initial information to the Central agent
     addBehaviour(new InitiatorBehaviour(this,initiatorMsg));
-    
-    
-    
-    // Execute the finite state automata
-    this.currentState = STATE_INITIAL_REQUEST;
   } //endof setup
 
   //Implements a responder to deal with the messages from boatsCoordinator
@@ -206,7 +195,7 @@ public class CoordinatorAgent extends Agent {
               ACLMessage boatMove = new ACLMessage(ACLMessage.REQUEST);
               boatMove.setSender(myAgent.getAID());
               boatMove.addReceiver(boatsCoordinator);
-              boatMove.setContent("Movement request");
+              boatMove.setContent("New fishing turn");
               
               //Add a behaviour to initiate a comunication with the boats coordinator
               myAgent.addBehaviour(new InitiatorBehaviour(myAgent,boatMove));
@@ -230,11 +219,13 @@ public class CoordinatorAgent extends Agent {
           	showMessage("Agent ID: " + ia.getName());          	  
                 if (ia.getAgentType() == AgentType.Boat){
                     showMessage("Agent type: " + ia.getAgentType().toString());
-                    Object[] position = new Object[4];
+                    Object[] position = new Object[6];
                     position[0] = info.getAgentsInitialPosition().get(ia).getRow();
                     position[1] = info.getAgentsInitialPosition().get(ia).getColumn();
                     position[2] = info.getMap()[0].length;
                     position[3] = info.getMap().length;
+                    position[4] = info.getCapacityBoats();
+                    position[5] = info.getSeaFoods();
                     UtilsAgents.createAgent(this.getContainerController(),ia.getName(), "sma.BoatAgent", position);
                 }else showMessage("no agent type");
           	  

@@ -2,9 +2,9 @@
 20    //columns
 5     //number of fishing phases to negotiate
 25    //total negotiations to end
-2    //number of seafood groups
-4    //number of boats
-10  //money per port
+5    //number of seafood groups
+20    //number of boats
+1000  //money per port
 10    //capacity of boat (per deposit)
 100   //capacity of port (per deposit)
 3,0,1,0,0,0     //ports and the quantity for each type in this order Steady, MinimumOffer, MediumOffer, MaximumOffer, MaxOffer, Cheapest & Expensive
