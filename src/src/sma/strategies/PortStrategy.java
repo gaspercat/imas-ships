@@ -12,6 +12,15 @@ import sma.ontology.DepositsLevel;
  * @author gaspercat
  */
 public abstract class PortStrategy {
+    private final double MIN_TUNA = 1.0;
+    private final double MAX_TUNA = 2.0;
+    private final double MIN_OCTOPUS = 2.0;
+    private final double MAX_OCTOPUS = 3.0;
+    private final double MIN_LOBSTER = 1.5;
+    private final double MAX_LOBSTER = 2.5;
+    private final double MIN_SHRIMP = 3.0;
+    private final double MAX_SHRIMP = 5.0;
+    
     protected PortAgent     port;
     protected DepositsLevel levels;
     
@@ -59,4 +68,26 @@ public abstract class PortStrategy {
     
     protected abstract void evaluate_offer();
     protected abstract void confirm_offer();
+    
+    protected double calculate_minimum_price(){
+        double ret = 0;
+        
+        ret += this.levels.getTunaLevel() * MIN_TUNA;
+        ret += this.levels.getOctopusLevel() * MIN_OCTOPUS;
+        ret += this.levels.getLobsterLevel() * MIN_LOBSTER;
+        ret += this.levels.getShrimpLevel() * MIN_SHRIMP;
+        
+        return ret;
+    }
+    
+    protected double calculate_maximum_price(){
+        double ret = 0;
+        
+        ret += this.levels.getTunaLevel() * MAX_TUNA;
+        ret += this.levels.getOctopusLevel() * MAX_OCTOPUS;
+        ret += this.levels.getLobsterLevel() * MAX_LOBSTER;
+        ret += this.levels.getShrimpLevel() * MAX_SHRIMP;
+        
+        return ret;
+    }
 }
