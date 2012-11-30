@@ -9,11 +9,19 @@ package sma.ontology;
  * @author joan
  */
 public class DepositsLevel implements java.io.Serializable{
-    private double tunaLevel, lobsterLevel, octopusLevel, shrimpLevel = 0;
+    private double tunaLevel;
+    private double lobsterLevel;
+    private double octopusLevel;
+    private double shrimpLevel;
     private double capacity;
     
     public DepositsLevel(double capacity){
         this.capacity = capacity;
+        
+        this.tunaLevel = 0;
+        this.lobsterLevel = 0;
+        this.octopusLevel = 0;
+        this.shrimpLevel = 0;
     }
 
     public double getTunaLevel() {
@@ -30,6 +38,17 @@ public class DepositsLevel implements java.io.Serializable{
 
     public double getShrimpLevel() {
         return this.shrimpLevel;
+    }
+    
+    public double getTotalAmount() {
+        int ret = 0;
+        
+        ret += this.lobsterLevel;
+        ret += this.tunaLevel;
+        ret += this.octopusLevel;
+        ret += this.shrimpLevel;
+        
+        return ret;
     }
 
     public double getCapacity() {
