@@ -23,6 +23,9 @@ public class DepositsLevel implements java.io.Serializable{
         this.octopusLevel = 0;
         this.shrimpLevel = 0;
     }
+    
+    // ** GETTER METHODS
+    // *****************************************
 
     public double getTunaLevel() {
         return this.tunaLevel;
@@ -55,6 +58,9 @@ public class DepositsLevel implements java.io.Serializable{
         return capacity;
     }
 
+    // ** SETTER METHODS
+    // *****************************************
+    
     public void setTunaLevel(double tunaLevel) {
         this.tunaLevel = tunaLevel;
     }
@@ -89,5 +95,27 @@ public class DepositsLevel implements java.io.Serializable{
     
     public double getFreeSpaceShrimp(){
         return this.capacity - this.shrimpLevel;
+    }
+    
+    // ** OPERATORS
+    // *****************************************
+    
+    public DepositsLevel addition(DepositsLevel deposits){
+        double capacity = (this.capacity > deposits.capacity) ? this.capacity : deposits.capacity;
+        DepositsLevel ret = new DepositsLevel(capacity);
+        
+        ret.lobsterLevel = this.lobsterLevel + deposits.lobsterLevel;
+        if(ret.lobsterLevel > ret.capacity) ret.lobsterLevel = ret.capacity;
+        
+        ret.octopusLevel = this.octopusLevel + deposits.octopusLevel;
+        if(ret.octopusLevel > ret.capacity) ret.octopusLevel = ret.capacity;
+        
+        ret.shrimpLevel = this.shrimpLevel + deposits.shrimpLevel;
+        if(ret.shrimpLevel > ret.capacity) ret.shrimpLevel = ret.capacity;
+        
+        ret.tunaLevel = this.tunaLevel + deposits.tunaLevel;
+        if(ret.tunaLevel > ret.capacity) ret.tunaLevel = ret.capacity;
+        
+        return ret;
     }
 }
