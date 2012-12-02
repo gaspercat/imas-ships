@@ -3,8 +3,6 @@ package sma.strategies;
 import sma.ontology.DepositsLevel;
 
 public class PortStrategyMedium extends PortStrategy {
-    private final double MAX_MSE = 200;
-    
     public PortStrategyMedium(PortAgent port, DepositsLevel levels){
         super(port, levels);
     }

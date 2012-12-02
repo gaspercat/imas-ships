@@ -3,8 +3,6 @@ package sma.strategies;
 import sma.ontology.DepositsLevel;
 
 public class PortStrategyMinimum extends PortStrategy {
-    private final double MAX_MSE = 200;
-    
     public PortStrategyMinimum(PortAgent port, DepositsLevel levels){
         super(port, levels);
     }
