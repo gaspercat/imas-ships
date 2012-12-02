@@ -1,15 +1,7 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package sma.strategies;
 
 import sma.ontology.DepositsLevel;
 
-/**
- *
- * @author gaspercat
- */
 public class PortStrategySteady extends PortStrategy {
     private final double MAX_MSE = 200;
     
@@ -36,7 +28,7 @@ public class PortStrategySteady extends PortStrategy {
         
         // Calculate price to offer
         double pdiff = max_price - min_price;
-        double factor = ((mse_current - mse_future) + inc) / (this.levels.getCapacity()*4 + mse_current);
+        double factor = ((mse_current - mse_future) + inc) / (mse_current + this.levels.getCapacity()*4);
         double price =  min_price + factor*pdiff;
         
         // Set price to offer and accept
@@ -46,7 +38,7 @@ public class PortStrategySteady extends PortStrategy {
 
     @Override
     protected void confirm_offer() {
-        if(!is_offer_acceptable()){
+        if(!is_offer_confirmable || !is_offer_acceptable()){
             this.is_aborted = true;
             return;
         }
@@ -68,6 +60,11 @@ public class PortStrategySteady extends PortStrategy {
             return false;
         }
         
+        return true;
+    }
+    
+    private boolean is_offer_confirmable() {
+        if(this.offer == 0 || this.offer > this.port.available_money) return false;
         return true;
     }
     
