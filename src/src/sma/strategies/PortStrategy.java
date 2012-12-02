@@ -6,24 +6,28 @@ package sma.strategies;
 
 import sma.PortAgent;
 import sma.ontology.DepositsLevel;
+import sma.ontology.PortType;
 
 /**
  *
  * @author gaspercat
  */
 public abstract class PortStrategy {
-    public static final int STRATEGY_STEADY  = 1;
-    public static final int STRATEGY_MINIMUM = 2;
-    public static final int STRATEGY_MAXIMUM = 3;
+    public static final int STRATEGY_STEADY    = 1;
+    public static final int STRATEGY_MINIMUM   = 2;
+    public static final int STRATEGY_MAXIMUM   = 3;
+    public static final int STRATEGY_MEDIUM    = 4;
+    public static final int STRATEGY_EXPENSIVE = 5;
+    public static final int STRATEGY_CHEAP     = 6;
     
-    private final double MIN_TUNA    = 1.0;
-    private final double MAX_TUNA    = 2.0;
-    private final double MIN_OCTOPUS = 2.0;
-    private final double MAX_OCTOPUS = 3.0;
-    private final double MIN_LOBSTER = 1.5;
-    private final double MAX_LOBSTER = 2.5;
-    private final double MIN_SHRIMP  = 3.0;
-    private final double MAX_SHRIMP  = 5.0;
+    protected final double MIN_TUNA    = 1.0;
+    protected final double MAX_TUNA    = 2.0;
+    protected final double MIN_OCTOPUS = 2.0;
+    protected final double MAX_OCTOPUS = 3.0;
+    protected final double MIN_LOBSTER = 1.5;
+    protected final double MAX_LOBSTER = 2.5;
+    protected final double MIN_SHRIMP  = 3.0;
+    protected final double MAX_SHRIMP  = 5.0;
     
     protected PortAgent     port;
     protected DepositsLevel levels;
@@ -32,12 +36,13 @@ public abstract class PortStrategy {
     protected boolean       is_aborted;
     protected double        offer;
     
-    public static PortStrategy create(int type, PortAgent port, DepositsLevel levels){
-        switch(type){
-            case STRATEGY_STEADY:   return new PortStrategySteady(port, levels);
-            case STRATEGY_MINIMUM:  return new PortStrategyMinimum(port, levels);
-            case STRATEGY_MAXIMUM:  return new PortStrategyMaximum(port, levels);
-        }
+    public static PortStrategy create(PortAgent port, DepositsLevel levels){
+        if(port.type == PortType.Steady) return new PortStrategySteady(port, levels);
+        if(port.type == PortType.Minimum) return new PortStrategyMinimum(port, levels);
+        if(port.type == PortType.Maximum) return new PortStrategyMaximum(port, levels);
+        if(port.type == PortType.Medium) return new PortStrategyMedium(port, levels);
+        if(port.type == PortType.Expensive) return new PortStrategyExpensive(port, levels);
+        if(port.type == PortType.Cheap) return new PortStrategyCheap(port, levels);
         
         return null;
     }
