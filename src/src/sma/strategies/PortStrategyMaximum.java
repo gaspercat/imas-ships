@@ -28,7 +28,7 @@ public class PortStrategyMaximum extends PortStrategy {
 
     @Override
     protected void confirm_offer() {
-        if(!is_offer_confirmable || !is_offer_acceptable()){
+        if(!is_offer_confirmable() || !is_offer_acceptable()){
             this.is_aborted = true;
             return;
         }

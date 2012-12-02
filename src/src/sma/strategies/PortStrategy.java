@@ -94,6 +94,17 @@ public abstract class PortStrategy {
         return ret;
     }
     
+    protected double calculate_medium_price(){
+        double ret = 0;
+        
+        ret += this.levels.getTunaLevel() * (MIN_TUNA + MAX_TUNA) / 2;
+        ret += this.levels.getOctopusLevel() * (MIN_OCTOPUS + MAX_OCTOPUS) / 2;
+        ret += this.levels.getLobsterLevel() * (MIN_LOBSTER + MAX_OCTOPUS) / 2;
+        ret += this.levels.getShrimpLevel() * (MIN_SHRIMP + MAX_SHRIMP) / 2;
+        
+        return ret;
+    }
+    
     protected double calculate_maximum_price(){
         double ret = 0;
         
