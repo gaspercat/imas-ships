@@ -4,6 +4,8 @@
  */
 package sma.ontology;
 
+import sma.ontology.SeaFoodType;
+
 /**
  *
  * @author joan
@@ -43,6 +45,40 @@ public class DepositsLevel implements java.io.Serializable{
         return this.shrimpLevel;
     }
     
+    public double getSeafoodLevel(SeaFoodType type){
+        if(type == SeaFoodType.Lobster) return this.lobsterLevel;
+        if(type == SeaFoodType.Tuna) return this.tunaLevel;
+        if(type == SeaFoodType.Octopus) return this.octopusLevel;
+        if(type == SeaFoodType.Shrimp) return this.shrimpLevel;
+        
+        return -1;
+    }
+    
+    public double getFreeSpaceTuna(){
+        return this.capacity - this.tunaLevel;
+    }
+    
+    public double getFreeSpaceLobster(){
+        return this.capacity - this.lobsterLevel;
+    }
+    
+    public double getFreeSpaceOctopus(){
+        return this.capacity - this.octopusLevel;
+    }
+    
+    public double getFreeSpaceShrimp(){
+        return this.capacity - this.shrimpLevel;
+    }
+    
+    public double getFreeSpaceSeafood(SeaFoodType type){
+        if(type == SeaFoodType.Lobster) return this.capacity - this.lobsterLevel;
+        if(type == SeaFoodType.Tuna) return this.capacity - this.tunaLevel;
+        if(type == SeaFoodType.Octopus) return this.capacity - this.octopusLevel;
+        if(type == SeaFoodType.Shrimp) return this.capacity - this.shrimpLevel;
+        
+        return -1;
+    }
+    
     public double getTotalAmount() {
         int ret = 0;
         
@@ -79,22 +115,6 @@ public class DepositsLevel implements java.io.Serializable{
 
     public void setCapacity(double capacity) {
         this.capacity = capacity;
-    }
-    
-    public double getFreeSpaceTuna(){
-        return this.capacity - this.tunaLevel;
-    }
-    
-    public double getFreeSpaceLobster(){
-        return this.capacity - this.lobsterLevel;
-    }
-    
-    public double getFreeSpaceOctopus(){
-        return this.capacity - this.octopusLevel;
-    }
-    
-    public double getFreeSpaceShrimp(){
-        return this.capacity - this.shrimpLevel;
     }
     
     // ** OPERATORS
