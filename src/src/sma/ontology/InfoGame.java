@@ -63,6 +63,8 @@ public class InfoGame implements java.io.Serializable {
 	FileReader fis = new FileReader(file);
     BufferedReader dis = new BufferedReader(fis);
     int NROWS = 0, NCOLS = 0;
+    Random rand = new Random();
+    //rand.setSeed(100);
     
 	String dades = dis.readLine(); 
 	StringTokenizer st = new StringTokenizer(dades, " ");
@@ -119,8 +121,8 @@ public class InfoGame implements java.io.Serializable {
 	//Now we set randomly cells for the quantity of boats defined between ranges NROWS - NCOLS
 	for (int ctr = 0; ctr < info.getNumBoats(); ctr++)
 	{
-		int rndRow = (int)  (Math.random() * ( (NROWS - 1) - 0 ));
-		int rndCol = (int) ( Math.random() * ( (NCOLS - 1) - 0 ));
+		int rndRow = (int)  (rand.nextFloat() * ( (NROWS - 1) - 0 ));
+		int rndCol = (int)  (rand.nextFloat() * ( (NCOLS - 1) - 0 ));
 
 		this.info.map[rndRow][rndCol].setType(CellType.Boat);
 		InfoAgent agent = new InfoAgent(AgentType.Boat);
@@ -139,10 +141,10 @@ public class InfoGame implements java.io.Serializable {
         
         //Add fishes
         for (int fish = 0; fish < info.getNumSeafoodGroups(); fish++){
-            int rndRow = (int)  (Math.random() * ( (NROWS - 1) - 0 ));
-            int rndCol = (int) ( Math.random() * ( (NCOLS - 1) - 0 ));
+            int rndRow = (int)  (rand.nextFloat() * ( (NROWS - 1) - 0 ));
+            int rndCol = (int)  (rand.nextFloat() * ( (NCOLS - 1) - 0 ));
             
-            int seaFoodType = new Random().nextInt();
+            int seaFoodType = rand.nextInt();
             seaFoodType = Math.abs(seaFoodType%4);
             
             SeaFood sf;
@@ -150,16 +152,16 @@ public class InfoGame implements java.io.Serializable {
             this.info.map[rndRow][rndCol].setType(CellType.Seafood);
             
             if (seaFoodType == 0){
-                sf = new SeaFood(SeaFoodType.Tuna, rndRow, rndCol, this.info.map.length, this.info.map[0].length, new Random().nextFloat()*10+10);
+                sf = new SeaFood(SeaFoodType.Tuna, rndRow, rndCol, this.info.map.length, this.info.map[0].length, rand.nextFloat()*10+10);
                 this.info.map[rndRow][rndCol].setSeaFoodType(SeaFoodType.Tuna);
             }else if (seaFoodType == 1){
-                sf = new SeaFood(SeaFoodType.Octopus, rndRow, rndCol, this.info.map.length, this.info.map[0].length, new Random().nextFloat()*10+10);
+                sf = new SeaFood(SeaFoodType.Octopus, rndRow, rndCol, this.info.map.length, this.info.map[0].length, rand.nextFloat()*10+10);
                 this.info.map[rndRow][rndCol].setSeaFoodType(SeaFoodType.Octopus);
             }else if (seaFoodType == 2){
-                sf = new SeaFood(SeaFoodType.Lobster, rndRow, rndCol, this.info.map.length, this.info.map[0].length, new Random().nextFloat()*10+10);
+                sf = new SeaFood(SeaFoodType.Lobster, rndRow, rndCol, this.info.map.length, this.info.map[0].length, rand.nextFloat()*10+10);
                 this.info.map[rndRow][rndCol].setSeaFoodType(SeaFoodType.Lobster);
             }else{
-                sf = new SeaFood(SeaFoodType.Shrimp, rndRow, rndCol, this.info.map.length, this.info.map[0].length, new Random().nextFloat()*10+10);
+                sf = new SeaFood(SeaFoodType.Shrimp, rndRow, rndCol, this.info.map.length, this.info.map[0].length, rand.nextFloat()*10+10);
                 this.info.map[rndRow][rndCol].setSeaFoodType(SeaFoodType.Shrimp);
             }
             sfList[fish] = sf;

@@ -33,6 +33,8 @@ public class BoatAgent extends Agent{
     private ArrayList<AID> boatsGroup = new ArrayList<AID>();
     private SeaFood sfToFish;
     private FishRank bestFishRank;
+    private HashMap pendentOfAcceptance = new HashMap();
+    private Boolean messagePendent = false;
 
     
     //First delivery generator of movement
@@ -95,10 +97,15 @@ public class BoatAgent extends Agent{
         
         
         //Message Template Preformative filter
+        MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
+        MessageTemplate mt2 = MessageTemplate.MatchContent("Rank fish");
+        MessageTemplate mt3 = MessageTemplate.MatchOntology("Ranking");
         MessageTemplate preformativeMT = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
+        MessageTemplate mt = MessageTemplate.and(preformativeMT,MessageTemplate.or(mt1, MessageTemplate.or(mt2,mt3)));
         
         //Add a new behaviour to respond this particular message
-        this.addBehaviour(new ResponderBehaviour(this,preformativeMT));
+        this.addBehaviour(new ResponderBehaviour(this,mt));
+        this.addBehaviour(new NOLeaderREResponder(this, MessageTemplate.MatchOntology("FishRank")));
 
     }
     
@@ -227,20 +234,14 @@ public class BoatAgent extends Agent{
             
             MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
             MessageTemplate mt2 = MessageTemplate.MatchContent("Rank fish");
-            MessageTemplate mt3 = MessageTemplate.MatchContent("Initiate grouping");
             MessageTemplate mt4 = MessageTemplate.MatchOntology("Ranking");
-            MessageTemplate mt5 = MessageTemplate.MatchOntology("FishRank");
             
             if (mt2.match(request)){
-                showMessage("Petition to rank fish"+request.getSender().getLocalName());
+                //showMessage("Petition to rank fish from "+request.getSender().getLocalName());
             }else if (mt1.match(request)){
-                showMessage("Petition to move recived from "+request.getSender().getLocalName());
-            }else if (mt3.match(request)){
-                showMessage("Order to initiate grouping recived");
+                //showMessage("Petition to move recived from "+request.getSender().getLocalName());
             }else if (mt4.match(request)){
-                showMessage("Ranking recieved");
-            }else if (mt5.match(request)){
-                showMessage("Fish Rank recieved");
+                //showMessage("Ranking recieved from "+request.getSender().getLocalName());
             }
             
             return reply;
@@ -255,10 +256,7 @@ public class BoatAgent extends Agent{
             
             MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
             MessageTemplate mt2 = MessageTemplate.MatchContent("Rank fish");
-            MessageTemplate mt3 = MessageTemplate.MatchContent("Initiate grouping");
-            MessageTemplate mt4 = MessageTemplate.MatchOntology("Ranking");
-            MessageTemplate mt5 = MessageTemplate.MatchOntology("FishRank");
-            MessageTemplate mt6 = MessageTemplate.MatchContent("No longer interested in form part of the group");
+            MessageTemplate mt3 = MessageTemplate.MatchOntology("Ranking");
 
             if (mt1.match(request)){
                 move();
@@ -277,70 +275,22 @@ public class BoatAgent extends Agent{
                     showMessage(e.toString());
                 }
             }else if(mt3.match(request)){
-                reply.setContent("Grouping...");
-                FishRank candidate = boatsRanking.remove(0);
-                ACLMessage msgToCandidate = new ACLMessage(ACLMessage.REQUEST);
-                msgToCandidate.addReceiver(candidate.getBoat().getAID());
-                try {
-                    msgToCandidate.setContentObject(candidate);
-                } catch (IOException ex) {
-                    Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                msgToCandidate.setOntology("FishRank");
-                myAgent.addBehaviour(new SInitiatorBehaviour(myAgent, msgToCandidate));
-                
-            }else if(mt4.match(request)){
                 setIsLeader(true);
                 try {
                     setBoatsRanking((ArrayList<FishRank>)request.getContentObject());
                 } catch (UnreadableException ex) {
                     showMessage("ERROR: "+ex.toString());
                 }
-                reply.setContent("Prepared to form groups");
-            }else if(mt5.match(request)){
-                try {
-                    FishRank candidateRank = (FishRank) request.getContentObject();
-                    
-                    if(leader == null){
-                        bestFishRank = candidateRank;
-                        leader = request.getSender();
-                        reply.setContent("Accept the proposal");
-                    }else{
-                        if(bestFishRank.compareTo(candidateRank) == -1){
-                            reply.setContent("No accept proposal");
-                        }else{
-                            ACLMessage msgToPrevLeader = new ACLMessage(ACLMessage.REQUEST);
-                            msgToPrevLeader.setContent("No longer interested in form part of the group");
-                            msgToPrevLeader.addReceiver(leader);
-                            myAgent.addBehaviour(new SInitiatorBehaviour(myAgent, msgToPrevLeader));
-                            leader = request.getSender();
-                            bestFishRank = candidateRank;
-                            reply.setContent("Accept the proposal");
-                        }
-                    }
-                } catch (UnreadableException ex) {
-                    Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }else if(mt6.match(request)){
-                if(boatsGroup.size()==3){
-                    ACLMessage msgDown = new ACLMessage(ACLMessage.REQUEST);
-                    msgDown.addReceiver(boatCoordinator);
-                    msgDown.setContent("Downgrade group counter");
-                    myAgent.addBehaviour(new SInitiatorBehaviour(myAgent, msgDown));
-                }
-                boatsGroup.remove(request.getSender());
                 
-                FishRank candidate = boatsRanking.remove(0);
-                ACLMessage msgToCandidate = new ACLMessage(ACLMessage.REQUEST);
-                msgToCandidate.addReceiver(candidate.getBoat().getAID());
-                try {
-                    msgToCandidate.setContentObject(candidate);
-                } catch (IOException ex) {
-                    Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                msgToCandidate.setOntology("FishRank");
-                myAgent.addBehaviour(new SInitiatorBehaviour(myAgent, msgToCandidate));
-                reply.setContent("Removed from the group");
+                MessageTemplate mtL1 = MessageTemplate.MatchContent("Initiate grouping");
+                MessageTemplate mtL2 = MessageTemplate.MatchContent("No longer interested in form part of the group");
+                MessageTemplate mtL3 = MessageTemplate.MatchContent("Pendent request accepted");
+                
+                MessageTemplate mt = MessageTemplate.or(mtL1, MessageTemplate.or(mtL3, mtL2));
+                
+                myAgent.addBehaviour(new LeaderREResponder(myAgent, mt));
+                
+                reply.setContent("Prepared to form groups");
             }
             
             return reply;
@@ -360,21 +310,115 @@ public class BoatAgent extends Agent{
         
         //Handle agree messages
         public void handleAgree(ACLMessage msg){
-            showMessage("AGREE message recived from "+msg.getSender().getLocalName());
+            //showMessage("AGREE message recived from "+msg.getSender().getLocalName());
         }
         
         //handle Inform Messages
         public void handleInform(ACLMessage msg){
-            showMessage("Informative message from "+msg.getSender()+": "+msg.getContent());
+            showMessage("Informative message from "+msg.getSender().getLocalName()+": "+msg.getContent());
+            
+        }
+    }
+    
+    private class LeaderREInitiator extends SimpleAchieveREInitiator{
+        Agent myAgent;
+        ACLMessage msg;
+        
+        public LeaderREInitiator(Agent myAgent, ACLMessage msg){
+            super(myAgent,msg);
+            this.myAgent = myAgent;
+            this.msg = msg;
+            messagePendent = true;
+        }
+        
+        public void handleAgree(ACLMessage msg){
+            //showMessage("AGREE message recived from "+msg.getSender().getLocalName());
+        }
+        
+        //handle Inform Messages
+        public void handleInform(ACLMessage msg){
+            showMessage("Informative message from "+msg.getSender().getLocalName()+": "+msg.getContent());
             MessageTemplate mt1 = MessageTemplate.MatchContent("Accept the proposal");
             MessageTemplate mt2 = MessageTemplate.MatchContent("No accept proposal");
             
-            String x = "BoatGroup Size:"+(boatsGroup.size()+1);
-            showMessage(x);
-            
             if(mt1.match(msg)){
                 boatsGroup.add(msg.getSender());
-                if(boatsGroup.size()<3){
+                messagePendent = false;
+                if(boatsGroup.size()<3 && boatsRanking.size() > 0){
+                    sendOffer();
+                }else{
+                    ACLMessage msgFormed = new ACLMessage(ACLMessage.REQUEST);
+                    msgFormed.addReceiver(boatCoordinator);
+                    msgFormed.setContent("Group formed");
+                    myAgent.addBehaviour(new LeaderREInitiator(myAgent, msgFormed));
+                }
+            }else if(mt2.match(msg) && boatsRanking.size() > 0){
+                messagePendent = false;
+                sendOffer();
+            }
+            showMessage("BoatGroup Size:"+(boatsGroup.size()+1));
+        }
+    }
+    
+    private class LeaderREResponder extends SimpleAchieveREResponder{
+
+        Agent myAgent;
+        MessageTemplate mt;
+
+        //Consturctor of the Behaviour
+        public LeaderREResponder(Agent myAgent, MessageTemplate mt){
+            super(myAgent, mt);
+            this.myAgent = myAgent;
+            this.mt = mt;
+        }
+        
+        protected ACLMessage prepareResponse(ACLMessage request){
+            ACLMessage reply = request.createReply();
+            reply.setPerformative(ACLMessage.AGREE);
+                        
+            MessageTemplate mt1 = MessageTemplate.MatchContent("Initiate grouping");
+            MessageTemplate mt2 = MessageTemplate.MatchContent("No longer interested in form part of the group");
+            MessageTemplate mt3 = MessageTemplate.MatchContent("Pendent request accepted");
+
+            
+            if (mt1.match(request)){
+                //showMessage("Order to initiate grouping recived from "+request.getSender().getLocalName());
+            }else if (mt2.match(request)){
+                //showMessage("No longer interested in form part of our group recived from "+request.getSender().getLocalName());
+            }else if (mt3.match(request)){
+                //showMessage("Pendent request from "+request.getSender().getLocalName() +" accepted");
+            }
+            
+            return reply;
+        }
+        
+        protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException{
+            ACLMessage reply = request.createReply();
+            reply.setPerformative(ACLMessage.INFORM);
+            
+            MessageTemplate mt1 = MessageTemplate.MatchContent("Initiate grouping");
+            MessageTemplate mt2 = MessageTemplate.MatchContent("No longer interested in form part of the group");
+            MessageTemplate mt3 = MessageTemplate.MatchContent("Pendent request accepted");
+            
+            if(mt1.match(request)){
+                reply.setContent("Grouping...");
+                sendOffer();
+            }else if(mt2.match(request) && boatsRanking.size() > 0){                
+                if(boatsGroup.size()==3){
+                    ACLMessage msgDown = new ACLMessage(ACLMessage.REQUEST);
+                    msgDown.addReceiver(boatCoordinator);
+                    msgDown.setContent("Downgrade group counter");
+                    myAgent.addBehaviour(new LeaderREInitiator(myAgent, msgDown));
+                }
+                boatsGroup.remove(request.getSender());
+
+                sendOffer();
+                
+                reply.setContent("Removed from the group");
+            }else if(mt3.match(request)){
+                boatsGroup.add(request.getSender());
+                messagePendent = false;
+                if(boatsGroup.size()<3 && boatsRanking.size() > 0){
                     sendOffer();
                 }else{
                     ACLMessage msgFormed = new ACLMessage(ACLMessage.REQUEST);
@@ -382,22 +426,121 @@ public class BoatAgent extends Agent{
                     msgFormed.setContent("Group formed");
                     myAgent.addBehaviour(new SInitiatorBehaviour(myAgent, msgFormed));
                 }
-            }else if(mt2.match(msg)){
-                sendOffer();
+                reply.setContent("Added to group");
             }
+            
+            return reply;
         }
         
-        private void sendOffer(){
-            FishRank candidate = boatsRanking.remove(0);
-            ACLMessage msgToCandidate = new ACLMessage(ACLMessage.REQUEST);
-            msgToCandidate.addReceiver(candidate.getBoat().getAID());
-            try {
-                msgToCandidate.setContentObject(candidate);
-            } catch (IOException ex) {
-                Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
+    }
+    
+    private void sendOffer(){
+        FishRank candidate = boatsRanking.remove(0);
+        showMessage("Sending offer!!! TO: "+candidate.getBoat().getLocalName());
+        ACLMessage msgToCandidate = new ACLMessage(ACLMessage.REQUEST);
+        msgToCandidate.addReceiver(candidate.getBoat().getAID());
+        try {
+            msgToCandidate.setContentObject(candidate);
+        } catch (IOException ex) {
+            Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        msgToCandidate.setOntology("FishRank");
+        this.addBehaviour(new LeaderREInitiator(this, msgToCandidate));
+    }
+    
+    private class NOLeaderREInitiator extends SimpleAchieveREInitiator{
+        Agent myAgent;
+        ACLMessage msg;
+        
+        public NOLeaderREInitiator(Agent myAgent, ACLMessage msg){
+            super(myAgent,msg);
+            this.myAgent = myAgent;
+            this.msg = msg;
+            messagePendent = true;
+        }
+        
+        public void handleAgree(ACLMessage msg){
+            //showMessage("AGREE message recived from "+msg.getSender().getLocalName());
+        }
+        
+        //handle Inform Messages
+        public void handleInform(ACLMessage msg){
+            showMessage("Informative message from "+msg.getSender().getLocalName()+": "+msg.getContent());
+            MessageTemplate mt1 = MessageTemplate.MatchContent("Removed from the group");
+            
+            if(mt1.match(msg)){
+                ACLMessage acceptanceMessage = new ACLMessage(ACLMessage.REQUEST);
+                ArrayList value = (ArrayList) pendentOfAcceptance.get(leader);
+                pendentOfAcceptance.remove(leader);
+                acceptanceMessage.addReceiver((AID) value.get(0));
+                acceptanceMessage.setContent("Pendent request accepted");
+                leader = (AID) value.get(0);
+                bestFishRank = (FishRank) value.get(1);
+                myAgent.addBehaviour(new SInitiatorBehaviour(myAgent, acceptanceMessage));
             }
-            msgToCandidate.setOntology("FishRank");
-            myAgent.addBehaviour(new SInitiatorBehaviour(myAgent, msgToCandidate));
+        }
+    }
+    
+    private class NOLeaderREResponder extends SimpleAchieveREResponder{
+
+        Agent myAgent;
+        MessageTemplate mt;
+
+        //Consturctor of the Behaviour
+        public NOLeaderREResponder(Agent myAgent, MessageTemplate mt){
+            super(myAgent, mt);
+            this.myAgent = myAgent;
+            this.mt = mt;
+        }
+        
+        //Send an AGREE message to the sender
+        protected ACLMessage prepareResponse(ACLMessage request){
+            ACLMessage reply = request.createReply();
+            reply.setPerformative(ACLMessage.AGREE); 
+            reply.setOntology("");
+            
+            return reply;
+        }
+        
+        
+        
+        protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException{
+            ACLMessage reply = request.createReply();
+            reply.setOntology("");
+            reply.setPerformative(ACLMessage.INFORM);
+            
+            MessageTemplate mt1 = MessageTemplate.MatchOntology("FishRank");
+
+            
+            if(mt1.match(request)){
+                try {
+                    FishRank candidateRank = (FishRank) request.getContentObject();
+                    
+                    if(leader == null){
+                        bestFishRank = candidateRank;
+                        leader = request.getSender();
+                        reply.setContent("Accept the proposal");
+                    }else{
+                        if(bestFishRank.compareTo(candidateRank) == 1){
+                            reply.setContent("No accept proposal");
+                        }else{
+                            ACLMessage msgToPrevLeader = new ACLMessage(ACLMessage.REQUEST);
+                            msgToPrevLeader.setContent("No longer interested in form part of the group");
+                            msgToPrevLeader.addReceiver(leader);
+                            myAgent.addBehaviour(new NOLeaderREInitiator(myAgent, msgToPrevLeader));
+                            ArrayList value = new ArrayList();
+                            value.add(request.getSender());
+                            value.add(candidateRank);
+                            pendentOfAcceptance.put(leader, value);
+                            reply.setContent("Pendent to response");
+                        }
+                    }
+                } catch (UnreadableException ex) {
+                    Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            
+            return reply;
         }
         
     }

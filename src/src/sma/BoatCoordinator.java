@@ -103,7 +103,7 @@ public class BoatCoordinator extends Agent {
         protected ACLMessage prepareResponse(ACLMessage request){
             ACLMessage reply = request.createReply();
             reply.setPerformative(ACLMessage.AGREE);
-            showMessage("Message Recived from "+request.getSender().getName()+", processing...");
+            //showMessage("Message Recived from "+request.getSender().getLocalName()+", processing...");
             return reply;
         }
         
@@ -123,11 +123,15 @@ public class BoatCoordinator extends Agent {
                 leaders = new ArrayList<AID>();
             }else if(mt2.match(request)){
                 actualGroups++;
+                reply.setContent("Wait for the other groups");
+                
                 if(actualGroups == numGroups){
+                    showMessage("AAAAAAAAAAAAAAAAAALL Groups Formed");
                     //addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareMoveMessageToBoats()));
                 }
             }else if(mt3.match(request)){
                 actualGroups--;
+                reply.setContent("Number of groups downgraded");
             }
             System.out.println("Number of groups Formed: "+actualGroups);
             return reply;
@@ -173,7 +177,7 @@ public class BoatCoordinator extends Agent {
         
         //Handle agree messages
         public void handleAgree(ACLMessage msg){
-            showMessage("AGREE message recived from "+msg.getSender().getLocalName());
+            //showMessage("AGREE message recived from "+msg.getSender().getLocalName());
         }
         
         //handle Inform Messages
@@ -204,7 +208,7 @@ public class BoatCoordinator extends Agent {
         
         //Handle agree messages
         public void handleAgree(ACLMessage msg){
-            showMessage("AGREE message recived from "+msg.getSender().getLocalName());
+           // showMessage("AGREE message recived from "+msg.getSender().getLocalName());
         }
         
         //Handle all the messages from boats in order to send that result to the CoordinatorAgent
@@ -332,33 +336,47 @@ public class BoatCoordinator extends Agent {
             for(int i = 0; i < rankings.size(); i++){              
                 FishRank candidateBestRank = rankings.get(i).seaFoodsBoatsBlockersRanking.get(0);
                 
-                if (bestRank.compareTo(candidateBestRank) == -1 && rankings.get(i).getLeader() == null){
+                if (bestRank.compareTo(candidateBestRank) == 1 && rankings.get(i).getLeader() == null){
                     bestRank = candidateBestRank;
                     bestRankIndex = i;
                 }
             }
             
             if (rankings.get(bestRankIndex).getLeader() == null) {
-                l++;
-                rankings.get(bestRankIndex).setLeader(bestRank);
+                Boolean uniqueInOtherRank = false;
+
                 for(int i = 0; i < rankings.size();i++){
-                    rankings.get(i).removeBoat(bestRank.getBoat(), rankings.get(i).seaFoodsBoatsBlockersRanking);
+                    if(rankings.get(i).seaFoodsBoatsBlockersRanking.size()>1){
+                        rankings.get(i).removeBoat(bestRank.getBoat(), rankings.get(i).seaFoodsBoatsBlockersRanking);
+                    }else if(rankings.get(i).seaFoodsBoatsBlockersRanking.size() == 1){
+                        if(rankings.get(i).indexBoatInRanking(bestRank.getBoat(), rankings.get(i).seaFoodsBoatsBlockersRanking) == 0 && i != bestRankIndex){
+                            uniqueInOtherRank = true;
+                        }
+                    }
+                }
+                
+                if(!uniqueInOtherRank){
+                        l++;
+                        rankings.get(bestRankIndex).setLeader(bestRank);
                 }
             }
-            System.out.println(l);
         }
         
         this.numGroups = rankings.size();
         this.actualGroups = 0;
         
         for (int i = 0; i < rankings.size();i++){
-            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-            msg.addReceiver(rankings.get(i).leader.getBoat().getAID());
             leaders.add(rankings.get(i).leader.getBoat().getAID());
             for (int j = 0; j < rankings.size();j++){
                 rankings.get(j).removeBoat(rankings.get(i).leader.getBoat(), rankings.get(j).seaFoodsBoatsRanking);
             }
+        }
+        
+        for (int i = 0; i < rankings.size();i++){
+            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+            msg.addReceiver(rankings.get(i).leader.getBoat().getAID());       
             msg.setOntology("Ranking");
+            System.out.println("Leader:\t"+rankings.get(i).leader.getBoat().getLocalName()+"\n"+rankings.get(i).toString());
             try {
                 msg.setContentObject(rankings.get(i).seaFoodsBoatsRanking);
             } catch (IOException ex) {
@@ -476,10 +494,10 @@ public class BoatCoordinator extends Agent {
         @Override
         public String toString() {
             StringBuffer msg = new StringBuffer();
-            for (int i = 0; i < this.seaFoodsBoatsBlockersRanking.size();i++){
-                msg.append("Boat:\t"+this.seaFoodsBoatsBlockersRanking.get(i).getBoat().getLocalName());
-                msg.append("\tExpected:\t"+this.seaFoodsBoatsBlockersRanking.get(i).getExpectedValue());
-                msg.append("\tDistance:\t"+this.seaFoodsBoatsBlockersRanking.get(i).getDistance()+"\n");
+            for (int i = 0; i < this.seaFoodsBoatsRanking.size();i++){
+                msg.append("Boat:\t"+this.seaFoodsBoatsRanking.get(i).getBoat().getLocalName());
+                msg.append("\tExpected:\t"+this.seaFoodsBoatsRanking.get(i).getExpectedValue());
+                msg.append("\tDistance:\t"+this.seaFoodsBoatsRanking.get(i).getDistance()+"\n");
             }
             return msg.toString();
         }
