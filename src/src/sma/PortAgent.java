@@ -78,7 +78,7 @@ public class PortAgent extends Agent {
                 
                 if (!this.strategy.isRejected()) {
                     reply.setPerformative(ACLMessage.PROPOSE);
-                    reply.setContentObject(this.strategy.getOffer());
+                    reply.setContentObject(new Double(this.strategy.getOffer()));
                 } else {
                     reply.setPerformative(ACLMessage.REFUSE);
                 }
