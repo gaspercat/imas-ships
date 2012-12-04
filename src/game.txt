@@ -2,8 +2,8 @@
 20    //columns
 5     //number of fishing phases to negotiate
 25    //total negotiations to end
-2    //number of seafood groups
-8    //number of boats
+5    //number of seafood groups
+20    //number of boats
 1000  //money per port
 10    //capacity of boat (per deposit)
 100   //capacity of port (per deposit)

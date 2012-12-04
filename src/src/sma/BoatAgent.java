@@ -350,6 +350,7 @@ public class BoatAgent extends Agent{
                     ACLMessage msgFormed = new ACLMessage(ACLMessage.REQUEST);
                     msgFormed.addReceiver(boatCoordinator);
                     msgFormed.setContent("Group formed");
+                    messagePendent = false;
                     myAgent.addBehaviour(new LeaderREInitiator(myAgent, msgFormed));
                 }
             }else if(mt2.match(msg) && boatsRanking.size() > 0){
@@ -409,10 +410,12 @@ public class BoatAgent extends Agent{
                     msgDown.addReceiver(boatCoordinator);
                     msgDown.setContent("Downgrade group counter");
                     myAgent.addBehaviour(new LeaderREInitiator(myAgent, msgDown));
+                    sendOffer();
                 }
                 boatsGroup.remove(request.getSender());
-
-                sendOffer();
+                
+                if(!messagePendent)
+                    sendOffer();
                 
                 reply.setContent("Removed from the group");
             }else if(mt3.match(request)){
