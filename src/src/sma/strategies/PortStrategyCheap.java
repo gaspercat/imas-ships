@@ -3,6 +3,7 @@ package sma.strategies;
 import java.util.ArrayList;
 import sma.ontology.DepositsLevel;
 import sma.ontology.SeaFoodType;
+import sma.PortAgent;
 
 public class PortStrategyCheap extends PortStrategy {
     private class FishType{
@@ -35,7 +36,7 @@ public class PortStrategyCheap extends PortStrategy {
     
     @Override
     protected void evaluate_offer() {
-        DepositsLevel plevels = this.port.deposits;
+        DepositsLevel plevels = this.port.getDeposits();
         
         if(!is_offer_acceptable()){
             this.is_rejected = true;
@@ -61,8 +62,8 @@ public class PortStrategyCheap extends PortStrategy {
             
             // Calculate useful volume
             double volume = this.levels.getSeafoodLevel(type.getType());
-            if(volume > this.port.deposits.getFreeSpaceSeafood(type.getType())){
-                volume = this.port.deposits.getFreeSpaceSeafood(type.getType());
+            if(volume > this.port.getDeposits().getFreeSpaceSeafood(type.getType())){
+                volume = this.port.getDeposits().getFreeSpaceSeafood(type.getType());
             }
             
             // Accumulate price to offer
@@ -73,8 +74,8 @@ public class PortStrategyCheap extends PortStrategy {
         }
         
         // If price to offer is higher than available money, lower offer
-        if(this.offer > this.port.available_money){
-            this.offer = this.port.available_money;
+        if(this.offer > this.port.getMoney()){
+            this.offer = this.port.getMoney();
         }
         
         // If price to offer is lower than minimum, reject offer
@@ -103,12 +104,12 @@ public class PortStrategyCheap extends PortStrategy {
         double min_price = calculate_minimum_price();
         
         // Reject if can't offer minimum price
-        if(this.port.available_money < min_price) return false;
+        if(this.port.getMoney() < min_price) return false;
         return true;
     }
     
     private boolean is_offer_confirmable() {
-        if(this.offer == 0 || this.offer > this.port.available_money) return false;
+        if(this.offer == 0 || this.offer > this.port.getMoney()) return false;
         return true;
     }
     

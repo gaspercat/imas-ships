@@ -120,6 +120,20 @@ public class DepositsLevel implements java.io.Serializable{
     // ** OPERATORS
     // *****************************************
     
+    public void add(DepositsLevel deposits){
+        this.lobsterLevel += deposits.lobsterLevel;
+        if(this.lobsterLevel > this.capacity) this.lobsterLevel = this.capacity;
+        
+        this.octopusLevel += deposits.octopusLevel;
+        if(this.octopusLevel > this.capacity) this.octopusLevel = this.capacity;
+        
+        this.shrimpLevel += deposits.shrimpLevel;
+        if(this.shrimpLevel > this.capacity) this.shrimpLevel = this.capacity;
+        
+        this.tunaLevel += deposits.tunaLevel;
+        if(this.tunaLevel > this.capacity) this.tunaLevel = this.capacity;
+    }
+    
     public DepositsLevel addition(DepositsLevel deposits){
         double capacity = (this.capacity > deposits.capacity) ? this.capacity : deposits.capacity;
         DepositsLevel ret = new DepositsLevel(capacity);

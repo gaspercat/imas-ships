@@ -1,6 +1,7 @@
 package sma.strategies;
 
 import sma.ontology.DepositsLevel;
+import sma.PortAgent;
 
 public class PortStrategyMedium extends PortStrategy {
     public PortStrategyMedium(PortAgent port, DepositsLevel levels){
@@ -16,8 +17,8 @@ public class PortStrategyMedium extends PortStrategy {
         
         // Set price to offer
         this.offer = calculate_medium_price();
-        if(this.offer > this.port.available_money){
-            this.offer = this.port.available_money;
+        if(this.offer > this.port.getMoney()){
+            this.offer = this.port.getMoney();
         }
         
         // Acccept offer
@@ -38,12 +39,12 @@ public class PortStrategyMedium extends PortStrategy {
         double min_price = calculate_minimum_price();
         
         // Reject if can't offer minimum price
-        if(this.port.available_money < min_price) return false;
+        if(this.port.getMoney() < min_price) return false;
         return true;
     }
     
     private boolean is_offer_confirmable() {
-        if(this.offer == 0 || this.offer > this.port.available_money) return false;
+        if(this.offer == 0 || this.offer > this.port.getMoney()) return false;
         return true;
     }
 }

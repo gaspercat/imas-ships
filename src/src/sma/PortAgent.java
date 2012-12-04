@@ -18,42 +18,51 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import sma.ontology.AuxInfo;
 import sma.ontology.PortType;
+import sma.ontology.DepositsLevel;
+
+import sma.strategies.PortStrategy;
 
 /**
  *
  * @author carles
  */
 public class PortAgent extends Agent {
-
     private AID portCoordinator;
-    private int[] deposits;
-    private Strategy strategy;
+    private PortType strategy;
+    
+    private DepositsLevel deposits;
     private double euros;
-    private double capacityPorts;
 
     public PortAgent(PortType type, AuxInfo auxInfo) {
-        try {
-            this.strategy = new StrategyFactory.createStrategy(type);
-        } catch (InvalidPortTypeException ex) {
-            System.err.println("PORT FaiL " + this);
-            Logger.getLogger(PortAgent.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    private Bid willBuy(int[] supplies) {
-        return this.strategy.willBuy(supplies, this.deposits, this.euros);
+        this.strategy = type;
+        
+        this.deposits = new DepositsLevel(1000);
+        this.euros = 1000;
     }
     
-    private void updateHold(int[] deposits){
-        this.strategy.updateHold(deposits);
+    public PortType getType(){
+        return this.strategy;
+    }
+    
+    public double getMoney(){
+        return this.euros;
+    }
+    
+    public DepositsLevel getDeposits(){
+        return this.deposits;
+    }
+    
+    private void updateHold(DepositsLevel deposits){
+        this.deposits.add(deposits);
     }
 
     private class PortBehaviour extends ContractNetResponder {
-
+        PortStrategy strategy;
         MessageTemplate mt;
-        Agent myAgent;
+        PortAgent myAgent;
+        
 
-        public PortBehaviour(Agent a, MessageTemplate mt) {
+        public PortBehaviour(PortAgent a, MessageTemplate mt) {
             super(a, mt);
             this.myAgent = a;
             this.mt = mt;
@@ -62,15 +71,14 @@ public class PortAgent extends Agent {
         @Override
         protected ACLMessage handleCfp(ACLMessage cfp) throws RefuseException, FailureException, NotUnderstoodException {
             ACLMessage reply = cfp.createReply();
+            
             try {
-
-                int supplies[] = (int[]) cfp.getContentObject();
-
-                Bid bid;
-                bid = willBuy(supplies);
-                if (bid.willBuy()) {
+                DepositsLevel levels = (DepositsLevel)cfp.getContentObject();
+                this.strategy = PortStrategy.create(this.myAgent, levels);
+                
+                if (!this.strategy.isRejected()) {
                     reply.setPerformative(ACLMessage.PROPOSE);
-                    reply.setContentObject(bid.getMoney());
+                    reply.setContentObject(this.strategy.getOffer());
                 } else {
                     reply.setPerformative(ACLMessage.REFUSE);
                 }
@@ -91,15 +99,14 @@ public class PortAgent extends Agent {
         @Override
         protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose, ACLMessage accept) {
             ACLMessage reply = accept.createReply();
-            try {
-                int[] deposits;
-                deposits = (int[]) cfp.getContentObject();
-                updateHold(deposits);
+            
+            if(!strategy.isAborted()){
+                this.myAgent.updateHold(this.strategy.getDeposits());
                 reply.setPerformative(ACLMessage.INFORM);
-            } catch (UnreadableException ex) {
-                showMessage(ex.getMessage());
+            }else{
                 reply.setPerformative(ACLMessage.FAILURE);
             }
+            
             return reply;
         }
 

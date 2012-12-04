@@ -37,17 +37,19 @@ public abstract class PortStrategy {
     protected double        offer;
     
     public static PortStrategy create(PortAgent port, DepositsLevel levels){
-        if(port.type == PortType.Steady) return new PortStrategySteady(port, levels);
-        if(port.type == PortType.Minimum) return new PortStrategyMinimum(port, levels);
-        if(port.type == PortType.Maximum) return new PortStrategyMaximum(port, levels);
-        if(port.type == PortType.Medium) return new PortStrategyMedium(port, levels);
-        if(port.type == PortType.Expensive) return new PortStrategyExpensive(port, levels);
-        if(port.type == PortType.Cheap) return new PortStrategyCheap(port, levels);
+        PortType type = port.getType();
+        
+        if(type == PortType.Steady) return new PortStrategySteady(port, levels);
+        if(type == PortType.Minimum) return new PortStrategyMinimum(port, levels);
+        if(type == PortType.Maximum) return new PortStrategyMaximum(port, levels);
+        if(type == PortType.Medium) return new PortStrategyMedium(port, levels);
+        if(type == PortType.Expensive) return new PortStrategyExpensive(port, levels);
+        if(type == PortType.Cheap) return new PortStrategyCheap(port, levels);
         
         return null;
     }
     
-    private PortStrategy(PortAgent port, DepositsLevel levels){
+    protected PortStrategy(PortAgent port, DepositsLevel levels){
         this.port = port;
         this.levels = levels;
         
@@ -83,6 +85,10 @@ public abstract class PortStrategy {
     public double getOffer(){
         if(this.is_rejected || this.is_aborted) return 0;
         return this.offer;
+    }
+    
+    public DepositsLevel getDeposits(){
+        return this.levels;
     }
     
     protected abstract void evaluate_offer();

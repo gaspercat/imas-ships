@@ -1,6 +1,7 @@
 package sma.strategies;
 
 import sma.ontology.DepositsLevel;
+import sma.PortAgent;
 
 public class PortStrategySteady extends PortStrategy {
     private final double MAX_MSE = 200;
@@ -16,8 +17,8 @@ public class PortStrategySteady extends PortStrategy {
             return;
         }
         
-        DepositsLevel current = this.port.deposits;
-        DepositsLevel future = this.port.deposits.addition(this.levels);
+        DepositsLevel current = this.port.getDeposits();
+        DepositsLevel future = this.port.getDeposits().addition(this.levels);
         
         double mse_current = calculate_mse(current);
         double mse_future = calculate_mse(future);
@@ -47,11 +48,11 @@ public class PortStrategySteady extends PortStrategy {
     }
     
     private boolean is_offer_acceptable() {
-        double mse_future = calculate_mse(this.port.deposits.addition(this.levels));
+        double mse_future = calculate_mse(this.port.getDeposits().addition(this.levels));
         double min_price = calculate_minimum_price();
         
         // Reject if can't offer minimum price
-        if(this.port.available_money < min_price){
+        if(this.port.getMoney() < min_price){
             return false;
         }
         
@@ -64,7 +65,7 @@ public class PortStrategySteady extends PortStrategy {
     }
     
     private boolean is_offer_confirmable() {
-        if(this.offer == 0 || this.offer > this.port.available_money) return false;
+        if(this.offer == 0 || this.offer > this.port.getMoney()) return false;
         return true;
     }
     
