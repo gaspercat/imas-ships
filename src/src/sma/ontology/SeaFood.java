@@ -44,10 +44,10 @@ public class SeaFood implements java.io.Serializable{
     
     public int setMovementDirection(){
         int[] distances = new int[4];
-        distances[0] = this.posY;
-        distances[1] = this.mapX - this.posX;
-        distances[2] = this.mapY - this.posY;
-        distances[3] = this.posX;
+        distances[0] = this.posX;
+        distances[1] = this.mapY - this.posY;
+        distances[2] = this.mapX - this.posX;
+        distances[3] = this.posY;
         
         int maxIndx = 0;
         
@@ -90,13 +90,13 @@ public class SeaFood implements java.io.Serializable{
     
     public void move(){
         if(this.movementDirection == 0){
-            this.posY -= 1;
-        }else if(this.movementDirection == 1){
-            this.posX += 1;
-        }else if(this.movementDirection ==2){
-            this.posY += 1;
-        }else{
             this.posX -= 1;
+        }else if(this.movementDirection == 1){
+            this.posY += 1;
+        }else if(this.movementDirection ==2){
+            this.posX += 1;
+        }else{
+            this.posY -= 1;
         }
     }
 }

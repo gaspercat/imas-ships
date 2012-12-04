@@ -316,7 +316,6 @@ public class BoatCoordinator extends Agent {
      */
     private void setUPleaders(ArrayList<ArrayList<FishRank>> frList){
         ArrayList<Rankings> rankings= this.getSeaFoodsBoatsRanking(frList);
-        ArrayList<Rankings> tempRankings = rankings;
         int l = 0;
         
         while(l < rankings.size()){                    
@@ -376,7 +375,7 @@ public class BoatCoordinator extends Agent {
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
             msg.addReceiver(rankings.get(i).leader.getBoat().getAID());       
             msg.setOntology("Ranking");
-            System.out.println("Leader:\t"+rankings.get(i).leader.getBoat().getLocalName()+"\n"+rankings.get(i).toString());
+            System.out.println(rankings.get(i).toString());
             try {
                 msg.setContentObject(rankings.get(i).seaFoodsBoatsRanking);
             } catch (IOException ex) {
@@ -494,10 +493,21 @@ public class BoatCoordinator extends Agent {
         @Override
         public String toString() {
             StringBuffer msg = new StringBuffer();
+            msg.append("Seafood: "+this.leader.getSf().getMovementDirection()+"("+this.leader.getSf().getPosX()+", "+this.leader.getSf().getPosY()+")"+"\n");
+            msg.append("Leader:\t"+this.leader.getBoat().getLocalName()+"("+this.leader.getBoat().getPosX()+", "+this.leader.getBoat().getPosY()+")");
+            msg.append("\tExpected:\t"+this.leader.getExpectedValue());
+            msg.append("\tDistance:\t"+this.leader.getDistance()+"\n");
             for (int i = 0; i < this.seaFoodsBoatsRanking.size();i++){
-                msg.append("Boat:\t"+this.seaFoodsBoatsRanking.get(i).getBoat().getLocalName());
+                BoatAgent boat = this.seaFoodsBoatsRanking.get(i).getBoat();
+                msg.append("Boat:\t"+boat.getLocalName()+"("+boat.getPosX()+", "+boat.getPosY()+")");
                 msg.append("\tExpected:\t"+this.seaFoodsBoatsRanking.get(i).getExpectedValue());
-                msg.append("\tDistance:\t"+this.seaFoodsBoatsRanking.get(i).getDistance()+"\n");
+                msg.append("\tDistance:\t"+this.seaFoodsBoatsRanking.get(i).getDistance());
+                msg.append("\tBlockable:\t");
+                if (this.seaFoodsBoatsRanking.get(i).getBlockable()){
+                    msg.append("Blockable\n");
+                }else{
+                    msg.append("No blockable\n");
+                }
             }
             return msg.toString();
         }

@@ -64,7 +64,7 @@ public class InfoGame implements java.io.Serializable {
     BufferedReader dis = new BufferedReader(fis);
     int NROWS = 0, NCOLS = 0;
     Random rand = new Random();
-    //rand.setSeed(202);
+   // rand.setSeed(202);
     
 	String dades = dis.readLine(); 
 	StringTokenizer st = new StringTokenizer(dades, " ");

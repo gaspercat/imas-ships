@@ -77,7 +77,7 @@ public class FishRank implements Comparable<FishRank>, java.io.Serializable{
     public void setBlockable(){
         blockable = true;
         
-        if(!((this.sf.getPosX() < this.boat.getPosX() && this.sf.movementDirection == 1)||(this.sf.getPosX() > this.boat.getPosX() && this.sf.movementDirection == 3)||(this.sf.getPosY() < this.boat.getPosY() && this.sf.movementDirection == 2)||(this.sf.getPosY() > this.boat.getPosY() && this.sf.movementDirection == 0))){
+        if((this.sf.getPosY() > this.boat.getPosY() && this.sf.getMovementDirection() == 1)||(this.sf.getPosY() < this.boat.getPosY() && this.sf.getMovementDirection() == 3)||(this.sf.getPosX() > this.boat.getPosX() && this.sf.getMovementDirection() == 2)||(this.sf.getPosX() < this.boat.getPosX() && this.sf.getMovementDirection() == 0)){
             blockable = false;
         }
         
