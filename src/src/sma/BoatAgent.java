@@ -552,6 +552,9 @@ public class BoatAgent extends Agent{
     private class NegotiateSalesInitiator extends ContractNetInitiator{
         BoatAgent myAgent;
         ACLMessage msg;
+
+        double acceptedPrice;
+        
         
         public NegotiateSalesInitiator(BoatAgent myAgent, ACLMessage msg){
             super(myAgent,msg);
@@ -560,10 +563,41 @@ public class BoatAgent extends Agent{
             messagePendent = true;
         }
         
-        // If port sends an offer for the fishes
         @Override
-        protected void handlePropose(ACLMessage propose, Vector acceptances){
+        protected void handleAllResponses(Vector responses, Vector acceptances){
+            double bestOffer = 0;
+            int bestPortIdx = -1;
             
+            for(ACLMessage msg: (Vector<ACLMessage>)responses){
+                if(msg.getPerformative() == ACLMessage.PROPOSE){
+                    try{
+                        double offer = ((Double)msg.getContentObject()).doubleValue();
+                        if(offer > bestOffer){
+                            bestOffer = offer;
+                            bestPortIdx = acceptances.size();
+                        }
+                        System.out.println(myAgent.getLocalName() + ": Received offer from " + msg.getSender().getLocalName() + ", value is " + String.valueOf(offer));
+                    }catch(UnreadableException e){
+                        System.out.println(myAgent.getLocalName() + ": Failed to read offer from " + msg.getSender().getLocalName() + "!!");
+                    }
+                    
+                    ACLMessage rsp = new ACLMessage(ACLMessage.REJECT_PROPOSAL);
+                    rsp.addReceiver(msg.getSender());
+                }
+                
+                if(bestPortIdx == -1){
+                    System.out.println(myAgent.getLocalName() + ": All boats rejected the proposals, failed to sell the seafoods!!");
+                }else{
+                    // Set acceptance response to best offer
+                    ACLMessage rsp = (ACLMessage)acceptances.get(bestPortIdx);
+                    rsp.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                    
+                    // Set current sell price
+                    this.acceptedPrice = bestOffer;
+                    
+                    System.out.println(myAgent.getLocalName() + ": Accepted offer from " + rsp.getSender().getLocalName() + ", waiting confirmation...");
+                }
+            }
         }
 
         // If port message not understood
@@ -571,10 +605,9 @@ public class BoatAgent extends Agent{
         protected void handleNotUnderstood(ACLMessage msg){
             
         }    
-            
-        // If port rejects request
-        @Override
-        protected void handleRefuse(ACLMessage msg){
+        
+        // If port finally buys deposits
+        protected void handleInform(ACLMessage inform){
             
         }
         
