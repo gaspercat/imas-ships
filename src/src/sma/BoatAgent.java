@@ -11,6 +11,7 @@ import jade.domain.FIPAAgentManagement.*;
 import jade.lang.acl.*;
 import jade.proto.SimpleAchieveREInitiator;
 import jade.proto.SimpleAchieveREResponder;
+import jade.proto.ContractNetInitiator;
 import sma.ontology.*;
 import java.util.*;
 import java.io.*;
@@ -546,5 +547,41 @@ public class BoatAgent extends Agent{
             return reply;
         }
         
+    }
+    
+    private class NegotiateSalesInitiator extends ContractNetInitiator{
+        BoatAgent myAgent;
+        ACLMessage msg;
+        
+        public NegotiateSalesInitiator(BoatAgent myAgent, ACLMessage msg){
+            super(myAgent,msg);
+            this.myAgent = myAgent;
+            this.msg = msg;
+            messagePendent = true;
+        }
+        
+        // If port sends an offer for the fishes
+        @Override
+        protected void handlePropose(ACLMessage propose, Vector acceptances){
+            
+        }
+
+        // If port message not understood
+        @Override
+        protected void handleNotUnderstood(ACLMessage msg){
+            
+        }    
+            
+        // If port rejects request
+        @Override
+        protected void handleRefuse(ACLMessage msg){
+            
+        }
+        
+        // If port cancels offer after the boat has accepted it
+        @Override
+        protected void handleFailure(ACLMessage msg){
+            
+        }
     }
 }
