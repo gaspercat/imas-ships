@@ -164,14 +164,14 @@ public class CoordinatorAgent extends Agent {
             }catch(UnreadableException e){
                 showMessage("HERE "+e.toString());
             }
-            reply.setContent("Boats Positions Recieved and sended to the central agent");
+            reply.setContent("Boats Positions Recieved and sent to the central agent");
 
           return reply;
       }
       
   }
   
-  //Behaviour that iniciate a comunication with a given agent
+  // Behaviour that iniciate a comunication with a given agent
   private class InitiatorBehaviour extends SimpleAchieveREInitiator{
       Agent myAgent;
       ACLMessage msg;
@@ -182,14 +182,14 @@ public class CoordinatorAgent extends Agent {
           this.msg = msg;
       }
       
-      //Handle agree messages
+      // Handle agree messages
       public void handleAgree(ACLMessage msg){
           showMessage("AGREE message recived from "+msg.getSender().getLocalName());
       }
       
-      //Handle an information message
+      // Handle an information message
       public void handleInform(ACLMessage msg){
-          //If message comes from centralAgent
+          // If message comes from centralAgent
           if(msg.getSender().equals(centralAgent)){
               if(msg.getOntology().equalsIgnoreCase("AuxInfo")){
                   computeInitialMessage(msg);
@@ -197,13 +197,13 @@ public class CoordinatorAgent extends Agent {
               }else{
                   showMessage("Message From Central Agent: "+msg.getContent());
               }
-              //prepare a message to sent to the boats coordinator
+              // Prepare a message to send to the boats coordinator
               ACLMessage boatMove = new ACLMessage(ACLMessage.REQUEST);
               boatMove.setSender(myAgent.getAID());
               boatMove.addReceiver(boatsCoordinator);
               boatMove.setContent("New fishing turn");
               
-              //Add a behaviour to initiate a comunication with the boats coordinator
+              // Add a behaviour to initiate a comunication with the boats coordinator
               myAgent.addBehaviour(new InitiatorBehaviour(myAgent,boatMove));
           }else if(msg.getSender().equals(boatsCoordinator)){  
                   showMessage("Message from Boats Coordinator: "+msg.getContent());
@@ -220,7 +220,7 @@ public class CoordinatorAgent extends Agent {
           AuxInfo info = (AuxInfo)msg.getContentObject();
           setGameInfo(info);
           if (info instanceof AuxInfo) {
-              // Prepare list of port AID's
+              // Prepare list of port AIDs
               ArrayList<AID> port_aids = new ArrayList<AID>();
               for(InfoAgent ia: info.getPorts()){
                   port_aids.add(ia.getAID());
