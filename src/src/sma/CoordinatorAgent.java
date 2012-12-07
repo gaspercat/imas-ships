@@ -26,6 +26,7 @@ public class CoordinatorAgent extends Agent {
   private static final long serialVersionUID = 1L;
 
   private AID centralAgent;
+  private AID portsCoordinator;
   private AID boatsCoordinator;
   
   private AuxInfo gameInfo;
@@ -94,13 +95,19 @@ public class CoordinatorAgent extends Agent {
     searchCriterion.setType(UtilsAgents.CENTRAL_AGENT);
     this.centralAgent = UtilsAgents.searchAgent(this, searchCriterion);
     
-    // Create boats coordinator
-      UtilsAgents.createAgent(this.getContainerController(), "BoatCoordinator", "sma.BoatCoordinator", null);
+    // Create ports & boats coordinators
+    UtilsAgents.createAgent(this.getContainerController(), "PortCoordinator", "sma.PortCoordinator", null);
+    UtilsAgents.createAgent(this.getContainerController(), "BoatCoordinator", "sma.BoatCoordinator", null);
 
-      //Search for the BoatCoordinator
-      ServiceDescription searchBoatCoordCriteria = new ServiceDescription();
-      searchBoatCoordCriteria.setName("BoatCoordinator");
-      this.boatsCoordinator = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
+    // Search for the PortCoordinator
+    ServiceDescription searchPortCoordCriteria = new ServiceDescription();
+    searchPortCoordCriteria.setName("PortCoordinator");
+    this.portsCoordinator = UtilsAgents.searchAgent(this, searchPortCoordCriteria);
+    
+    // Search for the BoatCoordinator
+    ServiceDescription searchBoatCoordCriteria = new ServiceDescription();
+    searchBoatCoordCriteria.setName("BoatCoordinator");
+    this.boatsCoordinator = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
     
     //Set the message template to deal with all the messages from boats coordinator
     MessageTemplate mt  = MessageTemplate.and(MessageTemplate.MatchSender(boatsCoordinator),MessageTemplate.MatchPerformative(ACLMessage.REQUEST));
@@ -207,31 +214,39 @@ public class CoordinatorAgent extends Agent {
   }
   
   
-  //Computes the initial message with the info of the game sended by the central agent
+  //Computes the initial message with the info of the game sent by the central agent
   private void computeInitialMessage(ACLMessage msg) {
     	showMessage("INFORM COORD AGENT received from "+ ( (AID)msg.getSender()).getLocalName()+" ... [OK]");
         try {
           AuxInfo info = (AuxInfo)msg.getContentObject();
           setGameInfo(info);
           if (info instanceof AuxInfo) {
-            //Creates as many boats as auxInfo contain
-            for (InfoAgent ia : info.getAgentsInitialPosition().keySet()){  
-          	showMessage("Agent ID: " + ia.getName());          	  
-                if (ia.getAgentType() == AgentType.Boat){
-                    showMessage("Agent type: " + ia.getAgentType().toString());
-                    Object[] position = new Object[6];
-                    position[0] = info.getAgentsInitialPosition().get(ia).getRow();
-                    position[1] = info.getAgentsInitialPosition().get(ia).getColumn();
-                    position[2] = info.getMap()[0].length;
-                    position[3] = info.getMap().length;
-                    position[4] = info.getCapacityBoats();
-                    position[5] = info.getSeaFoods();
-                    UtilsAgents.createAgent(this.getContainerController(),ia.getName(), "sma.BoatAgent", position);
-                }else showMessage("no agent type");
-          	  
-                Cell pos = (Cell)info.getAgentsInitialPosition().get(ia);
-                showMessage("pos: " + pos);
-             }
+              // Creates as many ports as auxInfo contains
+              for (InfoAgent ia : info.getPorts()){
+                  showMessage("Agent ID: " + ia.getName());  
+                  if(ia.getAgentType() == AgentType.Port){
+                      Object[] arguments = new Object[1];
+                      arguments[0] = ia.getPortType();
+                      showMessage("Agent type: " + ia.getAgentType().toString());
+                      UtilsAgents.createAgent(this.getContainerController(), ia.getName(), "sma.PortAgent", arguments);
+                  }else showMessage("no agent type");
+              }
+              
+              //Creates as many boats as auxInfo contains
+              for (InfoAgent ia : info.getAgentsInitialPosition().keySet()){  
+                  showMessage("Agent ID: " + ia.getName());          	  
+                  if (ia.getAgentType() == AgentType.Boat){
+                      showMessage("Agent type: " + ia.getAgentType().toString());
+                      Object[] position = new Object[6];
+                      position[0] = info.getAgentsInitialPosition().get(ia).getRow();
+                      position[1] = info.getAgentsInitialPosition().get(ia).getColumn();
+                      position[2] = info.getMap()[0].length;
+                      position[3] = info.getMap().length;
+                      position[4] = info.getCapacityBoats();
+                      position[5] = info.getSeaFoods();
+                      UtilsAgents.createAgent(this.getContainerController(), ia.getName(), "sma.BoatAgent", position);
+                  }else showMessage("no agent type");
+              }
           }
         } catch (Exception e) {
           showMessage("Incorrect content: "+e.toString());
