@@ -6,8 +6,7 @@ import jade.core.behaviours.*;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
 import jade.lang.acl.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.*;
 import sma.ontology.*;
 
 import jade.proto.SimpleAchieveREInitiator;
@@ -221,6 +220,12 @@ public class CoordinatorAgent extends Agent {
           AuxInfo info = (AuxInfo)msg.getContentObject();
           setGameInfo(info);
           if (info instanceof AuxInfo) {
+              // Prepare list of port AID's
+              ArrayList<AID> port_aids = new ArrayList<AID>();
+              for(InfoAgent ia: info.getPorts()){
+                  port_aids.add(ia.getAID());
+              }
+              
               // Creates as many ports as auxInfo contains
               for (InfoAgent ia : info.getPorts()){
                   showMessage("Agent ID: " + ia.getName());  
@@ -237,14 +242,18 @@ public class CoordinatorAgent extends Agent {
                   showMessage("Agent ID: " + ia.getName());          	  
                   if (ia.getAgentType() == AgentType.Boat){
                       showMessage("Agent type: " + ia.getAgentType().toString());
-                      Object[] position = new Object[6];
-                      position[0] = info.getAgentsInitialPosition().get(ia).getRow();
-                      position[1] = info.getAgentsInitialPosition().get(ia).getColumn();
-                      position[2] = info.getMap()[0].length;
-                      position[3] = info.getMap().length;
-                      position[4] = info.getCapacityBoats();
-                      position[5] = info.getSeaFoods();
-                      UtilsAgents.createAgent(this.getContainerController(), ia.getName(), "sma.BoatAgent", position);
+                      Object[] arguments = new Object[6];
+                      // Add position arguments
+                      arguments[0] = info.getAgentsInitialPosition().get(ia).getRow();
+                      arguments[1] = info.getAgentsInitialPosition().get(ia).getColumn();
+                      arguments[2] = info.getMap()[0].length;
+                      arguments[3] = info.getMap().length;
+                      arguments[4] = info.getCapacityBoats();
+                      arguments[5] = info.getSeaFoods();
+                      // Add ports AID
+                      arguments[6] = port_aids;
+                      // Create boat agent
+                      UtilsAgents.createAgent(this.getContainerController(), ia.getName(), "sma.BoatAgent", arguments);
                   }else showMessage("no agent type");
               }
           }

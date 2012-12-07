@@ -60,15 +60,18 @@ public class BoatAgent extends Agent{
     }
     
     protected void setup(){
-        
         Object[] arguments = this.getArguments();
 
+        // Read position arguments
         this.posX = new Integer(arguments[0].toString());
         this.posY = new Integer(arguments[1].toString());
         this.mapDimX = new Integer(arguments[2].toString());
         this.mapDimY = new Integer(arguments[3].toString());
         this.capacityBoats = (Double) arguments[4];
         this.seaFoods = (SeaFood[]) arguments[5];
+        
+        // Read ports list
+        this.ports = (ArrayList<AID>)arguments[6];
         
         this.deposits = new DepositsLevel(this.capacityBoats);
         this.money = 0;
