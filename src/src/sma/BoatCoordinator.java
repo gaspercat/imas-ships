@@ -52,6 +52,7 @@ public class BoatCoordinator extends Agent {
         System.out.println(getLocalName() + ": " + str);
     }
 
+    @Override
     protected void setup() {
         //Accept jave objects as messages
         this.setEnabledO2ACommunication(true, 0);

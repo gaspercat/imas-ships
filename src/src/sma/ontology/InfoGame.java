@@ -92,11 +92,11 @@ public class InfoGame implements java.io.Serializable {
 	String[] portsSplit = qtyPorts.split(",");
 	Integer counter = 0;
 	
-	for (String qty : portsSplit)
-	{
+	for (String qty : portsSplit){
 		this.info.setPortTypesQuantity(PortType.values()[counter], Integer.parseInt(qty));
 		InfoAgent agent = new InfoAgent(AgentType.Port);
 		agent.setAgentType(AgentType.Port);
+                agent.setName(AgentType.Port.toString() + counter, counter + "");
 		agent.setPortType(PortType.values()[counter]);
 		agent.setQuantityOfLobster(info.getCapacityPorts());
 		agent.setQuantityOfOctopus(info.getCapacityPorts());
