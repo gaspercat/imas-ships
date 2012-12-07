@@ -4,18 +4,12 @@
  */
 package sma;
 
-import jade.core.AID;
-import jade.core.Agent;
-import jade.domain.FIPAAgentManagement.FailureException;
-import jade.domain.FIPAAgentManagement.NotUnderstoodException;
-import jade.domain.FIPAAgentManagement.RefuseException;
-import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
-import jade.lang.acl.UnreadableException;
+import jade.core.*;;
+import jade.domain.*;
+import jade.domain.FIPAAgentManagement.*;
+import jade.lang.acl.*;
 import jade.proto.ContractNetResponder;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import sma.ontology.AuxInfo;
 import sma.ontology.PortType;
 import sma.ontology.DepositsLevel;
@@ -33,11 +27,45 @@ public class PortAgent extends Agent {
     private DepositsLevel deposits;
     private double euros;
 
-    public PortAgent(PortType type, AuxInfo auxInfo) {
-        this.strategy = type;
+    public PortAgent() {
+        super();
         
         this.deposits = new DepositsLevel(1000);
         this.euros = 1000;
+    }
+    
+    protected void setup(){
+        // Read port type argument
+        Object[] arguments = this.getArguments();
+        this.strategy = (PortType)arguments[0];
+        
+        //Accept jade objects as messages
+        this.setEnabledO2ACommunication(true, 0);
+        
+        showMessage("Agent (" + getLocalName() + ") .... [OK]");
+        
+        // Register the agent to the DF
+        ServiceDescription sd1 = new ServiceDescription();
+        sd1.setType(UtilsAgents.PORT_AGENT);
+        sd1.setName(getLocalName());
+        sd1.setOwnership(UtilsAgents.OWNER);
+        DFAgentDescription dfd = new DFAgentDescription();
+        dfd.addServices(sd1);
+        dfd.setName(getAID());
+        try {
+            DFService.register(this, dfd);
+            showMessage("Registered to the DF");
+        }catch (FIPAException e) {
+            System.err.println(getLocalName() + " registration with DF " + "unsucceeded. Reason: " + e.getMessage());
+            doDelete();
+        }
+        
+        // Add a new behaviour to respond to sale requests
+        MessageTemplate mt1 = MessageTemplate.MatchPerformative(ACLMessage.CFP);
+        MessageTemplate mt2 = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
+        MessageTemplate mt3 = MessageTemplate.MatchPerformative(ACLMessage.REJECT_PROPOSAL);
+        MessageTemplate mt = MessageTemplate.or(mt1, MessageTemplate.or(mt2, mt3));
+        this.addBehaviour(new PortAgent.TradeBehaviour(this,mt));
     }
     
     public PortType getType(){
@@ -60,13 +88,13 @@ public class PortAgent extends Agent {
         this.euros -= amount;
     }
 
-    private class PortBehaviour extends ContractNetResponder {
+    private class TradeBehaviour extends ContractNetResponder {
         PortStrategy strategy;
         MessageTemplate mt;
         PortAgent myAgent;
         
 
-        public PortBehaviour(PortAgent a, MessageTemplate mt) {
+        public TradeBehaviour(PortAgent a, MessageTemplate mt) {
             super(a, mt);
             this.myAgent = a;
             this.mt = mt;

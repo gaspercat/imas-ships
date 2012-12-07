@@ -24,11 +24,9 @@ import java.util.logging.Logger;
 public class BoatAgent extends Agent{
     private int posX, posY, mapDimX, mapDimY;
     private double capacityBoats;
-    private AID boatCoordinator;
     private SeaFood[] seaFoods;
     private ArrayList<FishRank> seaFoodRanking = new ArrayList<FishRank>();
     private Boolean isLeader = false;
-    private AID leader;
     private ArrayList<FishRank> boatsRanking = new ArrayList<FishRank>();
     private ArrayList<AID> boatsGroup = new ArrayList<AID>();
     private SeaFood sfToFish;
@@ -36,6 +34,10 @@ public class BoatAgent extends Agent{
     private HashMap pendentOfAcceptance = new HashMap();
     private Boolean messagePendent = false;
     
+    // Agent AID's
+    private AID leader;
+    private AID boatCoordinator;
+    private ArrayList<AID> ports;
     // Deposits & money
     private DepositsLevel deposits;
     private double money;
@@ -75,7 +77,7 @@ public class BoatAgent extends Agent{
             this.seaFoodRanking.add(new FishRank(this.seaFoods[i],this));
         }
         
-        //Accept jave objects as messages
+        //Accept jade objects as messages
         this.setEnabledO2ACommunication(true, 0);
         
         showMessage("Agent (" + getLocalName() + ") .... [OK]");
@@ -99,7 +101,6 @@ public class BoatAgent extends Agent{
         ServiceDescription searchBoatCoordCriteria = new ServiceDescription();
         searchBoatCoordCriteria.setType(UtilsAgents.BOAT_COORDINATOR);
         this.boatCoordinator = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
-        
         
         //Message Template Preformative filter
         MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
@@ -215,6 +216,23 @@ public class BoatAgent extends Agent{
         }
         
         return this.getPosition();
+    }
+    
+    public void negotiateDeposits(){
+        // Create message to be sent
+        ACLMessage msgFormed = new ACLMessage(ACLMessage.CFP);
+        try {
+            msgFormed.setContentObject(this.deposits);
+        } catch (IOException ex) {
+            showMessage("Error crafting initial port negotiation message!!");
+        }
+        
+        // Set destination ports
+        for(AID receiver: this.ports){
+            msgFormed.addReceiver(receiver);
+        }
+        
+        this.addBehaviour(new NegotiateSalesCNInitiator(this, msgFormed));
     }
     
     public void sellDeposits(double price){
