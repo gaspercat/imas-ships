@@ -22,9 +22,8 @@ import java.util.logging.Logger;
  * @author joan
  */
 public class BoatAgent extends Agent{
-    private int posX, posY,mapDimX, mapDimY;
+    private int posX, posY, mapDimX, mapDimY;
     private double capacityBoats;
-    private DepositsLevel dl;
     private AID boatCoordinator;
     private SeaFood[] seaFoods;
     private ArrayList<FishRank> seaFoodRanking = new ArrayList<FishRank>();
@@ -36,6 +35,10 @@ public class BoatAgent extends Agent{
     private FishRank bestFishRank;
     private HashMap pendentOfAcceptance = new HashMap();
     private Boolean messagePendent = false;
+    
+    // Deposits & money
+    private DepositsLevel deposits;
+    private double money;
 
     
     //First delivery generator of movement
@@ -65,7 +68,8 @@ public class BoatAgent extends Agent{
         this.capacityBoats = (Double) arguments[4];
         this.seaFoods = (SeaFood[]) arguments[5];
         
-        this.dl = new DepositsLevel(this.capacityBoats);
+        this.deposits = new DepositsLevel(this.capacityBoats);
+        this.money = 0;
         
         for(int i = 0; i < this.seaFoods.length;i++){
             this.seaFoodRanking.add(new FishRank(this.seaFoods[i],this));
@@ -156,7 +160,7 @@ public class BoatAgent extends Agent{
     
     //Boat Deposit getters
     public DepositsLevel getDL(){
-        return this.dl;
+        return this.deposits;
     }
    
     //Boat capacity getter
@@ -211,7 +215,12 @@ public class BoatAgent extends Agent{
         }
         
         return this.getPosition();
-    }    
+    }
+    
+    public void sellDeposits(double price){
+        this.money += price;
+        this.deposits.empty();
+    }
     
     //Given a particular request, handles it;
     private class ResponderBehaviour extends SimpleAchieveREResponder{
@@ -549,18 +558,19 @@ public class BoatAgent extends Agent{
         
     }
     
-    private class NegotiateSalesInitiator extends ContractNetInitiator{
+    private class NegotiateSalesCNInitiator extends ContractNetInitiator{
         BoatAgent myAgent;
         ACLMessage msg;
 
         double acceptedPrice;
+        Vector<AID> accepted;
         
-        
-        public NegotiateSalesInitiator(BoatAgent myAgent, ACLMessage msg){
+        public NegotiateSalesCNInitiator(BoatAgent myAgent, ACLMessage msg){
             super(myAgent,msg);
             this.myAgent = myAgent;
             this.msg = msg;
             messagePendent = true;
+            accepted = new Vector<AID>();
         }
         
         @Override
@@ -568,8 +578,12 @@ public class BoatAgent extends Agent{
             double bestOffer = 0;
             int bestPortIdx = -1;
             
+            this.accepted = new Vector<AID>();
+            
             for(ACLMessage msg: (Vector<ACLMessage>)responses){
                 if(msg.getPerformative() == ACLMessage.PROPOSE){
+                    this.accepted.add(msg.getSender());
+                    
                     try{
                         double offer = ((Double)msg.getContentObject()).doubleValue();
                         if(offer > bestOffer){
@@ -583,38 +597,58 @@ public class BoatAgent extends Agent{
                     
                     ACLMessage rsp = new ACLMessage(ACLMessage.REJECT_PROPOSAL);
                     rsp.addReceiver(msg.getSender());
-                }
-                
-                if(bestPortIdx == -1){
-                    System.out.println(myAgent.getLocalName() + ": All boats rejected the proposals, failed to sell the seafoods!!");
-                }else{
-                    // Set acceptance response to best offer
-                    ACLMessage rsp = (ACLMessage)acceptances.get(bestPortIdx);
-                    rsp.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-                    
-                    // Set current sell price
-                    this.acceptedPrice = bestOffer;
-                    
-                    System.out.println(myAgent.getLocalName() + ": Accepted offer from " + rsp.getSender().getLocalName() + ", waiting confirmation...");
+                }else if(msg.getPerformative() == ACLMessage.NOT_UNDERSTOOD){
+                    System.out.println(myAgent.getLocalName() + ": Message from " + msg.getSender().getLocalName() + " not understood!!");
                 }
             }
-        }
-
-        // If port message not understood
-        @Override
-        protected void handleNotUnderstood(ACLMessage msg){
             
-        }    
+            if(bestPortIdx == -1){
+                System.out.println(myAgent.getLocalName() + ": All boats rejected the proposals, failed to sell the seafoods!!");
+            }else{
+                // Set acceptance response to best offer
+                ACLMessage rsp = (ACLMessage)acceptances.get(bestPortIdx);
+                rsp.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+
+                // Set current sell price
+                this.acceptedPrice = bestOffer;
+
+                System.out.println(myAgent.getLocalName() + ": Accepted offer from " + rsp.getSender().getLocalName() + ", waiting confirmation...");
+            }
+        } 
         
         // If port finally buys deposits
+        @Override
         protected void handleInform(ACLMessage inform){
-            
+            this.myAgent.sellDeposits(acceptedPrice);
+            System.out.println(myAgent.getLocalName() + ": Fish sold to " + inform.getSender().getLocalName() + ".");
         }
         
         // If port cancels offer after the boat has accepted it
         @Override
         protected void handleFailure(ACLMessage msg){
+            // If no more initial acceptances, dump deposits
+            if(accepted.isEmpty()){
+                this.myAgent.sellDeposits(0);
+                return;
+            }
             
+            // Prepare new iteration message
+            Vector<ACLMessage> messages = new Vector<ACLMessage>();
+            ACLMessage rsp = new ACLMessage(ACLMessage.CFP);
+            try{
+                rsp.setContentObject(this.msg.getContentObject());
+            }catch(Exception e){
+                System.out.println(myAgent.getLocalName() + ": Failed to build sale request message (at newIteration)!!");
+            }
+            
+            // Prepare new iteration receivers
+            for(AID id: this.accepted){
+                rsp.addReceiver(id);
+            }
+            
+            // Start new iteration
+            messages.add(rsp);
+            this.newIteration(messages);
         }
     }
 }

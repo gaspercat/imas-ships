@@ -134,6 +134,13 @@ public class DepositsLevel implements java.io.Serializable{
         if(this.tunaLevel > this.capacity) this.tunaLevel = this.capacity;
     }
     
+    public void empty(){
+        this.lobsterLevel = 0;
+        this.octopusLevel = 0;
+        this.shrimpLevel = 0;
+        this.tunaLevel = 0;
+    }
+    
     public DepositsLevel addition(DepositsLevel deposits){
         double capacity = (this.capacity > deposits.capacity) ? this.capacity : deposits.capacity;
         DepositsLevel ret = new DepositsLevel(capacity);

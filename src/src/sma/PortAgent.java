@@ -55,6 +55,10 @@ public class PortAgent extends Agent {
     private void updateHold(DepositsLevel deposits){
         this.deposits.add(deposits);
     }
+    
+    private void withrawMoney(double amount){
+        this.euros -= amount;
+    }
 
     private class PortBehaviour extends ContractNetResponder {
         PortStrategy strategy;
@@ -102,6 +106,7 @@ public class PortAgent extends Agent {
             
             if(!strategy.isAborted()){
                 this.myAgent.updateHold(this.strategy.getDeposits());
+                this.myAgent.withrawMoney(strategy.getOffer());
                 reply.setPerformative(ACLMessage.INFORM);
             }else{
                 reply.setPerformative(ACLMessage.FAILURE);
