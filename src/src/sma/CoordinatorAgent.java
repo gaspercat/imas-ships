@@ -23,6 +23,10 @@ import jade.proto.SimpleAchieveREResponder;
  */
 public class CoordinatorAgent extends Agent {
   private static final long serialVersionUID = 1L;
+  
+  private static final int TURN_FISHING = 1;
+  private static final int TURN_NEGOTIATION = 2;
+  private static final int TURN_END = 3;
 
   private AID centralAgent;
   private AID portsCoordinator;
@@ -36,7 +40,6 @@ public class CoordinatorAgent extends Agent {
   // Game state
   private int currentNegotiation;
   private int currentTurn;
-  private int currentState;
 
   public BoatsPosition getBoatsPosition(){
       return boatsPosition;
@@ -56,6 +59,24 @@ public class CoordinatorAgent extends Agent {
   
   public void setBoatsPosition(BoatsPosition positions){
       this.boatsPosition = positions;
+  }
+  
+  public int nextTurn(){
+      if(this.currentTurn >= 20) return TURN_END;
+      
+      int ret = -1;
+      switch(this.currentTurn%5){
+          // If negotiation turn
+          case 4:
+              ret = TURN_NEGOTIATION;
+              
+          // If fishing turn
+          default:
+              ret = TURN_FISHING;
+      }
+      
+      this.currentTurn++;
+      return ret;
   }
 
   /**
@@ -126,10 +147,10 @@ public class CoordinatorAgent extends Agent {
 
   //Implements a responder to deal with the messages from boatsCoordinator
   private class ResponderBehaviour extends SimpleAchieveREResponder{
-      Agent myAgent;
+      CoordinatorAgent myAgent;
       MessageTemplate mt;
       
-      public ResponderBehaviour(Agent myAgent, MessageTemplate mt){
+      public ResponderBehaviour(CoordinatorAgent myAgent, MessageTemplate mt){
           super(myAgent, mt);
           this.myAgent = myAgent;
           this.mt = mt;
@@ -158,7 +179,7 @@ public class CoordinatorAgent extends Agent {
                 outMsg.setContentObject(bp);
                 
                 //Add a behaviour to initiate a comunication with the centralagent
-                myAgent.addBehaviour(new InitiatorBehaviour(myAgent,outMsg));
+                myAgent.addBehaviour(new InitiatorBehaviour(myAgent, outMsg));
             }catch(IOException e){
                 showMessage(e.toString());
             }catch(UnreadableException e){
@@ -173,10 +194,10 @@ public class CoordinatorAgent extends Agent {
   
   // Behaviour that iniciate a comunication with a given agent
   private class InitiatorBehaviour extends SimpleAchieveREInitiator{
-      Agent myAgent;
+      CoordinatorAgent myAgent;
       ACLMessage msg;
       
-      public InitiatorBehaviour(Agent myAgent, ACLMessage msg){
+      public InitiatorBehaviour(CoordinatorAgent myAgent, ACLMessage msg){
           super(myAgent, msg);
           this.myAgent = myAgent;
           this.msg = msg;
@@ -197,11 +218,18 @@ public class CoordinatorAgent extends Agent {
               }else{
                   showMessage("Message From Central Agent: "+msg.getContent());
               }
+              
               // Prepare a message to send to the boats coordinator
               ACLMessage boatMove = new ACLMessage(ACLMessage.REQUEST);
               boatMove.setSender(myAgent.getAID());
               boatMove.addReceiver(boatsCoordinator);
-              boatMove.setContent("New fishing turn");
+              
+              int turn = myAgent.nextTurn();
+              if(turn == TURN_FISHING){
+                boatMove.setContent("New fishing turn");
+              }else if(turn == TURN_NEGOTIATION){
+                boatMove.setContent("New negotiation turn");
+              }
               
               // Add a behaviour to initiate a comunication with the boats coordinator
               myAgent.addBehaviour(new InitiatorBehaviour(myAgent,boatMove));
