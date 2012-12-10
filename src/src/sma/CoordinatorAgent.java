@@ -219,20 +219,23 @@ public class CoordinatorAgent extends Agent {
                   showMessage("Message From Central Agent: "+msg.getContent());
               }
               
-              // Prepare a message to send to the boats coordinator
-              ACLMessage boatMove = new ACLMessage(ACLMessage.REQUEST);
-              boatMove.setSender(myAgent.getAID());
-              boatMove.addReceiver(boatsCoordinator);
-              
               int turn = myAgent.nextTurn();
-              if(turn == TURN_FISHING){
-                boatMove.setContent("New fishing turn");
-              }else if(turn == TURN_NEGOTIATION){
-                boatMove.setContent("New negotiation turn");
+              if(turn != TURN_END){
+                  // Prepare a message to send to the boats coordinator
+                  ACLMessage boatMove = new ACLMessage(ACLMessage.REQUEST);
+                  boatMove.setSender(myAgent.getAID());
+                  boatMove.addReceiver(boatsCoordinator);
+
+
+                  if(turn == TURN_FISHING){
+                      boatMove.setContent("New fishing turn");
+                  }else if(turn == TURN_NEGOTIATION){
+                      boatMove.setContent("New negotiation turn");
+                  }
+
+                  // Add a behaviour to initiate a comunication with the boats coordinator
+                  myAgent.addBehaviour(new InitiatorBehaviour(myAgent,boatMove));
               }
-              
-              // Add a behaviour to initiate a comunication with the boats coordinator
-              myAgent.addBehaviour(new InitiatorBehaviour(myAgent,boatMove));
           }else if(msg.getSender().equals(boatsCoordinator)){  
                   showMessage("Message from Boats Coordinator: "+msg.getContent());
           }
