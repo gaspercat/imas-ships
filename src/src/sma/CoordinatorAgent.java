@@ -62,12 +62,12 @@ public class CoordinatorAgent extends Agent {
   }
   
   public int nextTurn(){
-      if(this.currentTurn >= 20) return TURN_END;
+      if(this.currentTurn >= 30) return TURN_END;
       
       int ret = -1;
-      switch(this.currentTurn%5){
+      switch(this.currentTurn%6){
           // If negotiation turn
-          case 4:
+          case 5:
               ret = TURN_NEGOTIATION;
               
           // If fishing turn
@@ -234,7 +234,7 @@ public class CoordinatorAgent extends Agent {
                   }
 
                   // Add a behaviour to initiate a comunication with the boats coordinator
-                  myAgent.addBehaviour(new InitiatorBehaviour(myAgent,boatMove));
+                  myAgent.addBehaviour(new InitiatorBehaviour(myAgent, boatMove));
               }
           }else if(msg.getSender().equals(boatsCoordinator)){  
                   showMessage("Message from Boats Coordinator: "+msg.getContent());
@@ -273,7 +273,7 @@ public class CoordinatorAgent extends Agent {
                   showMessage("Agent ID: " + ia.getName());          	  
                   if (ia.getAgentType() == AgentType.Boat){
                       showMessage("Agent type: " + ia.getAgentType().toString());
-                      Object[] arguments = new Object[6];
+                      Object[] arguments = new Object[7];
                       // Add position arguments
                       arguments[0] = info.getAgentsInitialPosition().get(ia).getRow();
                       arguments[1] = info.getAgentsInitialPosition().get(ia).getColumn();

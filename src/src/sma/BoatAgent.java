@@ -109,12 +109,18 @@ public class BoatAgent extends Agent{
         MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
         MessageTemplate mt2 = MessageTemplate.MatchContent("Rank fish");
         MessageTemplate mt3 = MessageTemplate.MatchOntology("Ranking");
+        MessageTemplate mt4 = MessageTemplate.MatchContent("Start negotiation");
+        MessageTemplate mt5 = MessageTemplate.MatchContent("Set boats destinations");
         MessageTemplate preformativeMT = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
-        MessageTemplate mt = MessageTemplate.and(preformativeMT,MessageTemplate.or(mt1, MessageTemplate.or(mt2,mt3)));
+        MessageTemplate mt = MessageTemplate.and(preformativeMT,MessageTemplate.or(mt1, MessageTemplate.or(mt2,MessageTemplate.or(mt3, MessageTemplate.or(mt4, mt5)))));
         
-        //Add a new behaviour to respond this particular message
+        // Add a new behaviour to respond this particular message
         this.addBehaviour(new ResponderBehaviour(this,mt));
+        
+        // Add a new behaviour to respond to FishRank message
         this.addBehaviour(new NOLeaderREResponder(this, MessageTemplate.MatchOntology("FishRank")));
+        
+        // Add a new behaviour
 
     }
     
@@ -192,12 +198,15 @@ public class BoatAgent extends Agent{
         this.sfToFish = sfToFish;
     }
     
+    // Set the destination of the group boats
+    public void setBoatsDestinations(){
+        // TODO: Set destination of each boat and then send
+        // a 'Boats destination assigned' message to BoatCoordinator
+    }
     
-    
-    
-    //Move the boat one position randomly()
+    // Move the boat one position randomly()
     public int[] move(){
-        
+        // TODO: Move group of boats
         Boolean moved = false;
         
         while (!moved){
@@ -259,20 +268,20 @@ public class BoatAgent extends Agent{
         //Send an AGREE message to the sender
         protected ACLMessage prepareResponse(ACLMessage request){
             ACLMessage reply = request.createReply();
-            reply.setPerformative(ACLMessage.AGREE);
             
             String msgContent = request.getContent();
-            
+                        
             MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
-            MessageTemplate mt2 = MessageTemplate.MatchContent("Rank fish");
+            MessageTemplate mt2 = MessageTemplate.MatchContent("Start negotiation");
+            MessageTemplate mt3 = MessageTemplate.MatchContent("Rank fish");
             MessageTemplate mt4 = MessageTemplate.MatchOntology("Ranking");
+            MessageTemplate mt5 = MessageTemplate.MatchContent("Set boats destinations");
+            MessageTemplate mt = MessageTemplate.or(mt1, MessageTemplate.or(mt2,MessageTemplate.or(mt3, MessageTemplate.or(mt4, mt5))));
             
-            if (mt2.match(request)){
-                //showMessage("Petition to rank fish from "+request.getSender().getLocalName());
-            }else if (mt1.match(request)){
-                //showMessage("Petition to move recived from "+request.getSender().getLocalName());
-            }else if (mt4.match(request)){
-                //showMessage("Ranking recieved from "+request.getSender().getLocalName());
+            if (mt.match(request)){
+                reply.setPerformative(ACLMessage.AGREE);
+            }else{
+                reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
             }
             
             return reply;
@@ -286,9 +295,12 @@ public class BoatAgent extends Agent{
             String msgContent = request.getContent();
             
             MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
-            MessageTemplate mt2 = MessageTemplate.MatchContent("Rank fish");
-            MessageTemplate mt3 = MessageTemplate.MatchOntology("Ranking");
-
+            MessageTemplate mt2 = MessageTemplate.MatchContent("Start negotiation");
+            MessageTemplate mt3 = MessageTemplate.MatchContent("Rank fish");
+            MessageTemplate mt4 = MessageTemplate.MatchOntology("Ranking");
+            MessageTemplate mt5 = MessageTemplate.MatchContent("Set boats destinations");
+            
+            // Move request
             if (mt1.match(request)){
                 move();
                 try{
@@ -298,14 +310,22 @@ public class BoatAgent extends Agent{
                 }catch (IOException e){
                     showMessage(e.toString());
                 }
+                
+            // Negotiation start request
             }else if(mt2.match(request)){
+                // TODO: Start negotiation
+                
+            // Rank fishes request
+            }else if(mt3.match(request)){
                 try{
                     showMessage("Fish rank send to BoatCoordinator");
                     reply.setContentObject(getFishRank());
                 }catch (IOException e){
                     showMessage(e.toString());
                 }
-            }else if(mt3.match(request)){
+                
+            // Promotion to leader request
+            }else if(mt4.match(request)){
                 setIsLeader(true);
                 try {
                     setBoatsRanking((ArrayList<FishRank>)request.getContentObject());
@@ -322,6 +342,11 @@ public class BoatAgent extends Agent{
                 myAgent.addBehaviour(new LeaderREResponder(myAgent, mt));
                 
                 reply.setContent("Prepared to form groups");
+            
+            // Set group boats destinations
+            }else if(mt5.match(request)){
+                setBoatsDestinations();
+                reply.setContent("Assigning boat destinations");
             }
             
             return reply;
