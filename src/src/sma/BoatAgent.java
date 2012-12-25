@@ -22,16 +22,29 @@ import java.util.logging.Logger;
  * @author joan
  */
 public class BoatAgent extends Agent{
-    private int posX, posY, mapDimX, mapDimY;
-    private double capacityBoats;
-    private SeaFood[] seaFoods;
+    //Position and dimensions of the map
+    private int posX, posY, mapDimX, mapDimY;    
+    //Capacity of the boats
+    private double capacityBoats;    
+    //SeaFoods Groups
+    private SeaFood[] seaFoods;    
+    //Ranking of seafoods
     private ArrayList<FishRank> seaFoodRanking = new ArrayList<FishRank>();
+    //Is the boat a leader
     private Boolean isLeader = false;
+    //Ranking of the boats, only used by the leaders
     private ArrayList<FishRank> boatsRanking = new ArrayList<FishRank>();
+    
+    //Boats Group, only used by the leaders
     private ArrayList<AID> boatsGroup = new ArrayList<AID>();
-    private SeaFood sfToFish;
+    
+    //Best fishRank so far.
     private FishRank bestFishRank;
-    private HashMap pendentOfAcceptance = new HashMap();
+    
+    //List of messages pendents to response
+    private ArrayList<CandidateLeader> pendentOfAcceptance = new ArrayList<CandidateLeader>();
+    
+    //Are there any message pendent?
     private Boolean messagePendent = false;
     
     // Agent AID's
@@ -189,14 +202,6 @@ public class BoatAgent extends Agent{
     public void setBoatsRanking(ArrayList<FishRank> boatsRanking) {
         this.boatsRanking = boatsRanking;
     }
-
-    public SeaFood getSfToFish() {
-        return sfToFish;
-    }
-
-    public void setSfToFish(SeaFood sfToFish) {
-        this.sfToFish = sfToFish;
-    }
     
     // Set the destination of the group boats
     public void setBoatsDestinations(){
@@ -206,7 +211,7 @@ public class BoatAgent extends Agent{
     
     // Move the boat one position randomly()
     public int[] move(){
-        // TODO: Move group of boats
+        // TODO: Move group of boats according to the bestRankFish!!!!!
         Boolean moved = false;
         
         while (!moved){
@@ -529,12 +534,12 @@ public class BoatAgent extends Agent{
             
             if(mt1.match(msg)){
                 ACLMessage acceptanceMessage = new ACLMessage(ACLMessage.REQUEST);
-                ArrayList value = (ArrayList) pendentOfAcceptance.get(leader);
-                pendentOfAcceptance.remove(leader);
-                acceptanceMessage.addReceiver((AID) value.get(0));
+                Collections.sort(pendentOfAcceptance,Collections.reverseOrder());
+                CandidateLeader cl =  pendentOfAcceptance.remove(0);
+                acceptanceMessage.addReceiver(cl.candidateAID);
                 acceptanceMessage.setContent("Pendent request accepted");
-                leader = (AID) value.get(0);
-                bestFishRank = (FishRank) value.get(1);
+                leader = cl.candidateAID;
+                bestFishRank = cl.candidateRank;
                 myAgent.addBehaviour(new SInitiatorBehaviour(myAgent, acceptanceMessage));
             }
         }
@@ -580,17 +585,24 @@ public class BoatAgent extends Agent{
                         leader = request.getSender();
                         reply.setContent("Accept the proposal");
                     }else{
-                        if(bestFishRank.compareTo(candidateRank) == 1){
+                        boolean isNotBest = false;
+                        
+                        for(CandidateLeader cl: pendentOfAcceptance){
+                            if(cl.candidateRank.compareTo(candidateRank) == 1){
+                                isNotBest = true;
+                                break;
+                            }
+                        }
+                        
+                        if(bestFishRank.compareTo(candidateRank) == 1 || isNotBest){
                             reply.setContent("No accept proposal");
                         }else{
                             ACLMessage msgToPrevLeader = new ACLMessage(ACLMessage.REQUEST);
                             msgToPrevLeader.setContent("No longer interested in form part of the group");
                             msgToPrevLeader.addReceiver(leader);
                             myAgent.addBehaviour(new NOLeaderREInitiator(myAgent, msgToPrevLeader));
-                            ArrayList value = new ArrayList();
-                            value.add(request.getSender());
-                            value.add(candidateRank);
-                            pendentOfAcceptance.put(leader, value);
+                            CandidateLeader cl = new CandidateLeader(request.getSender(),candidateRank);
+                            pendentOfAcceptance.add(cl);
                             reply.setContent("Pendent to response");
                         }
                     }
@@ -602,6 +614,21 @@ public class BoatAgent extends Agent{
             return reply;
         }
         
+    }
+    
+    private class CandidateLeader implements Comparable<CandidateLeader>{
+        AID candidateAID;
+        FishRank candidateRank;
+        
+        public CandidateLeader(AID candidateAID, FishRank candidateRank){
+            this.candidateAID = candidateAID;
+            this.candidateRank = candidateRank;
+        }
+
+        @Override
+        public int compareTo(CandidateLeader t) {
+            return this.candidateRank.compareTo(t.candidateRank);
+        }
     }
     
     private class NegotiateSalesCNInitiator extends ContractNetInitiator{
