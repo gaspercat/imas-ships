@@ -8,10 +8,12 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.FailureException;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.proto.SimpleAchieveREResponder;
 
 /**
  *
@@ -58,8 +60,65 @@ public class PortCoordinator extends Agent{
         searchBoatCoordCriteria.setType(UtilsAgents.COORDINATOR_AGENT);
         this.coordinatorAgent = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
         
-        //Register a responder behavior to deal with the messages from the coordinatorAgent
-        //MessageTemplate mt_coord = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
-        //this.addBehaviour(new BoatCoordinator.ResponderBehaviour(this, mt_coord));
+        //Register a responder behavior to deal with the messages from the coordinatorAgent and the ports
+        
+        MessageTemplate mt1 = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
+        MessageTemplate mt2 = MessageTemplate.MatchContent("Upgrade sold counter");
+        MessageTemplate mt3 = MessageTemplate.MatchContent("New negotiation turn");
+
+        MessageTemplate mt = MessageTemplate.or(mt1, MessageTemplate.or(mt2, mt3));
+        
+        this.addBehaviour(new PortCoordinator.ResponderBehaviour(this, mt));
+    }
+    
+            //Given a particular request, handles it;
+    private class ResponderBehaviour extends SimpleAchieveREResponder {
+
+        PortCoordinator myAgent;
+        MessageTemplate mt;
+
+        //Consturctor of the Behaviour
+        public ResponderBehaviour(PortCoordinator myAgent, MessageTemplate mt) {
+            super(myAgent, mt);
+            //Change to match CNInitiator
+            this.myAgent = myAgent;
+            this.mt = mt;
+        }
+
+        //Send an AGREE message to the sender
+        protected ACLMessage prepareResponse(ACLMessage request) {
+            ACLMessage reply = request.createReply();
+
+            String msgContent = request.getContent();
+            
+            MessageTemplate mt1 = MessageTemplate.MatchContent("Upgrade sold counter");
+            //MessageTemplate mt2 = MessageTemplate.MatchContent("Start negotiation");
+
+            //MessageTemplate mt = MessageTemplate.or(mt1, mt2);
+            mt = mt1;
+            if (mt.match(request)) {
+                reply.setPerformative(ACLMessage.AGREE);
+            } else {
+                reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
+            }
+
+            showMessage("TIOOOOO  "+request.getContent());
+            
+            return reply;
+        }
+
+        //Return the result of the movement in a INFORM Message
+        protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException {
+            ACLMessage reply = request.createReply();
+            reply.setPerformative(ACLMessage.INFORM);
+
+            String msgContent = request.getContent();
+
+            MessageTemplate mt1 = MessageTemplate.MatchContent("Upgrade sold counter");
+
+            
+
+            return reply;
+        }
     }
 }

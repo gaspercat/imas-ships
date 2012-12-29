@@ -212,6 +212,7 @@ public class CoordinatorAgent extends Agent {
       public void handleInform(ACLMessage msg){
           // If message comes from centralAgent
           if(msg.getSender().equals(centralAgent)){
+              //TODO mt here
               if(msg.getOntology().equalsIgnoreCase("AuxInfo")){
                   computeInitialMessage(msg);
                   showMessage("AuxInfo recived from central Agent");

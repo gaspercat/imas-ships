@@ -4,17 +4,27 @@
  */
 package sma;
 
-import jade.core.*;;
-import jade.domain.*;
-import jade.domain.FIPAAgentManagement.*;
-import jade.lang.acl.*;
+import jade.core.AID;
+import jade.core.Agent;
+import jade.domain.DFService;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.FailureException;
+import jade.domain.FIPAAgentManagement.NotUnderstoodException;
+import jade.domain.FIPAAgentManagement.RefuseException;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
+import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
+import jade.lang.acl.UnreadableException;
 import jade.proto.ContractNetResponder;
+import jade.proto.SimpleAchieveREInitiator;
+import jade.proto.SimpleAchieveREResponder;
 import java.io.IOException;
-import sma.ontology.AuxInfo;
-import sma.ontology.PortType;
 import sma.ontology.DepositsLevel;
-
+import sma.ontology.PortType;
 import sma.strategies.PortStrategy;
+
+
 
 /**
  *
@@ -38,6 +48,12 @@ public class PortAgent extends Agent {
         // Read port type argument
         Object[] arguments = this.getArguments();
         this.strategy = (PortType)arguments[0];
+        
+        if(this.portCoordinator == null){
+            ServiceDescription searchBoatCoordCriteria = new ServiceDescription();
+            searchBoatCoordCriteria.setType(UtilsAgents.PORT_COORDINATOR);
+            this.portCoordinator = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
+        }
         
         //Accept jade objects as messages
         this.setEnabledO2ACommunication(true, 0);
@@ -88,6 +104,15 @@ public class PortAgent extends Agent {
         this.euros -= amount;
     }
 
+    private void warnSoldCoordinator() {
+        ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+        msg.addReceiver(portCoordinator);
+        msg.setContent("Upgrade sold counter");
+        System.out.println("tioooooo" +portCoordinator);
+        this.addBehaviour(new PortAgent.SInitiatorBehaviour(this, msg));
+    }
+
+
     private class TradeBehaviour extends ContractNetResponder {
         PortStrategy strategy;
         MessageTemplate mt;
@@ -108,11 +133,11 @@ public class PortAgent extends Agent {
                 DepositsLevel levels = (DepositsLevel)cfp.getContentObject();
                 this.strategy = PortStrategy.create(this.myAgent, levels);
                 if (!this.strategy.isRejected()) {
-                    showMessage("ACCEPTING proposal from "+cfp.getSender().getLocalName()+" with offer of "+this.strategy.getOffer());
+                    //showMessage("ACCEPTING proposal from "+cfp.getSender().getLocalName()+" with offer of "+this.strategy.getOffer());
                     reply.setPerformative(ACLMessage.PROPOSE);
                     reply.setContentObject(new Double(this.strategy.getOffer()));
                 } else {
-                    showMessage("REJECTING proposal from "+cfp.getSender().getLocalName());
+                    //showMessage("REJECTING proposal from "+cfp.getSender().getLocalName());
                     reply.setPerformative(ACLMessage.REFUSE);
                 }
 
@@ -140,13 +165,14 @@ public class PortAgent extends Agent {
                 reply.setPerformative(ACLMessage.FAILURE);
             }
             
+            myAgent.warnSoldCoordinator();
             return reply;
         }
 
         @Override
         protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
             super.handleRejectProposal(cfp, propose, reject);
-            showMessage("Reject from "+reject.getSender().getLocalName());
+            //showMessage("Reject from "+reject.getSender().getLocalName());
         }
 
         @Override
@@ -156,6 +182,86 @@ public class PortAgent extends Agent {
         }
     }
 
+        //Given a particular request, handles it;
+    private class ResponderBehaviour extends SimpleAchieveREResponder {
+
+        BoatAgent myAgent;
+        MessageTemplate mt;
+
+        //Consturctor of the Behaviour
+        public ResponderBehaviour(BoatAgent myAgent, MessageTemplate mt) {
+            super(myAgent, mt);
+            //Change to match CNInitiator
+            this.myAgent = myAgent;
+            this.mt = mt;
+        }
+
+        //Send an AGREE message to the sender
+        protected ACLMessage prepareResponse(ACLMessage request) {
+            ACLMessage reply = request.createReply();
+
+            String msgContent = request.getContent();
+            
+            MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
+            MessageTemplate mt2 = MessageTemplate.MatchContent("Start negotiation");
+            MessageTemplate mt3 = MessageTemplate.MatchContent("Rank fish");
+            MessageTemplate mt4 = MessageTemplate.MatchOntology("Ranking");
+            MessageTemplate mt5 = MessageTemplate.MatchContent("Set boats destinations");
+            MessageTemplate mt = MessageTemplate.or(mt1, MessageTemplate.or(mt2, MessageTemplate.or(mt3, MessageTemplate.or(mt4, mt5))));
+
+            if (mt.match(request)) {
+                reply.setPerformative(ACLMessage.AGREE);
+            } else {
+                reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
+            }
+
+            return reply;
+        }
+
+        //Return the result of the movement in a INFORM Message
+        protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException {
+            ACLMessage reply = request.createReply();
+            reply.setPerformative(ACLMessage.INFORM);
+
+            String msgContent = request.getContent();
+
+            MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
+            MessageTemplate mt2 = MessageTemplate.MatchContent("Start negotiation");
+            MessageTemplate mt3 = MessageTemplate.MatchContent("Rank fish");
+            MessageTemplate mt4 = MessageTemplate.MatchOntology("Ranking");
+            MessageTemplate mt5 = MessageTemplate.MatchContent("Set boats destinations");
+
+            
+
+            return reply;
+        }
+    }
+
+    //Implements a SimpleInitiator that deals with the cominication with the CoordinatorAgent
+    class SInitiatorBehaviour extends SimpleAchieveREInitiator {
+
+        Agent myAgent;
+        ACLMessage msg;
+
+        public SInitiatorBehaviour(Agent myAgent, ACLMessage msg) {
+            super(myAgent, msg);
+            this.myAgent = myAgent;
+            this.msg = msg;
+        }
+
+        //Handle agree messages
+        public void handleAgree(ACLMessage msg) {
+            //showMessage("AGREE message recived from "+msg.getSender().getLocalName());
+        }
+
+        //handle Inform Messages
+        public void handleInform(ACLMessage msg) {
+            showMessage("Informative message from " + msg.getSender().getLocalName() + ": " + msg.getContent());
+
+        }
+    }
+
+    
     /**
      * A message is shown in the log area of the GUI
      *

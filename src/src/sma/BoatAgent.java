@@ -344,10 +344,8 @@ public class BoatAgent extends Agent {
 
                 // Negotiation start request
             } else if (mt2.match(request)) {
-                // TODO: Start negotiation
                 showMessage("Starting negotiation");
                 negotiateDeposits();
-
             } else if (mt3.match(request)) {
                 try {
                     showMessage("Fish rank send to BoatCoordinator");

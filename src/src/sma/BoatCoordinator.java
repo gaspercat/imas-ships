@@ -4,19 +4,16 @@
  */
 package sma;
 
-import java.io.*;
 import jade.core.*;
-import jade.core.behaviours.SimpleBehaviour;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
 import jade.lang.acl.*;
-import sma.ontology.*;
-import java.util.*;
 import jade.proto.AchieveREInitiator;
 import jade.proto.SimpleAchieveREInitiator;
 import jade.proto.SimpleAchieveREResponder;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.io.*;
+import java.util.*;
+import sma.ontology.*;
 
 /**
  *
@@ -141,7 +138,7 @@ public class BoatCoordinator extends Agent {
                 reply.setContent("Wait for the other groups");
                 actualGroups++;
                 System.out.println("Number of groups Formed: "+actualGroups);
-                
+
                 if(actualGroups == numGroups){
                     showMessage("AAAAAAAAAAAAAAAAAALL Groups Formed");
                     addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareDestinationsMessageToBoats()));

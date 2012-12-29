@@ -1,7 +1,7 @@
 package sma.strategies;
 
-import sma.ontology.DepositsLevel;
 import sma.PortAgent;
+import sma.ontology.DepositsLevel;
 
 public class PortStrategySteady extends PortStrategy {
     private final double MAX_MSE = 200;

@@ -6,6 +6,9 @@ import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
 import jade.lang.acl.*;
 import jade.proto.SimpleAchieveREResponder;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import sma.ontology.*;
 import sma.gui.*;
@@ -22,7 +25,6 @@ import sma.gui.*;
 public class CentralAgent extends Agent {
   private sma.gui.GraphicInterface gui;
   private sma.ontology.InfoGame game;
-
   private BoatsPosition boats;
   
   SeaFood[] sfList;
@@ -91,6 +93,7 @@ public class CentralAgent extends Agent {
     }
     try {
       this.gui = new GraphicInterface(game);
+      gui.showPanelInfo(this.game.getInfo());
       gui.setVisible(true);
       
       showMessage("Game loaded ... [OK]");
@@ -116,6 +119,9 @@ public class CentralAgent extends Agent {
    // Setup finished. When the last inform is received, the agent itself will add
    // a behavious to send/receive actions
 
+   
+   
+   
   } //endof setup
   
   private class ResponderBehaviour extends SimpleAchieveREResponder{
@@ -139,7 +145,7 @@ public class CentralAgent extends Agent {
       protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException{
             ACLMessage reply = request.createReply();
             reply.setPerformative(ACLMessage.INFORM);
-            try{
+            try{//TODO put mt here
                 if(request.getContent().equalsIgnoreCase("Initial request")){
                     showMessage("Initial Request recived");
                     reply.setOntology("AuxInfo");
@@ -150,6 +156,13 @@ public class CentralAgent extends Agent {
                     refreshMap();
                     myAgent.doWait(500);
                     reply.setContent("Map reloaded");
+                }else if(request.getOntology().equalsIgnoreCase("Stats")){
+                    Stats stats = (Stats)request.getContentObject();
+                    updatePortStats(stats);
+                    refreshMap();
+                    myAgent.doWait(500);
+                    reply.setContent("Stats updated");
+                           
                 }else{
                     reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
                 }
@@ -216,13 +229,22 @@ public class CentralAgent extends Agent {
           }
       }
       
+      
+      
       try {
           gui.showGameMap(map);
-          gui.showPanelInfo(this.game.getInfo());
       
     } catch (Exception e) {
       e.printStackTrace();
     }      
+  }
+  
+  private void updatePortStats(Stats stats){          
+     gui.updatePortsPanelInfo(stats.getStats());
+  }
+  
+  private void updateBoatStats(Stats stats){
+      gui.updateBoatsPanelInfo(stats.getStats());
   }
   
 } //endof class AgentCentral
