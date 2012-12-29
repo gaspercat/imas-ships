@@ -101,7 +101,6 @@ public abstract class PortStrategy {
         ret += this.levels.getOctopusLevel() * MIN_OCTOPUS;
         ret += this.levels.getLobsterLevel() * MIN_LOBSTER;
         ret += this.levels.getShrimpLevel() * MIN_SHRIMP;
-        
         return ret;
     }
     

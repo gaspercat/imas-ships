@@ -19,7 +19,6 @@ public class PortStrategySteady extends PortStrategy {
         
         DepositsLevel current = this.port.getDeposits();
         DepositsLevel future = this.port.getDeposits().addition(this.levels);
-        
         double mse_current = calculate_mse(current);
         double mse_future = calculate_mse(future);
         double inc = future.getTotalAmount() - current.getTotalAmount();
@@ -35,6 +34,7 @@ public class PortStrategySteady extends PortStrategy {
         // Set price to offer and accept
         this.offer = price;
         this.is_rejected = false;
+        this.is_aborted = false;
     }
 
     @Override
@@ -49,8 +49,8 @@ public class PortStrategySteady extends PortStrategy {
     
     private boolean is_offer_acceptable() {
         double mse_future = calculate_mse(this.port.getDeposits().addition(this.levels));
-        double min_price = calculate_minimum_price();
         
+        double min_price = calculate_minimum_price();
         // Reject if can't offer minimum price
         if(this.port.getMoney() < min_price){
             return false;
@@ -71,14 +71,15 @@ public class PortStrategySteady extends PortStrategy {
     
     // Calculate mean squared error of the deposits balance
     private double calculate_mse(DepositsLevel levels){
+        
         double mean = levels.getTotalAmount() / 4;
         
         double mse = 0;
         
-        mse += Math.sqrt(mean - levels.getLobsterLevel());
-        mse += Math.sqrt(mean - levels.getOctopusLevel());
-        mse += Math.sqrt(mean - levels.getShrimpLevel());
-        mse += Math.sqrt(mean - levels.getTunaLevel());
+        mse += Math.pow(mean - levels.getLobsterLevel(), 2);
+        mse += Math.pow(mean - levels.getOctopusLevel(), 2);
+        mse += Math.pow(mean - levels.getShrimpLevel(), 2);
+        mse += Math.pow(mean - levels.getTunaLevel(), 2);
         
         return mse;
     }

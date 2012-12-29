@@ -107,15 +107,15 @@ public class PortAgent extends Agent {
             try {
                 DepositsLevel levels = (DepositsLevel)cfp.getContentObject();
                 this.strategy = PortStrategy.create(this.myAgent, levels);
-                
                 if (!this.strategy.isRejected()) {
+                    showMessage("ACCEPTING proposal from "+cfp.getSender().getLocalName()+" with offer of "+this.strategy.getOffer());
                     reply.setPerformative(ACLMessage.PROPOSE);
                     reply.setContentObject(new Double(this.strategy.getOffer()));
                 } else {
+                    showMessage("REJECTING proposal from "+cfp.getSender().getLocalName());
                     reply.setPerformative(ACLMessage.REFUSE);
                 }
 
-                showMessage("Petition to move recived from " + cfp.getSender().getLocalName());
 
 
             } catch (UnreadableException ex) {

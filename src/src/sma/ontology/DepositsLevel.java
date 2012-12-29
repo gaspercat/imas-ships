@@ -159,4 +159,12 @@ public class DepositsLevel implements java.io.Serializable{
         
         return ret;
     }
+
+    @Override
+    public String toString() {
+        return "DepositsLevel{" + "tunaLevel=" + tunaLevel + ", lobsterLevel=" + lobsterLevel + ", octopusLevel=" + octopusLevel + ", shrimpLevel=" + shrimpLevel + ", capacity=" + capacity + '}';
+    }
+    
+    
+    
 }
