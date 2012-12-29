@@ -139,9 +139,9 @@ public class BoatCoordinator extends Agent {
             // Group formed
             }else if(mt2.match(request)){
                 reply.setContent("Wait for the other groups");
+                actualGroups++;
                 System.out.println("Number of groups Formed: "+actualGroups);
                 
-                actualGroups++;
                 if(actualGroups == numGroups){
                     showMessage("AAAAAAAAAAAAAAAAAALL Groups Formed");
                     addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareDestinationsMessageToBoats()));
