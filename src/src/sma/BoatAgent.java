@@ -711,9 +711,7 @@ public class BoatAgent extends Agent {
                 ACLMessage acceptedReply  = response.createReply();
                 acceptedReply.setContent(null);
                 acceptedReply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-                
-                showMessage("resp "+response + "accetrpy"+acceptedReply);
-                
+                                
                 //Add to reply list
                 acceptances.add(acceptedReply);
                 //Set refusal to the other offers

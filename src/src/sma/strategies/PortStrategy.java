@@ -83,7 +83,8 @@ public abstract class PortStrategy {
      * @return Value > 0 if not rejected, 0 otherwise
      */
     public double getOffer(){
-        if(this.is_rejected || this.is_aborted) return 0;
+        //TODO configar que || this.is_aborted sobra aqui! MARC
+        if(this.is_rejected ) return 0;
         return this.offer;
     }
     
