@@ -130,7 +130,8 @@ public class PortAgent extends Agent {
         @Override
         protected ACLMessage handleCfp(ACLMessage cfp) throws RefuseException, FailureException, NotUnderstoodException {
             ACLMessage reply = cfp.createReply();
-            
+            MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.CFP);
+            if(mt.match(cfp)){
             try {
                 DepositsLevel levels = (DepositsLevel)cfp.getContentObject();
                 if(levels == null){
@@ -154,7 +155,7 @@ public class PortAgent extends Agent {
             } catch (IOException ex) {
                 reply.setPerformative(ACLMessage.FAILURE);
                 showMessage(ex.getMessage());
-            }
+            }}
             return reply;
         }
 
