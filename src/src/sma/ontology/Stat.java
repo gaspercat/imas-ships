@@ -4,11 +4,13 @@
  */
 package sma.ontology;
 
+import jade.util.leap.Serializable;
+
 /**
  *
  * @author carles
  */
-public class Stat {
+public class Stat implements Serializable{
     private DepositsLevel deposit;
     private double euros;
     private String name;

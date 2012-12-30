@@ -97,7 +97,9 @@ public abstract class PortStrategy {
     
     protected double calculate_minimum_price(){
         double ret = 0;
-        
+        if(this.levels == null){
+            System.out.println("FATAL NULL ERROR AT "+ port.getLocalName());
+        }
         ret += this.levels.getTunaLevel() * MIN_TUNA;
         ret += this.levels.getOctopusLevel() * MIN_OCTOPUS;
         ret += this.levels.getLobsterLevel() * MIN_LOBSTER;

@@ -9,11 +9,19 @@ import jade.core.Agent;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.FailureException;
+import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.lang.acl.UnreadableException;
+import jade.proto.AchieveREInitiator;
+import jade.proto.SimpleAchieveREInitiator;
 import jade.proto.SimpleAchieveREResponder;
+import jade.util.leap.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import sma.ontology.Stat;
 
 /**
  *
@@ -21,7 +29,11 @@ import jade.proto.SimpleAchieveREResponder;
  */
 public class PortCoordinator extends Agent{
     private AID coordinatorAgent;
-    
+    private int nBoats = 20;
+    private int boatCounter;
+    private ArrayList ports = new ArrayList();
+    private ArrayList stats = new ArrayList();
+            
     public PortCoordinator() {
         super();
     }
@@ -70,6 +82,54 @@ public class PortCoordinator extends Agent{
         
         this.addBehaviour(new PortCoordinator.ResponderBehaviour(this, mt));
     }
+
+    private void incBoatCounter() {
+        boolean done = false;
+        synchronized(this){
+            this.boatCounter++;
+            if(this.boatCounter == this.nBoats){
+                done = true;
+            }
+        }
+        showMessage("Boat done "+this.boatCounter);
+        if(done){
+            getStatPortInfo();
+        }
+    }
+
+    private void getStatPortInfo() {
+        ACLMessage infoRqst = new ACLMessage(ACLMessage.REQUEST);
+        infoRqst.setContent("Get stats");
+        if(this.ports.isEmpty()){
+            searchPorts();
+        }
+        for(int i = 0; i < this.ports.size(); i++){
+            AID port = (AID) ports.get(i);
+            infoRqst.addReceiver(port);
+        }
+        this.addBehaviour(new PortCoordinator.InitiatorBehaviour(this, infoRqst));
+    }
+
+    private void searchPorts() {
+        ServiceDescription searchPortCoordCriteria = new ServiceDescription();
+        searchPortCoordCriteria.setType(UtilsAgents.PORT_AGENT);
+        DFAgentDescription dfd = new DFAgentDescription();
+        dfd.addServices(searchPortCoordCriteria);
+        SearchConstraints c = new SearchConstraints();
+        c.setMaxResults(new Long(-1));
+        try {
+            DFAgentDescription[] result = DFService.search(this, dfd, c);
+            for(DFAgentDescription dfad : result){
+                ports.add(dfad.getName());
+            }
+            
+        } catch (FIPAException ex) {
+            //TODO throw custom exception
+            Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+        
     
             //Given a particular request, handles it;
     private class ResponderBehaviour extends SimpleAchieveREResponder {
@@ -102,7 +162,6 @@ public class PortCoordinator extends Agent{
                 reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
             }
 
-            showMessage("TIOOOOO  "+request.getContent());
             
             return reply;
         }
@@ -116,9 +175,49 @@ public class PortCoordinator extends Agent{
 
             MessageTemplate mt1 = MessageTemplate.MatchContent("Upgrade sold counter");
 
-            
+            if(mt1.match(request)){
+                myAgent.incBoatCounter();
+            }
 
             return reply;
+        }
+    }
+
+
+    //Implements a SimpleInitiator that deals with the cominication with the CoordinatorAgent
+    class InitiatorBehaviour extends AchieveREInitiator {
+
+        PortCoordinator myAgent;
+        ACLMessage msg;
+
+        public InitiatorBehaviour(PortCoordinator myAgent, ACLMessage msg) {
+            super(myAgent, msg);
+            this.myAgent = myAgent;
+            this.msg = msg;
+        }
+
+        //Handle agree messages
+        @Override
+        public void handleAgree(ACLMessage msg) {
+            //showMessage("AGREE message recived from "+msg.getSender().getLocalName());
+        }
+
+        @Override
+        protected void handleAllResultNotifications(java.util.Vector resultNotifications){
+            MessageTemplate mt = MessageTemplate.MatchOntology("Stat");
+            for(int i = 0; i < resultNotifications.size(); i++){
+                if(mt.match(msg)){
+                    try {
+                        Stat stat = (Stat)msg.getContentObject();
+                        stats.add(stat);
+                        
+                    } catch (UnreadableException ex) {
+                        showMessage("Couldn't read stat: "+ex.getMessage());
+                    }
+
+                }    
+            }
+            showMessage("Got "+myAgent.stats.size()+ " stats");
         }
     }
 }

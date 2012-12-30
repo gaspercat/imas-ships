@@ -20,8 +20,11 @@ import jade.proto.ContractNetResponder;
 import jade.proto.SimpleAchieveREInitiator;
 import jade.proto.SimpleAchieveREResponder;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import sma.ontology.DepositsLevel;
 import sma.ontology.PortType;
+import sma.ontology.Stat;
 import sma.strategies.PortStrategy;
 
 
@@ -108,7 +111,6 @@ public class PortAgent extends Agent {
         ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
         msg.addReceiver(portCoordinator);
         msg.setContent("Upgrade sold counter");
-        System.out.println("tioooooo" +portCoordinator);
         this.addBehaviour(new PortAgent.SInitiatorBehaviour(this, msg));
     }
 
@@ -131,13 +133,16 @@ public class PortAgent extends Agent {
             
             try {
                 DepositsLevel levels = (DepositsLevel)cfp.getContentObject();
+                if(levels == null){
+                    showMessage("GOT null from "+cfp.getSender().getLocalName()+ " "+cfp.getPerformative());
+                }
                 this.strategy = PortStrategy.create(this.myAgent, levels);
                 if (!this.strategy.isRejected()) {
-                    //showMessage("ACCEPTING proposal from "+cfp.getSender().getLocalName()+" with offer of "+this.strategy.getOffer());
+                    showMessage("ACCEPTING proposal from "+cfp.getSender().getLocalName()+" with offer of "+this.strategy.getOffer());
                     reply.setPerformative(ACLMessage.PROPOSE);
                     reply.setContentObject(new Double(this.strategy.getOffer()));
                 } else {
-                    //showMessage("REJECTING proposal from "+cfp.getSender().getLocalName());
+                    showMessage("REJECTING proposal from "+cfp.getSender().getLocalName());
                     reply.setPerformative(ACLMessage.REFUSE);
                 }
 
@@ -161,18 +166,22 @@ public class PortAgent extends Agent {
                 this.myAgent.updateHold(this.strategy.getDeposits());
                 this.myAgent.withrawMoney(strategy.getOffer());
                 reply.setPerformative(ACLMessage.INFORM);
+                            showMessage("ACCEPTED PROPOSAL");
+                             myAgent.warnSoldCoordinator();
+
             }else{
                 reply.setPerformative(ACLMessage.FAILURE);
+                            showMessage("FAILURE PROPOSAL");
+
             }
-            
-            myAgent.warnSoldCoordinator();
+           
             return reply;
         }
 
         @Override
         protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
             super.handleRejectProposal(cfp, propose, reject);
-            //showMessage("Reject from "+reject.getSender().getLocalName());
+            showMessage("Reject from "+reject.getSender().getLocalName());
         }
 
         @Override
@@ -185,11 +194,11 @@ public class PortAgent extends Agent {
         //Given a particular request, handles it;
     private class ResponderBehaviour extends SimpleAchieveREResponder {
 
-        BoatAgent myAgent;
+        PortAgent myAgent;
         MessageTemplate mt;
 
         //Consturctor of the Behaviour
-        public ResponderBehaviour(BoatAgent myAgent, MessageTemplate mt) {
+        public ResponderBehaviour(PortAgent myAgent, MessageTemplate mt) {
             super(myAgent, mt);
             //Change to match CNInitiator
             this.myAgent = myAgent;
@@ -202,12 +211,9 @@ public class PortAgent extends Agent {
 
             String msgContent = request.getContent();
             
-            MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
-            MessageTemplate mt2 = MessageTemplate.MatchContent("Start negotiation");
-            MessageTemplate mt3 = MessageTemplate.MatchContent("Rank fish");
-            MessageTemplate mt4 = MessageTemplate.MatchOntology("Ranking");
-            MessageTemplate mt5 = MessageTemplate.MatchContent("Set boats destinations");
-            MessageTemplate mt = MessageTemplate.or(mt1, MessageTemplate.or(mt2, MessageTemplate.or(mt3, MessageTemplate.or(mt4, mt5))));
+            MessageTemplate mt = MessageTemplate.MatchContent("Get stats");         
+            showMessage("fail");
+            //MessageTemplate mt = MessageTemplate.or(mt1, MessageTemplate.or(mt2, MessageTemplate.or(mt3, MessageTemplate.or(mt4, mt5))));
 
             if (mt.match(request)) {
                 reply.setPerformative(ACLMessage.AGREE);
@@ -224,14 +230,18 @@ public class PortAgent extends Agent {
             reply.setPerformative(ACLMessage.INFORM);
 
             String msgContent = request.getContent();
-
-            MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
-            MessageTemplate mt2 = MessageTemplate.MatchContent("Start negotiation");
-            MessageTemplate mt3 = MessageTemplate.MatchContent("Rank fish");
-            MessageTemplate mt4 = MessageTemplate.MatchOntology("Ranking");
-            MessageTemplate mt5 = MessageTemplate.MatchContent("Set boats destinations");
-
+            showMessage("REFAIL");
+            MessageTemplate mt = MessageTemplate.MatchContent("Get stats");
             
+            if(mt.match(request)){
+                reply.setOntology("Stat");
+                Stat stat = new Stat(myAgent.getDeposits(), myAgent.getMoney(), myAgent.getLocalName());
+                try {
+                    reply.setContentObject(stat);
+                } catch (IOException ex) {
+                    reply.setPerformative(ACLMessage.FAILURE);
+                }
+            }
 
             return reply;
         }
@@ -256,7 +266,7 @@ public class PortAgent extends Agent {
 
         //handle Inform Messages
         public void handleInform(ACLMessage msg) {
-            showMessage("Informative message from " + msg.getSender().getLocalName() + ": " + msg.getContent());
+            //showMessage("Informative message from " + msg.getSender().getLocalName() + ": " + msg.getContent());
 
         }
     }
