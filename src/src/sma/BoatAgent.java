@@ -231,12 +231,15 @@ public class BoatAgent extends Agent {
     public void negotiateDeposits() {
         // Create message to be sent
         ACLMessage msgFormed = new ACLMessage(ACLMessage.CFP);
-        showMessage("Faking desposits to debug");
+        msgFormed.setSender(this.getAID());
+        
+        
         Random r = new Random();
         this.deposits.setLobsterLevel(r.nextInt((int)deposits.getCapacity()));
         this.deposits.setOctopusLevel(r.nextInt((int)deposits.getCapacity()));
         this.deposits.setShrimpLevel(r.nextInt((int)deposits.getCapacity()));
         this.deposits.setTunaLevel(r.nextInt((int)deposits.getCapacity()));
+        showMessage("Faking desposits to debug "+deposits);
         try {
             msgFormed.setContentObject(this.deposits);
         } catch (IOException ex) {
@@ -250,8 +253,11 @@ public class BoatAgent extends Agent {
         // Set destination ports
         for (AID receiver : this.ports) {
             msgFormed.addReceiver(receiver);
-        }
+            AID sender = msgFormed.getSender();
+            showMessage("Sending request to "+receiver.getLocalName() + " From "+sender.getLocalName());
 
+        }
+        
         this.addBehaviour(new NegotiateSalesCNInitiator(this, msgFormed));
     }
 
@@ -662,14 +668,14 @@ public class BoatAgent extends Agent {
         BoatAgent myAgent;
         ACLMessage msg;
         double acceptedPrice;
-        Vector<AID> accepted;
+        Vector<ACLMessage> accepted;
 
         public NegotiateSalesCNInitiator(BoatAgent myAgent, ACLMessage msg) {
             super(myAgent, msg);
             this.myAgent = myAgent;
             this.msg = msg;
             messagePendent = true;
-            accepted = new Vector<AID>();
+            accepted = new Vector<ACLMessage>();
         }
 
         @Override
@@ -677,11 +683,12 @@ public class BoatAgent extends Agent {
             double bestOffer = 0;
             int bestPortIdx = -1;
 
-            this.accepted = new Vector<AID>();
+            this.accepted = new Vector<ACLMessage>();
 
             for (ACLMessage msg : (Vector<ACLMessage>) responses) {
+                showMessage("MSG "+msg.getPerformative() +" from "+ msg.getSender().getLocalName());
                 if (msg.getPerformative() == ACLMessage.PROPOSE) {
-                    this.accepted.add(msg.getSender());
+                    this.accepted.add(msg);
 
                     try {
                         double offer = ((Double) msg.getContentObject()).doubleValue();
@@ -713,9 +720,9 @@ public class BoatAgent extends Agent {
                 //Add to reply list
                 acceptances.add(acceptedReply);
                 //Set refusal to the other offers
-                for(int i = 0; i < responses.size(); i++ ){
+                for(int i = 0; i < accepted.size(); i++ ){
                     if(i != bestPortIdx){
-                        ACLMessage resp = (ACLMessage) responses.get(i);
+                        ACLMessage resp = (ACLMessage) accepted.get(i);
                         ACLMessage reply = resp.createReply();
                         reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
                         acceptedReply.setContent(null);
@@ -741,6 +748,7 @@ public class BoatAgent extends Agent {
         @Override
         protected void handleFailure(ACLMessage msg) {
             // If no more initial acceptances, dump deposits
+            showMessage("Port abortion");
             if (accepted.isEmpty()) {
                 this.myAgent.sellDeposits(0);
                 return;
@@ -750,14 +758,15 @@ public class BoatAgent extends Agent {
             Vector<ACLMessage> messages = new Vector<ACLMessage>();
             ACLMessage rsp = new ACLMessage(ACLMessage.CFP);
             try {
-                rsp.setContentObject(this.msg.getContentObject());
+                
+                rsp.setContentObject(myAgent.deposits);
             } catch (Exception e) {
                 System.out.println(myAgent.getLocalName() + ": Failed to build sale request message (at newIteration)!!");
             }
 
             // Prepare new iteration receivers
-            for (AID id : this.accepted) {
-                rsp.addReceiver(id);
+            for (ACLMessage id : this.accepted) {
+                rsp.addReceiver(id.getSender());
             }
 
             // Start new iteration
