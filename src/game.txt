@@ -7,4 +7,4 @@
 1000  //money per port
 10    //capacity of boat (per deposit)
 100   //capacity of port (per deposit)
-3,0,1,0,0,0     //ports and the quantity for each type in this order Steady, MinimumOffer, MediumOffer, MaximumOffer, MaxOffer, Cheapest & Expensive
+0,0,0,0,6,0     //ports and the quantity for each type in this order Steady, MinimumOffer, MediumOffer, MaximumOffer, MaxOffer, Cheapest & Expensive

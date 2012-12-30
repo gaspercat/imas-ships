@@ -5,6 +5,7 @@
 package sma.ontology;
 
 import jade.util.leap.ArrayList;
+import jade.util.leap.Serializable;
 
 
 
@@ -12,13 +13,13 @@ import jade.util.leap.ArrayList;
  *
  * @author carles
  */
-public class Stats {
+public class Stats implements Serializable{
     private ArrayList stats;
     private boolean isPort;
 
-    public Stats() {
+    public Stats(boolean isPort) {
         stats = new ArrayList();
-        isPort = false;
+        this.isPort = isPort;
     }
 
     public ArrayList getStats() {
@@ -35,6 +36,10 @@ public class Stats {
 
     public void setIsPort(boolean isPort) {
         this.isPort = isPort;
+    }
+
+    public int size() {
+        return this.stats.size();
     }
 
 }

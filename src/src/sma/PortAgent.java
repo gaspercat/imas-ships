@@ -19,6 +19,7 @@ import jade.lang.acl.UnreadableException;
 import jade.proto.ContractNetResponder;
 import jade.proto.SimpleAchieveREInitiator;
 import jade.proto.SimpleAchieveREResponder;
+import jade.tools.gui.ACLAIDDialog;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,6 +33,7 @@ import sma.strategies.PortStrategy;
  * @author carles
  */
 public class PortAgent extends Agent {
+    private static int boatDone = 0;
 
     private AID portCoordinator;
     private PortType strategy;
@@ -81,8 +83,15 @@ public class PortAgent extends Agent {
         MessageTemplate mt1 = MessageTemplate.MatchPerformative(ACLMessage.CFP);
         MessageTemplate mt2 = MessageTemplate.MatchPerformative(ACLMessage.ACCEPT_PROPOSAL);
         MessageTemplate mt3 = MessageTemplate.MatchPerformative(ACLMessage.REJECT_PROPOSAL);
+
         MessageTemplate mt = MessageTemplate.or(mt1, MessageTemplate.or(mt2, mt3));
+        
+        MessageTemplate req = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
+        MessageTemplate coord = MessageTemplate.MatchSender(portCoordinator);
+        MessageTemplate cont = MessageTemplate.MatchContent("Get stats");
+        MessageTemplate resp = MessageTemplate.or(cont, MessageTemplate.or(req,coord));
         this.addBehaviour(new PortAgent.TradeBehaviour(this, mt));
+        this.addBehaviour(new ResponderBehaviour(this, resp));
     }
 
     public PortType getType() {
@@ -109,7 +118,7 @@ public class PortAgent extends Agent {
         ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
         msg.addReceiver(portCoordinator);
         msg.setContent("Upgrade sold counter");
-        this.addBehaviour(new PortAgent.SInitiatorBehaviour(this, msg));
+        this.addBehaviour(new PortAgent.SInitiatorBehaviour(this, msg));       
     }
 
     private class TradeBehaviour extends ContractNetResponder {
@@ -128,13 +137,12 @@ public class PortAgent extends Agent {
         protected ACLMessage handleCfp(ACLMessage cfp) throws RefuseException, FailureException, NotUnderstoodException {
             ACLMessage reply = cfp.createReply();
             MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.CFP);
-            if (!mt.match(cfp)) {
-                showMessage("Wrong performative from " + cfp.getSender().getLocalName());
-
+            if(!mt.match(cfp)){
+                showMessage("GET "+cfp.getPerformative()+","+ cfp.getContent()+" from "+ cfp.getSender().getLocalName());
             }
+
             try {
                 DepositsLevel levels = (DepositsLevel) cfp.getContentObject();
-
                 this.strategy = PortStrategy.create(this.myAgent, levels);
                 if (!this.strategy.isRejected()) {
                     showMessage("ACCEPTING proposal from " + cfp.getSender().getLocalName() + " with offer of " + this.strategy.getOffer());
@@ -166,8 +174,10 @@ public class PortAgent extends Agent {
                 this.myAgent.updateHold(this.strategy.getDeposits());
                 this.myAgent.withrawMoney(strategy.getOffer());
                 reply.setPerformative(ACLMessage.INFORM);
-                showMessage("BOAT ACCEPT from " + accept.getSender().getLocalName());
-                // myAgent.warnSoldCoordinator();
+                                PortAgent.boatDone++;
+
+                showMessage("BOAT DONE from " + accept.getSender().getLocalName()+", "+PortAgent.boatDone);
+                myAgent.warnSoldCoordinator();
 
             } else {
                 reply.setPerformative(ACLMessage.FAILURE);
@@ -181,13 +191,13 @@ public class PortAgent extends Agent {
         @Override
         protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
             super.handleRejectProposal(cfp, propose, reject);
-            showMessage("Reject from " + reject.getSender().getLocalName());
+            //showMessage("Reject from " + reject.getSender().getLocalName());
         }
 
         @Override
         protected void handleOutOfSequence(ACLMessage msg) {
             super.handleOutOfSequence(msg);
-            System.out.println("PORT " + super.myAgent + " got OUT OF SEQUENCE " + msg);;
+           // System.out.println("PORT " + super.myAgent + " got OUT OF SEQUENCE " + msg);;
         }
     }
 
@@ -214,6 +224,8 @@ public class PortAgent extends Agent {
             MessageTemplate mt = MessageTemplate.MatchContent("Get stats");
             //MessageTemplate mt = MessageTemplate.or(mt1, MessageTemplate.or(mt2, MessageTemplate.or(mt3, MessageTemplate.or(mt4, mt5))));
 
+            showMessage("RESPONSE "+request.getPerformative()+request.getOntology());
+            
             if (mt.match(request)) {
                 reply.setPerformative(ACLMessage.AGREE);
             } else {
@@ -230,6 +242,7 @@ public class PortAgent extends Agent {
 
             String msgContent = request.getContent();
             MessageTemplate mt = MessageTemplate.MatchContent("Get stats");
+            showMessage("RESULT "+request.getPerformative()+request.getOntology());
 
             if (mt.match(request)) {
                 reply.setOntology("Stat");
@@ -259,12 +272,13 @@ public class PortAgent extends Agent {
 
         //Handle agree messages
         public void handleAgree(ACLMessage msg) {
-            //showMessage("AGREE message recived from "+msg.getSender().getLocalName());
+            showMessage("AGREE message recived from "+msg.getSender().getLocalName());
         }
 
         //handle Inform Messages
         public void handleInform(ACLMessage msg) {
-            //showMessage("Informative message from " + msg.getSender().getLocalName() + ": " + msg.getContent());
+            showMessage("Informative message from " + msg.getSender().getLocalName() + ": " + msg.getContent());
+            
         }
     }
 

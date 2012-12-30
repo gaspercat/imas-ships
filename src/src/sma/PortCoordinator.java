@@ -19,9 +19,11 @@ import jade.proto.AchieveREInitiator;
 import jade.proto.SimpleAchieveREInitiator;
 import jade.proto.SimpleAchieveREResponder;
 import jade.util.leap.ArrayList;
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import sma.ontology.Stat;
+import sma.ontology.Stats;
 
 /**
  *
@@ -32,7 +34,7 @@ public class PortCoordinator extends Agent{
     private int nBoats = 20;
     private int boatCounter;
     private ArrayList ports = new ArrayList();
-    private ArrayList stats = new ArrayList();
+    private Stats stats = new Stats(true);
             
     public PortCoordinator() {
         super();
@@ -48,7 +50,7 @@ public class PortCoordinator extends Agent{
         this.setEnabledO2ACommunication(true, 0);
 
         showMessage("Agent (" + getLocalName() + ") .... [OK]");
-
+        
         // Register the agent to the DF
         ServiceDescription sd1 = new ServiceDescription();
         sd1.setType(UtilsAgents.PORT_COORDINATOR);
@@ -85,14 +87,16 @@ public class PortCoordinator extends Agent{
 
     private void incBoatCounter() {
         boolean done = false;
-        synchronized(this){
+        showMessage("Getting lock");
+       // synchronized(this){
             this.boatCounter++;
             if(this.boatCounter == this.nBoats){
                 done = true;
             }
-        }
+       // }
         showMessage("Boat done "+this.boatCounter);
         if(done){
+            showMessage("End of negotiation turn");
             getStatPortInfo();
         }
     }
@@ -102,7 +106,7 @@ public class PortCoordinator extends Agent{
         infoRqst.setContent("Get stats");
         if(this.ports.isEmpty()){
             searchPorts();
-        }
+        } 
         for(int i = 0; i < this.ports.size(); i++){
             AID port = (AID) ports.get(i);
             infoRqst.addReceiver(port);
@@ -129,6 +133,43 @@ public class PortCoordinator extends Agent{
         }
     }
 
+    private void sendStatsCoord() {
+        ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);       
+        try {
+            msg.setOntology("Stats");
+            msg.addReceiver(coordinatorAgent);
+            msg.setContentObject(this.stats);
+            addBehaviour(new PortCoordinator.SInitiatorBehaviour(this, msg));
+        } catch (IOException ex) {
+            showMessage("Failed to build stats msg");
+        }
+        
+        
+    }
+
+    
+    //Implements a SimpleInitiator that deals with the cominication with the CoordinatorAgent
+    class SInitiatorBehaviour extends SimpleAchieveREInitiator {
+
+        Agent myAgent;
+        ACLMessage msg;
+
+        public SInitiatorBehaviour(Agent myAgent, ACLMessage msg) {
+            super(myAgent, msg);
+            this.myAgent = myAgent;
+            this.msg = msg;
+        }
+
+        //Handle agree messages
+        public void handleAgree(ACLMessage msg) {
+            //showMessage("AGREE message recived from "+msg.getSender().getLocalName());
+        }
+
+        //handle Inform Messages
+        public void handleInform(ACLMessage msg) {
+            //showMessage("Informative message from " + msg.getSender().getLocalName() + ": " + msg.getContent());
+        }
+    }
         
     
             //Given a particular request, handles it;
@@ -178,7 +219,7 @@ public class PortCoordinator extends Agent{
             if(mt1.match(request)){
                 myAgent.incBoatCounter();
             }
-
+            showMessage("RETURNING from "+request.getSender().getLocalName());
             return reply;
         }
     }
@@ -206,10 +247,11 @@ public class PortCoordinator extends Agent{
         protected void handleAllResultNotifications(java.util.Vector resultNotifications){
             MessageTemplate mt = MessageTemplate.MatchOntology("Stat");
             for(int i = 0; i < resultNotifications.size(); i++){
-                if(mt.match(msg)){
+                ACLMessage rsult = (ACLMessage) resultNotifications.get(i);
+                if(mt.match(rsult)){
                     try {
-                        Stat stat = (Stat)msg.getContentObject();
-                        stats.add(stat);
+                        Stat stat = (Stat)rsult.getContentObject();
+                        stats.addStat(stat);
                         
                     } catch (UnreadableException ex) {
                         showMessage("Couldn't read stat: "+ex.getMessage());
@@ -218,6 +260,7 @@ public class PortCoordinator extends Agent{
                 }    
             }
             showMessage("Got "+myAgent.stats.size()+ " stats");
+            myAgent.sendStatsCoord();
         }
     }
 }

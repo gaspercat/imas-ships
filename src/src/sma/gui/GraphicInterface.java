@@ -168,7 +168,7 @@ public class GraphicInterface extends JFrame {
 
         jAgensStatusPanel.setLayout(new GridLayout(ports + boats, 1, 0, 0));
 
-        int portCounter = 1;
+        int portCounter = 0;
         for (PortType type : info.getPortTypesQuantity().keySet()) {
             String pType = type.toString();
             Integer qty = info.getPortTypesQuantity().get(type);

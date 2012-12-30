@@ -254,7 +254,7 @@ public class BoatAgent extends Agent {
         for (AID receiver : this.ports) {
             msgFormed.addReceiver(receiver);
             AID sender = msgFormed.getSender();
-            showMessage("Sending request to "+receiver.getLocalName() + " From "+sender.getLocalName());
+           // showMessage("Sending request to "+receiver.getLocalName() + " From "+sender.getLocalName());
 
         }
         
@@ -686,7 +686,6 @@ public class BoatAgent extends Agent {
             this.accepted = new Vector<ACLMessage>();
 
             for (ACLMessage msg : (Vector<ACLMessage>) responses) {
-                showMessage("MSG "+msg.getPerformative() +" from "+ msg.getSender().getLocalName());
                 if (msg.getPerformative() == ACLMessage.PROPOSE) {
                     this.accepted.add(msg);
 
@@ -696,7 +695,7 @@ public class BoatAgent extends Agent {
                             bestOffer = offer;
                             bestPortIdx = accepted.size()-1;
                         }
-                        System.out.println(myAgent.getLocalName() + ": Received offer from " + msg.getSender().getLocalName() + ", value is " + String.valueOf(offer));
+                        //System.out.println(myAgent.getLocalName() + ": Received offer from " + msg.getSender().getLocalName() + ", value is " + String.valueOf(offer));
                     } catch (UnreadableException e) {
                         System.out.println(myAgent.getLocalName() + ": Failed to read offer from " + msg.getSender().getLocalName() + "!!");
                     }
@@ -712,11 +711,11 @@ public class BoatAgent extends Agent {
                 System.out.println(myAgent.getLocalName() + ": All boats rejected the proposals, failed to sell the seafoods!!");
             } else {
                 // Set acceptance response to best offer
-                ACLMessage response = (ACLMessage) responses.get(bestPortIdx);
+                ACLMessage response = (ACLMessage) accepted.get(bestPortIdx);
                 ACLMessage acceptedReply  = response.createReply();
                 acceptedReply.setContent(null);
                 acceptedReply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-                                
+                acceptances.clear();              
                 //Add to reply list
                 acceptances.add(acceptedReply);
                 //Set refusal to the other offers
@@ -727,6 +726,8 @@ public class BoatAgent extends Agent {
                         reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
                         acceptedReply.setContent(null);
                         acceptances.add(reply);
+                    }else{
+                        accepted.remove(i);
                     }
                 }
                 

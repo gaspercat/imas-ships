@@ -6,7 +6,7 @@ import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
 import jade.lang.acl.*;
 import jade.proto.SimpleAchieveREResponder;
-import java.util.ArrayList;
+import jade.util.leap.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -145,6 +145,7 @@ public class CentralAgent extends Agent {
       protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException{
             ACLMessage reply = request.createReply();
             reply.setPerformative(ACLMessage.INFORM);
+            MessageTemplate sttmt = MessageTemplate.MatchOntology("Stats");
             try{//TODO put mt here
                 if(request.getContent().equalsIgnoreCase("Initial request")){
                     showMessage("Initial Request recived");
@@ -156,13 +157,15 @@ public class CentralAgent extends Agent {
                     refreshMap();
                     myAgent.doWait(500);
                     reply.setContent("Map reloaded");
-                }else if(request.getOntology().equalsIgnoreCase("Stats")){
+                }else if(sttmt.match(request)){
                     Stats stats = (Stats)request.getContentObject();
                     updatePortStats(stats);
-                    refreshMap();
                     myAgent.doWait(500);
-                    reply.setContent("Stats updated");
-                           
+                    if(stats.isPort()){
+                        reply.setContent("Port updated");
+                    }else{
+                        reply.setContent("Boat updated");
+                    }       
                 }else{
                     reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
                 }
@@ -239,7 +242,12 @@ public class CentralAgent extends Agent {
     }      
   }
   
-  private void updatePortStats(Stats stats){          
+  private void updatePortStats(Stats stats){    
+     ArrayList lel = stats.getStats();
+     for(int i = 0; i < lel.size(); i++){
+         Stat s = (Stat)lel.get(i);
+         showMessage("Stat "+i+", "+s);
+     }
      gui.updatePortsPanelInfo(stats.getStats());
   }
   
