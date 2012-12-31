@@ -32,7 +32,7 @@ import sma.ontology.Stats;
 public class PortCoordinator extends Agent{
     private AID coordinatorAgent;
     private int nBoats = 20;
-    private int boatCounter;
+    private int boatCounter = 0;
     private ArrayList ports = new ArrayList();
     private Stats stats = new Stats(true);
             
@@ -88,12 +88,12 @@ public class PortCoordinator extends Agent{
     private void incBoatCounter() {
         boolean done = false;
         showMessage("Getting lock");
-       // synchronized(this){
+        synchronized(this){
             this.boatCounter++;
             if(this.boatCounter == this.nBoats){
                 done = true;
             }
-       // }
+        }
         showMessage("Boat done "+this.boatCounter);
         if(done){
             showMessage("End of negotiation turn");
@@ -103,12 +103,15 @@ public class PortCoordinator extends Agent{
 
     private void getStatPortInfo() {
         ACLMessage infoRqst = new ACLMessage(ACLMessage.REQUEST);
-        infoRqst.setContent("Get stats");
+        infoRqst.setContent("Get stats"); 
         if(this.ports.isEmpty()){
             searchPorts();
-        } 
+        }
+        showMessage("PORT SIZE "+this.ports.size());
         for(int i = 0; i < this.ports.size(); i++){
             AID port = (AID) ports.get(i);
+            showMessage("Sending stats request to "+port.getLocalName());
+
             infoRqst.addReceiver(port);
         }
         this.addBehaviour(new PortCoordinator.InitiatorBehaviour(this, infoRqst));
@@ -134,10 +137,11 @@ public class PortCoordinator extends Agent{
     }
 
     private void sendStatsCoord() {
-        ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);       
+        ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);    
         try {
             msg.setOntology("Stats");
             msg.addReceiver(coordinatorAgent);
+            this.boatCounter = 0;
             msg.setContentObject(this.stats);
             addBehaviour(new PortCoordinator.SInitiatorBehaviour(this, msg));
         } catch (IOException ex) {
@@ -145,6 +149,11 @@ public class PortCoordinator extends Agent{
         }
         
         
+    }
+
+    private void prepareNewTurn() {
+        showMessage("New turn received");
+        this.boatCounter = 0;
     }
 
     
@@ -193,10 +202,9 @@ public class PortCoordinator extends Agent{
             String msgContent = request.getContent();
             
             MessageTemplate mt1 = MessageTemplate.MatchContent("Upgrade sold counter");
-            //MessageTemplate mt2 = MessageTemplate.MatchContent("Start negotiation");
+            MessageTemplate mt2 = MessageTemplate.MatchContent("New negotiation turn");
 
-            //MessageTemplate mt = MessageTemplate.or(mt1, mt2);
-            mt = mt1;
+            MessageTemplate mt = MessageTemplate.or(mt1, mt2);
             if (mt.match(request)) {
                 reply.setPerformative(ACLMessage.AGREE);
             } else {
@@ -215,11 +223,17 @@ public class PortCoordinator extends Agent{
             String msgContent = request.getContent();
 
             MessageTemplate mt1 = MessageTemplate.MatchContent("Upgrade sold counter");
+            MessageTemplate mt2 = MessageTemplate.MatchContent("New negotiation turn");
 
             if(mt1.match(request)){
+                showMessage("Upgrading counter");
                 myAgent.incBoatCounter();
+            }else if(mt2.match(request)){
+                showMessage("New turn");
+                myAgent.prepareNewTurn();
+                
             }
-            showMessage("RETURNING from "+request.getSender().getLocalName());
+            //showMessage("RETURNING from "+request.getSender().getLocalName());
             return reply;
         }
     }

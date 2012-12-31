@@ -118,6 +118,8 @@ public class CoordinatorAgent extends Agent {
         searchCriterion.setType(UtilsAgents.CENTRAL_AGENT);
         this.centralAgent = UtilsAgents.searchAgent(this, searchCriterion);
 
+        
+        
         // Create ports & boats coordinators
         UtilsAgents.createAgent(this.getContainerController(), "PortCoordinator", "sma.PortCoordinator", null);
         UtilsAgents.createAgent(this.getContainerController(), "BoatCoordinator", "sma.BoatCoordinator", null);
@@ -249,7 +251,7 @@ public class CoordinatorAgent extends Agent {
             if (msg.getSender().equals(centralAgent)) {
                 //TODO mt here
                 MessageTemplate sttmt = MessageTemplate.MatchContent("Port updated");
-                if (sttmt.match(msg)) {
+                if (sttmt.match(msg)) {//Debufing purpouses
                     showMessage("ITS DONE");
                 } else {
                     if (msg.getOntology().equalsIgnoreCase("AuxInfo")) {
@@ -267,11 +269,12 @@ public class CoordinatorAgent extends Agent {
                         boatMove.addReceiver(boatsCoordinator);
 
 
-                        if (turn == TURN_FISHING) {
+                       if (turn == TURN_FISHING) {
                             boatMove.setContent("New fishing turn");
-                        } else if (turn == TURN_NEGOTIATION) {
+                       } else if (turn == TURN_NEGOTIATION) {
                             boatMove.setContent("New negotiation turn");
-                        }
+                         //   boatMove.addReceiver(portsCoordinator);
+                       }
 
                         // Add a behaviour to initiate a comunication with the boats coordinator
                         myAgent.addBehaviour(new InitiatorBehaviour(myAgent, boatMove));
@@ -285,6 +288,7 @@ public class CoordinatorAgent extends Agent {
 
     //Computes the initial message with the info of the game sent by the central agent
     private void computeInitialMessage(ACLMessage msg) {
+        //TODO seems that the ports aid arguments are improperly set
         showMessage("INFORM COORD AGENT received from " + ((AID) msg.getSender()).getLocalName() + " ... [OK]");
         try {
             AuxInfo info = (AuxInfo) msg.getContentObject();

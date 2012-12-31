@@ -239,7 +239,7 @@ public class BoatAgent extends Agent {
         this.deposits.setOctopusLevel(r.nextInt((int)deposits.getCapacity()));
         this.deposits.setShrimpLevel(r.nextInt((int)deposits.getCapacity()));
         this.deposits.setTunaLevel(r.nextInt((int)deposits.getCapacity()));
-        showMessage("Faking desposits to debug "+deposits);
+        //showMessage("Faking desposits to debug "+deposits);
         try {
             msgFormed.setContentObject(this.deposits);
         } catch (IOException ex) {
@@ -715,26 +715,32 @@ public class BoatAgent extends Agent {
                 ACLMessage acceptedReply  = response.createReply();
                 acceptedReply.setContent(null);
                 acceptedReply.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                acceptedReply.setSender(myAgent.getAID());
+                Object fu = acceptedReply.getSender();
+                
+               
                 acceptances.clear();              
+                
                 //Add to reply list
                 acceptances.add(acceptedReply);
+                
                 //Set refusal to the other offers
                 for(int i = 0; i < accepted.size(); i++ ){
                     if(i != bestPortIdx){
                         ACLMessage resp = (ACLMessage) accepted.get(i);
                         ACLMessage reply = resp.createReply();
+                        reply.setSender(myAgent.getAID());
+                        //showMessage("REFUSING PROP "+resp.getSender().getLocalName());
                         reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
                         acceptedReply.setContent(null);
                         acceptances.add(reply);
-                    }else{
-                        accepted.remove(i);
                     }
                 }
                 
                 // Set current sell price
                 this.acceptedPrice = bestOffer;
 
-                System.out.println(myAgent.getLocalName() + ": Accepted offer from " + response.getSender().getLocalName() + ", waiting confirmation...");
+                //System.out.println(myAgent.getLocalName() + ": Accepted offer from " + response.getSender().getLocalName() + ", waiting confirmation...");
             }
         }
 
@@ -742,7 +748,7 @@ public class BoatAgent extends Agent {
         @Override
         protected void handleInform(ACLMessage inform) {
             this.myAgent.sellDeposits(acceptedPrice);
-            System.out.println(myAgent.getLocalName() + ": Fish sold to " + inform.getSender().getLocalName() + ".");
+            //System.out.println(myAgent.getLocalName() + ": Fish sold to " + inform.getSender().getLocalName() + ".");
         }
 
         // If port cancels offer after the boat has accepted it
@@ -751,6 +757,7 @@ public class BoatAgent extends Agent {
             // If no more initial acceptances, dump deposits
             showMessage("Port abortion");
             if (accepted.isEmpty()) {
+                showMessage("Dumping deposits");
                 this.myAgent.sellDeposits(0);
                 return;
             }
