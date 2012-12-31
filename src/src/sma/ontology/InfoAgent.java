@@ -8,7 +8,7 @@ import jade.core.AID;
  * <p><b>Copyright:</b> Copyright (c) 2011</p>
  * <p><b>Company:</b> Universitat Rovira i Virgili (<a
  * href="http://www.urv.cat">URV</a>)</p>
- * @author David Isern & Joan Albert López
+ * @author David Isern & Joan Albert Lopez
  */
 public class InfoAgent extends Object implements java.io.Serializable {
 	private AID aid;

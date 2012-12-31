@@ -4,16 +4,19 @@
  */
 package sma;
 
+import java.io.*;
 import jade.core.*;
+import jade.core.behaviours.SimpleBehaviour;
 import jade.domain.*;
 import jade.domain.FIPAAgentManagement.*;
 import jade.lang.acl.*;
+import sma.ontology.*;
+import java.util.*;
 import jade.proto.AchieveREInitiator;
 import jade.proto.SimpleAchieveREInitiator;
 import jade.proto.SimpleAchieveREResponder;
-import java.io.*;
-import java.util.*;
-import sma.ontology.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -25,7 +28,9 @@ public class BoatCoordinator extends Agent {
     private BoatsPosition boatsPosition;
     private ArrayList<AID> leaders;
     
-    private int actualGroups, positionedGroups, numGroups;
+    private int actualGroups, organizedGroups, numGroups;
+    // Boats in the fishing spot, ready to fish.
+    private int positionedBoats; 
 
     public BoatCoordinator() {
         super();
@@ -114,7 +119,8 @@ public class BoatCoordinator extends Agent {
             MessageTemplate mt2 = MessageTemplate.MatchContent("Group formed");
             MessageTemplate mt3 = MessageTemplate.MatchContent("Downgrade group counter");
             MessageTemplate mt4 = MessageTemplate.MatchContent("New negotiation turn");
-            MessageTemplate mt5 = MessageTemplate.MatchContent("Boats destination assigned");
+            MessageTemplate mt5 = MessageTemplate.MatchContent("Group organized");
+            MessageTemplate mt6 = MessageTemplate.MatchContent("Boat destination reached");
             
             // New fishing turn
             if(mt1.match(request)){
@@ -136,12 +142,15 @@ public class BoatCoordinator extends Agent {
             // Group formed
             }else if(mt2.match(request)){
                 reply.setContent("Wait for the other groups");
-                actualGroups++;
                 System.out.println("Number of groups Formed: "+actualGroups);
-
+                
+                actualGroups++;
                 if(actualGroups == numGroups){
-                    showMessage("AAAAAAAAAAAAAAAAAALL Groups Formed");
-                    addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareDestinationsMessageToBoats()));
+                    showMessage("Groups Formed");
+                    // The task of the leader now is to plan how to position the group around the target seafood.
+                    // One this task is accomplished, each leader sends a message "Group organized"
+                    // back here (BoatCoordinator).
+                    myAgent.addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareOrganizeGroupMessageToLeaders()));
                 }
                 
             // Downgrade group counter
@@ -150,19 +159,42 @@ public class BoatCoordinator extends Agent {
                 reply.setContent("Number of groups downgraded");
                 System.out.println("Number of groups Formed: "+actualGroups);
             
-            // Boat destinations assigned
+            // Group organized
             }else if(mt5.match(request)){
                 reply.setContent("Wait for the other groups");
-                System.out.println("Number of groups with destinations set: " + positionedGroups + "/" + numGroups);
+                System.out.println("Number of groups with destinations set: " + organizedGroups + "/" + numGroups);
                 
-                positionedGroups++;
-                if(positionedGroups == numGroups){
+                organizedGroups++;
+                if(organizedGroups == numGroups)
+                {
                     showMessage("All boat destinations assigned, starting ship movements");
-                    // TODO: Send information to coordinator agent -> central agent
-                    // addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareMoveMessageToBoats()));
+                    // The BoatCoordinator asks to the boats (individually, not to the leaders) to move their asses.
+                    // REMARK: Boat positions (after moving) came in the inform message of the following behaviour.
+                    addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareMoveMessageToBoats()));
                 }
-                
             }
+            // Boat fishing spots reached
+            else if(mt6.match(request)){
+                reply.setContent("Wait for other boats to reach their fishing spot");
+                System.out.println("Number of boats that reached the fishing spot: " + positionedBoats + "/" + 20);
+                
+                positionedBoats++;
+                if (positionedBoats < 20)
+                // Some boats still moving, because have not reached the fishing spot.
+                // REMARK: Boat positions (after moving) came in the inform message of the following behaviour. 
+                {
+                    addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareMoveMessageToBoats()));
+                }
+                // Finished moving, all reached their corresponding destination (fishing spot).
+                else
+                {
+                    showMessage("All boats reached their destination (fishing spot)!");
+                    
+                    System.out.println("DAMN, NIGAS! GO FISHING MUTHAFOCASSSS");
+                    // TODO: Start fishing phase
+                }
+            }
+                
             
             return reply;
         }
@@ -192,14 +224,15 @@ public class BoatCoordinator extends Agent {
         }
         
         // Message asking the boat leaders to set their boats destinations
-        private ACLMessage prepareDestinationsMessageToBoats(){
+        private ACLMessage prepareOrganizeGroupMessageToLeaders(){
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
 
             for(AID boat: leaders){
                 msg.addReceiver(boat);
             }
             
-            msg.setContent("Set boats destinations");
+            msg.setContent("Organize group");
+
             return msg;
         }
         
@@ -249,7 +282,7 @@ public class BoatCoordinator extends Agent {
         }
     }
 
-    //Initiates the petiotion to move all boats
+    //Initiates communication with the boats
     class boatsInitiatorBehaviour extends AchieveREInitiator{
         Agent myAgent;
         ACLMessage msg;
@@ -272,11 +305,15 @@ public class BoatCoordinator extends Agent {
             MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
             MessageTemplate mt2 = MessageTemplate.MatchContent("Rank Fish");
             MessageTemplate mt3 = MessageTemplate.MatchContent("Initiate grouping");
-                
+            MessageTemplate mt4 = MessageTemplate.MatchContent("Organize groups");
+                  
+            // Move
             if (mt1.match(msg)){
                 //Boats positions that we have to send to the Coordinator agent
                 BoatsPosition boatsPos = new BoatsPosition();
-
+                //How many boats reached their fishing spots.
+                int fishingPos = 0;
+                MessageTemplate mt = MessageTemplate.MatchOntology("Fishing position"); // Or Intermediate position.
                 //iterate over all the responses
                 while(itr.hasNext()){
                    ACLMessage msg = (ACLMessage)itr.next(); 
@@ -284,6 +321,8 @@ public class BoatCoordinator extends Agent {
                        try{
                            BoatPosition bp = (BoatPosition) msg.getContentObject();
                            boatsPos.addPosition(bp);
+                           if (mt.match(msg)) // Current position is the fishing position
+                               fishingPos++;
                        }catch(UnreadableException e){
                            showMessage(e.toString());
                        }
@@ -291,7 +330,7 @@ public class BoatCoordinator extends Agent {
                 }
                 
                 try{
-                    //Prepare the message to the Coordinator agents
+                    //Prepare the message to the Coordinator agent
                     ACLMessage outMessage = new ACLMessage(ACLMessage.REQUEST);
                     outMessage.addReceiver(coordinatorAgent);
                     outMessage.setSender(myAgent.getAID());
@@ -302,6 +341,7 @@ public class BoatCoordinator extends Agent {
                 }catch(IOException e){
                     showMessage(e.toString());
                 }
+            // Rank Fish
             }else if(mt2.match(msg)){
                 ArrayList<ArrayList<FishRank>> fishRanks = new ArrayList();
                 
@@ -316,9 +356,15 @@ public class BoatCoordinator extends Agent {
                        }
                    }
                 }             
-                setUPleaders(fishRanks);           
+                setUPleaders(fishRanks);   
+            // Initiate grouping
             }else if(mt3.match(msg)){
-                
+               
+            }
+            // Set boats destinations
+            else if (mt4.match(msg))
+            {
+                // Don't care
             }
         }
     }
@@ -417,7 +463,7 @@ public class BoatCoordinator extends Agent {
         
         this.numGroups = rankings.size();
         this.actualGroups = 0;
-        this.positionedGroups = 0;
+        this.positionedBoats = 0;
         
         for (int i = 0; i < rankings.size();i++){
             leaders.add(rankings.get(i).leader.getBoat().getAID());

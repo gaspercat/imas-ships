@@ -14,7 +14,7 @@ import java.awt.Dimension;
  * <p><b>Copyright:</b> Copyright (c) 2011</p>
  * <p><b>Company:</b> Universitat Rovira i Virgili (<a
  * href="http://www.urv.cat">URV</a>)</p>
- * @author David Isern & Joan Albert López
+ * @author David Isern & Joan Albert Lopez
  */
 public class StatisticsPanel
     extends JPanel {
