@@ -15,6 +15,8 @@ public class SeaFood implements java.io.Serializable{
     int posX, posY, mapX, mapY, movementDirection;
     float quantity;
     SeaFoodType type;
+    // Number of boats blocking the seafood. Must be 4 to start fishing.
+    int blocks;
     
     public SeaFood(SeaFoodType type, int posX, int posY, int mapX, int mapY, float quantity){
         this.type = type;
@@ -24,6 +26,7 @@ public class SeaFood implements java.io.Serializable{
         this.mapY = mapY-1;
         this.movementDirection = this.setMovementDirection();
         this.quantity = quantity;
+        this.blocks = 0;
     }
     
     public void setPosX(int posX){
@@ -88,6 +91,10 @@ public class SeaFood implements java.io.Serializable{
         }
     }
     
+    /**
+     * Movements of the seafood. The next position depends on the movement 
+     * direction. 0 North, 1 East, 2 South, 3 West, and -1 no movement.
+     */
     public void move(){
         if(this.movementDirection == 0){
             this.posX -= 1;
@@ -98,5 +105,55 @@ public class SeaFood implements java.io.Serializable{
         }else{
             this.posY -= 1;
         }
+    }
+    
+    public boolean isBlockable(BoatPosition bp)
+    {
+        int boatPosX = bp.getRow();
+        int boatPosY = bp.getColumn();
+        
+        if((getPosY() > boatPosY && getMovementDirection() == 1)||(getPosY() < boatPosY && getMovementDirection() == 3)||(getPosX() > boatPosX && getMovementDirection() == 2)||(getPosX() < boatPosX && getMovementDirection() == 0)){
+            return false;
+        }
+        
+        int dX = Math.abs(posX - boatPosX);
+        int dY = Math.abs(posY - boatPosY);
+        if(movementDirection%2==0){
+            if (!(dX >= dY - 1)) return false;
+        }else{
+            if (!(dY >= dX - 1)) return false;
+        }
+        
+        return true;
+    }
+    
+    @Override
+    public String toString()
+    {
+        return String.valueOf(posX) + " " + String.valueOf(posY)
+                + " " + this.getType().toString() 
+                + " " + String.valueOf(movementDirection);
+    }
+    
+    
+    /**
+     * A boat blocks the fish and it stops. The first block stops the fish
+     * setting the movement direction different from the defined directions.
+     * This method should be called from one of the 4 boats.
+     */
+    public void block()
+    {
+        this.blocks++; // Each boat trying to catch it blockes a way.
+        this.movementDirection = -1;
+    }      
+    
+    /**
+     * Is surrounded by the 4 corresponding boats. All boats blocked the fish on
+     * its particular one of the four ways.
+     * @return Is surrounded by the four corresponding4 boats.
+     */
+    public boolean isSurrounded()
+    {
+        return this.blocks == 4;
     }
 }

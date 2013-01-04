@@ -4,6 +4,7 @@
  */
 package sma.ontology;
 
+import jade.core.AID;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -32,6 +33,11 @@ public class BoatsPosition implements java.io.Serializable{
         return ret;
     }
     
+    public ArrayList<BoatPosition> getBoatsPositionsArrayList()
+    {
+        return (ArrayList<BoatPosition>) positions;
+    }    
+    
     public void setBoatPosition(BoatPosition position){
         // If boat position present, replace
         for(BoatPosition boat : positions){
@@ -50,6 +56,11 @@ public class BoatsPosition implements java.io.Serializable{
         this.positions.add(bp);
     }
     
+    public void removePosition(BoatPosition bp)
+    {
+        this.positions.remove(bp);
+    }
+    
     public String toString(){
         String ret = "";
         
@@ -59,5 +70,16 @@ public class BoatsPosition implements java.io.Serializable{
         if(positions.size() == 0) ret = "Empty";
         
         return ret;
+    }
+    
+    public BoatPosition get(AID id)
+    {
+        for (BoatPosition bp : positions)
+        {
+            if (bp.getAID().equals(id))
+                return bp;
+        }
+        
+        return null;
     }
 }

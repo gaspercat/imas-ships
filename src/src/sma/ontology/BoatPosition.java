@@ -48,4 +48,10 @@ public class BoatPosition implements java.io.Serializable{
     public String toString(){
         return "(" + this.id.getName() + "=" + this.row + "," + this.column + ")";
     }
+    
+    @Override
+    public BoatPosition clone()
+    {
+        return new BoatPosition ((AID) id.clone(), this.row, this.column);
+    }
 }
