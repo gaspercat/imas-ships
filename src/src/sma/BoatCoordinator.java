@@ -118,6 +118,7 @@ public class BoatCoordinator extends Agent {
             MessageTemplate mt4 = MessageTemplate.MatchContent("New negotiation turn");
             MessageTemplate mt5 = MessageTemplate.MatchContent("Group organized");
             MessageTemplate mt6 = MessageTemplate.MatchContent("Boat destination reached");
+            MessageTemplate mt7 = MessageTemplate.MatchContent("Boat positions redrawn");
             
             // New fishing turn
             if(mt1.match(request)){
@@ -163,34 +164,34 @@ public class BoatCoordinator extends Agent {
                 System.out.println("Number of groups with destinations set: " + organizedGroups + "/" + numGroups);
                 
                 organizedGroups++;
-                if(organizedGroups == numGroups)
-                {
+                if(organizedGroups == numGroups){
                     showMessage("All boat destinations assigned, starting ship movements");
                     // The BoatCoordinator asks to the boats (individually, not to the leaders) to move their asses.
                     // REMARK: Boat positions (after moving) came in the inform message of the following behaviour.
                     addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareMoveMessageToBoats()));
                 }
-            }
+            
             // Boat fishing spots reached
-            else if(mt6.match(request)){
+            }else if(mt6.match(request)){
                 reply.setContent("Wait for other boats to reach their fishing spot");
                 System.out.println("Number of boats that reached the fishing spot: " + positionedBoats + "/" + 20);
                 
-                if (positionedBoats++ < 20)
+                if (positionedBoats++ < 20){
                 // Some boats still moving, because have not reached the fishing spot.
                 // REMARK: Boat positions (after moving) came in the inform message of the following behaviour. 
-                {
                     addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareMoveMessageToBoats()));
-                }
+                }else{
                 // Finished moving, all reached their corresponding destination (fishing spot).
-                else
-                {
                     showMessage("All boats reached their destination (fishing spot)!");
                     
                     System.out.println("DAMN, NIGAS! GO FISHING MUTHAFOCASSSS");
                     // TODO: Start fishing phase
                 }
-            }
+            
+            // Boat positions updated
+            }else if(mt7.match(request)){
+                addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareMoveMessageToBoats()));
+            } 
             
             return reply;
         }

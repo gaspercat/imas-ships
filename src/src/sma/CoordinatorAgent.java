@@ -60,24 +60,48 @@ public class CoordinatorAgent extends Agent {
         this.boatsPosition = positions;
     }
 
-    public int nextTurn() {
+    public void nextTurn() {
+        int turn = -1;
+        
+        // Get type of turn
+        // ****************************************
+        
         if (this.currentTurn >= 30) {
-            return TURN_END;
+            turn = TURN_END;
         }
 
-        int ret = -1;
         switch (this.currentTurn % 6) {
             // If negotiation turn
             case 5:
-                ret = TURN_NEGOTIATION;
+                turn = TURN_NEGOTIATION;
 
             // If fishing turn
             default:
-                ret = TURN_FISHING;
+                turn = TURN_FISHING;
         }
-
+        
         this.currentTurn++;
-        return ret;
+        
+        // 
+        // ****************************************
+        
+        if (turn != TURN_END) {
+            // Prepare a message to send to the boats coordinator
+            ACLMessage boatMove = new ACLMessage(ACLMessage.REQUEST);
+            boatMove.setSender(this.getAID());
+            boatMove.addReceiver(boatsCoordinator);
+
+
+           if (turn == TURN_FISHING) {
+                boatMove.setContent("New fishing turn");
+           } else if (turn == TURN_NEGOTIATION) {
+                boatMove.setContent("New negotiation turn");
+             //   boatMove.addReceiver(portsCoordinator);
+           }
+
+            // Add a behaviour to initiate a comunication with the boats coordinator
+            this.addBehaviour(new InitiatorBehaviour(this, boatMove));
+        }
     }
 
     /**
@@ -251,8 +275,21 @@ public class CoordinatorAgent extends Agent {
             if (msg.getSender().equals(centralAgent)) {
                 //TODO mt here
                 MessageTemplate sttmt = MessageTemplate.MatchContent("Port updated");
-                if (sttmt.match(msg)) {//Debufing purpouses
-                    showMessage("ITS DONE");
+                MessageTemplate mt1 = MessageTemplate.MatchContent("Map reloaded");
+                
+                if (sttmt.match(msg)) {//Debugging purpouses
+                    showMessage("Port updated!");
+                    
+                // Send boat positions redrawn message
+                } else if(mt1.match(msg)) {
+                    ACLMessage boatMove = new ACLMessage(ACLMessage.REQUEST);
+                    boatMove.setSender(myAgent.getAID());
+                    boatMove.addReceiver(boatsCoordinator);
+                    boatMove.setContent("Boat positions redrawn");
+
+                    // Add a behaviour to initiate a comunication with the boats coordinator
+                    myAgent.addBehaviour(new InitiatorBehaviour(myAgent, boatMove));
+                            
                 } else {
                     if (msg.getOntology().equalsIgnoreCase("AuxInfo")) {
                         computeInitialMessage(msg);
@@ -261,24 +298,7 @@ public class CoordinatorAgent extends Agent {
                         showMessage("Message From Central Agent: " + msg.getContent());
                     }
 
-                    int turn = myAgent.nextTurn();
-                    if (turn != TURN_END) {
-                        // Prepare a message to send to the boats coordinator
-                        ACLMessage boatMove = new ACLMessage(ACLMessage.REQUEST);
-                        boatMove.setSender(myAgent.getAID());
-                        boatMove.addReceiver(boatsCoordinator);
-
-
-                       if (turn == TURN_FISHING) {
-                            boatMove.setContent("New fishing turn");
-                       } else if (turn == TURN_NEGOTIATION) {
-                            boatMove.setContent("New negotiation turn");
-                         //   boatMove.addReceiver(portsCoordinator);
-                       }
-
-                        // Add a behaviour to initiate a comunication with the boats coordinator
-                        myAgent.addBehaviour(new InitiatorBehaviour(myAgent, boatMove));
-                    }
+                    myAgent.nextTurn();
                 }
             } else if (msg.getSender().equals(boatsCoordinator)) {
                 showMessage("Message from Boats Coordinator: " + msg.getContent());
