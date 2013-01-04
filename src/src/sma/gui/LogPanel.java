@@ -16,7 +16,7 @@ import java.awt.Toolkit;
  * <p><b>Copyright:</b> Copyright (c) 2011</p>
  * <p><b>Company:</b> Universitat Rovira i Virgili (<a
  * href="http://www.urv.cat">URV</a>)</p>
- * @author David Isern & Joan Albert Lopez
+ * @author David Isern & Joan Albert López
  * @version 2.0
  */
 public class LogPanel extends JPanel {
@@ -37,7 +37,7 @@ public class LogPanel extends JPanel {
   }
 
   /**
-   * Mostra una cadena en l'ï¿½rea de text (jTextArea) del panell
+   * Mostra una cadena en l'àrea de text (jTextArea) del panell
    * @param msg String a mostrar
    */
   public static void showMessage(String msg) {

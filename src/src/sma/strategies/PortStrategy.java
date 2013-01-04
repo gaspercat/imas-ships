@@ -83,7 +83,8 @@ public abstract class PortStrategy {
      * @return Value > 0 if not rejected, 0 otherwise
      */
     public double getOffer(){
-        if(this.is_rejected || this.is_aborted) return 0;
+        //TODO configar que || this.is_aborted sobra aqui! MARC
+        if(this.is_rejected ) return 0;
         return this.offer;
     }
     
@@ -96,12 +97,13 @@ public abstract class PortStrategy {
     
     protected double calculate_minimum_price(){
         double ret = 0;
-        
+        if(this.levels == null){
+            System.out.println("FATAL NULL ERROR AT "+ port.getLocalName());
+        }
         ret += this.levels.getTunaLevel() * MIN_TUNA;
         ret += this.levels.getOctopusLevel() * MIN_OCTOPUS;
         ret += this.levels.getLobsterLevel() * MIN_LOBSTER;
         ret += this.levels.getShrimpLevel() * MIN_SHRIMP;
-        
         return ret;
     }
     

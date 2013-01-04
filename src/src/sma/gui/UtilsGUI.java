@@ -24,7 +24,7 @@ import java.io.PrintStream;
  * <p><b>Copyright:</b> Copyright (c) 2011</p>
  * <p><b>Company:</b> Universitat Rovira i Virgili (<a
  * href="http://www.urv.cat">URV</a>)</p>
- * @author David Isern & Joan Albert Lopez
+ * @author David Isern & Joan Albert López
  */
 public class UtilsGUI {
 
@@ -44,7 +44,7 @@ public class UtilsGUI {
   public static String pathIconButtonSave = UtilsGUI.IMAGE_DIR + "save.gif";
 
   // constants de les TextAreas
-  public static Color fonsAreaTreball = new Color(250,250,250); //griset mï¿½s clar
+  public static Color fonsAreaTreball = new Color(250,250,250); //griset més clar
   public static Color colorText = Color.BLACK;
 
   // constants globals
@@ -53,12 +53,12 @@ public class UtilsGUI {
   public static Font fontTextSmall = new Font("Arial",0,10);
 
   //  public static Color fonsBoto = new Color(103,103,153);
-  public static Color fonsBoto = new Color(240,210,160); //marrï¿½ mï¿½s fosquet
+  public static Color fonsBoto = new Color(240,210,160); //marró més fosquet
   public static Font fontBoto = new Font("Arial",0,11);
   public static Color colorTextBoto = Color.BLACK;
 
 
-  static public Color colorBackgroundFrame = new Color(240,210,160); //marrï¿½ mï¿½s fosquet
+  static public Color colorBackgroundFrame = new Color(240,210,160); //marró més fosquet
   static public Color colorForegroundText = new Color(0,0,100); //blau fosc
 
   static public Font fontTitol = new Font("Arial Narrow",Font.PLAIN,15);

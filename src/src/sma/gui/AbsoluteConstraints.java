@@ -3,7 +3,7 @@ package sma.gui;
 
  /**
  * <p><B>Title:</b> IA2-SMA</p>
- * <p><b>Description:</b> Practica del curs 2011-12. Recycle swarm.</p>
+ * <p><b>Description:</b> Pràctica del curs 2011-12. Recycle swarm.</p>
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
