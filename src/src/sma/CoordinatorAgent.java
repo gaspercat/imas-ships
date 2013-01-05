@@ -216,9 +216,27 @@ public class CoordinatorAgent extends Agent {
         protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException {
             ACLMessage reply = request.createReply();
             reply.setPerformative(ACLMessage.INFORM);
+            MessageTemplate mt1 = MessageTemplate.MatchOntology("SeaFood");
             MessageTemplate boat = MessageTemplate.MatchSender(boatsCoordinator);
             MessageTemplate port = MessageTemplate.MatchSender(portsCoordinator);
-            if (boat.match(request)) {
+            
+            // If message to update boats positions
+            if(mt1.match(request)){
+                try{
+                    SeaFood obj = (SeaFood)request.getContentObject();
+
+                    ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+                    msg.addReceiver(centralAgent);
+                    msg.setSender(myAgent.getAID());
+                    msg.setOntology("SeaFood");
+                    msg.setContentObject(obj);
+                    
+                    myAgent.addBehaviour(new InitiatorBehaviour(myAgent, msg));
+                }catch(Exception e){
+                    showMessage(myAgent.getLocalName() + " - ERROR: Coordinator Agent ate the seafood!");
+                }
+                
+            }else if (boat.match(request)) {
                 try {
                     //prepare the message to send to centralagent
                     ACLMessage outMsg = new ACLMessage(ACLMessage.REQUEST);
@@ -237,6 +255,7 @@ public class CoordinatorAgent extends Agent {
                     showMessage("HERE " + e.toString());
                 }
                 reply.setContent("Boats Positions Recieved and sent to the central agent");
+                
             } else if (port.match(request)) {
                 MessageTemplate statMT = MessageTemplate.MatchOntology("Stats");
                 if (statMT.match(request)) {
@@ -276,6 +295,7 @@ public class CoordinatorAgent extends Agent {
                 //TODO mt here
                 MessageTemplate sttmt = MessageTemplate.MatchContent("Port updated");
                 MessageTemplate mt1 = MessageTemplate.MatchContent("Map reloaded");
+                MessageTemplate mt2 = MessageTemplate.MatchOntology("AuxInfo");
                 
                 if (sttmt.match(msg)) {//Debugging purpouses
                     showMessage("Port updated!");
@@ -289,17 +309,16 @@ public class CoordinatorAgent extends Agent {
 
                     // Add a behaviour to initiate a comunication with the boats coordinator
                     myAgent.addBehaviour(new InitiatorBehaviour(myAgent, boatMove));
-                            
-                } else {
-                    if (msg.getOntology().equalsIgnoreCase("AuxInfo")) {
-                        computeInitialMessage(msg);
-                        showMessage("AuxInfo recived from central Agent");
-                    } else {
-                        showMessage("Message From Central Agent: " + msg.getContent());
-                    }
-
+                    
+                }else if(mt2.match(msg)){
+                    computeInitialMessage(msg);
+                    showMessage("AuxInfo recived from central Agent");
                     myAgent.nextTurn();
+                    
+                } else {
+                    showMessage("Message From Central Agent: " + msg.getContent());
                 }
+                
             } else if (msg.getSender().equals(boatsCoordinator)) {
                 showMessage("Message from Boats Coordinator: " + msg.getContent());
             }

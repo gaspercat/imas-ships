@@ -119,6 +119,7 @@ public class BoatCoordinator extends Agent {
             MessageTemplate mt5 = MessageTemplate.MatchContent("Group organized");
             MessageTemplate mt6 = MessageTemplate.MatchContent("Boat destination reached");
             MessageTemplate mt7 = MessageTemplate.MatchContent("Boat positions redrawn");
+            MessageTemplate mt8 = MessageTemplate.MatchOntology("SeaFood");
             
             // New fishing turn
             if(mt1.match(request)){
@@ -173,10 +174,12 @@ public class BoatCoordinator extends Agent {
             
             // Boat fishing spots reached
             }else if(mt6.match(request)){
+                positionedBoats++;
+                
                 reply.setContent("Wait for other boats to reach their fishing spot");
                 System.out.println("Number of boats that reached the fishing spot: " + positionedBoats + "/" + 20);
                 
-                if (positionedBoats++ < 20){
+                if (positionedBoats < 20){
                 // Some boats still moving, because have not reached the fishing spot.
                 // REMARK: Boat positions (after moving) came in the inform message of the following behaviour. 
                     addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareMoveMessageToBoats()));
@@ -191,7 +194,18 @@ public class BoatCoordinator extends Agent {
             // Boat positions updated
             }else if(mt7.match(request)){
                 addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareMoveMessageToBoats()));
-            } 
+            
+            // Block a seafood
+            }else if(mt8.match(request)){
+                reply.setContent("Received");
+                
+                try{
+                    SeaFood content = (SeaFood)request.getContentObject();
+                    addBehaviour(new SInitiatorBehaviour(myAgent, this.prepareBlockSeafoodMessageToCoordinator(content)));
+                }catch(UnreadableException e){
+                    showMessage(myAgent.getLocalName() + " - ERROR: Fire falls from the sky! As a result, your seafood has a terrible death in hands of the boats coordinator!");
+                }
+            }
             
             return reply;
         }
@@ -243,6 +257,21 @@ public class BoatCoordinator extends Agent {
                 msg.addReceiver(boat);
             }
             msg.setContent("Move");
+            return msg;
+        }
+        
+        private ACLMessage prepareBlockSeafoodMessageToCoordinator(SeaFood obj){
+            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+
+            try{
+                msg.addReceiver(coordinatorAgent);
+                msg.setSender(myAgent.getAID());
+                msg.setOntology("SeaFood");
+                msg.setContentObject(obj);
+            }catch(IOException e){
+                showMessage(myAgent.getLocalName() + "- ERROR: Failed to send block seafood message!!");
+            }
+            
             return msg;
         }
     }

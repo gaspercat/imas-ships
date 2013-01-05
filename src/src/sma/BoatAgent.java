@@ -571,17 +571,13 @@ public class BoatAgent extends Agent {
 
             // BoatCoordinator sent to the boat a request to move (to the fishing spot assigned by the team leader)
             if (mt1.match(request))
-            {
+            {                
                 // Do the boat reached the assigned fishing spot up to now?
-                if (!reachedFishingSpot())
-                {   
+                if (!reachedFishingSpot()){   
                     int prevPosX = getPosX(); // Log and debug purposes
                     int prevPosY = getPosY(); // Log and debug purposes
 
                     moveTowardsFishingSpot(); // Move a cell towards the fishing spot!
-
-                    if (isNextToSeafood(targetSeafood))
-                        targetSeafood.block(); // Block this boat corresponding way.
 
                     // Prepare the reply content
                     reply.setOntology("Intermediate position");
@@ -597,6 +593,20 @@ public class BoatAgent extends Agent {
                 }
                 else
                 {
+                    // Block seafood when possible
+                    //if (isNextToSeafood(targetSeafood)){
+                        try {
+                            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+                            msg.addReceiver(boatCoordinator);
+                            msg.setSender(myAgent.getAID());
+                            msg.setOntology("SeaFood");
+                            msg.setContentObject(targetSeafood);
+                            myAgent.addBehaviour(new LeaderREInitiator(myAgent, msg));
+                        } catch (IOException ex) {
+                            Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                    //}
+                    
                     // Prepare the reply content
                     reply.setOntology("Fishing position");
                     

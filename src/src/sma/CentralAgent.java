@@ -145,18 +145,37 @@ public class CentralAgent extends Agent {
       protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException{
             ACLMessage reply = request.createReply();
             reply.setPerformative(ACLMessage.INFORM);
+            
+            MessageTemplate mt1 = MessageTemplate.MatchOntology("SeaFood");
             MessageTemplate sttmt = MessageTemplate.MatchOntology("Stats");
+            
+            
             try{//TODO put mt here
                 if(request.getContent().equalsIgnoreCase("Initial request")){
                     showMessage("Initial Request recived");
                     reply.setOntology("AuxInfo");
                     reply.setContentObject(game.getInfo());
+                    
                 }else if(request.getOntology().equalsIgnoreCase("BoatsPosition")){
                     showMessage("New positions recived");
                     boats = (BoatsPosition)request.getContentObject();
                     refreshMap();
                     myAgent.doWait(500);
                     reply.setContent("Map reloaded");
+                    
+                }else if(mt1.match(request)){
+                    SeaFood sf = (SeaFood)request.getContentObject();
+                    
+                    SeaFood[] sfs = game.getInfo().getSeaFoods();
+                    for(int i=0;i<sfs.length;i++){
+                        if(sf.getID() == sfs[i].getID()){
+                            sfs[i].block();
+                        }
+                    }
+                    
+                    reply.setContent("Received");
+                    
+                    
                 }else if(sttmt.match(request)){
                     Stats stats = (Stats)request.getContentObject();
                     updatePortStats(stats);

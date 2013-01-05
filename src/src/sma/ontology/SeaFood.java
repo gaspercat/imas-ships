@@ -12,6 +12,10 @@ import java.io.Serializable;
  * @author joan
  */
 public class SeaFood implements java.io.Serializable{
+    private static int ids = 0;
+    
+    int id;
+    
     int posX, posY, mapX, mapY, movementDirection;
     float quantity;
     SeaFoodType type;
@@ -19,6 +23,9 @@ public class SeaFood implements java.io.Serializable{
     int blocks;
     
     public SeaFood(SeaFoodType type, int posX, int posY, int mapX, int mapY, float quantity){
+        SeaFood.ids++;
+        this.id = ids;
+        
         this.type = type;
         this.posX = posX;
         this.posY = posY;
@@ -27,6 +34,10 @@ public class SeaFood implements java.io.Serializable{
         this.movementDirection = this.setMovementDirection();
         this.quantity = quantity;
         this.blocks = 0;
+    }
+    
+    public int getID(){
+        return this.id;
     }
     
     public void setPosX(int posX){
@@ -96,6 +107,8 @@ public class SeaFood implements java.io.Serializable{
      * direction. 0 North, 1 East, 2 South, 3 West, and -1 no movement.
      */
     public void move(){
+        if(this.blocks > 0) return;
+        
         if(this.movementDirection == 0){
             this.posX -= 1;
         }else if(this.movementDirection == 1){
