@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 
 import sma.ontology.*;
 import sma.gui.*;
+import sma.ontology.SeaFood;
 
 /**
  * <p><B>Title:</b> IA2-SMA</p>
@@ -25,9 +26,9 @@ import sma.gui.*;
 public class CentralAgent extends Agent {
   private sma.gui.GraphicInterface gui;
   private sma.ontology.InfoGame game;
-  private BoatsPosition boats;
+  private BoatsPosition boatsPositions;
   
-  SeaFood[] sfList;
+  java.util.ArrayList<SeaFood> sfList;
   
   private AID coordinatorAgent;
   
@@ -36,7 +37,7 @@ public class CentralAgent extends Agent {
   }
   
   public void setBoatsPosition(BoatsPosition positions){
-      boats = positions;
+      boatsPositions = positions;
   }
 
   /**
@@ -86,7 +87,7 @@ public class CentralAgent extends Agent {
     try {
       this.game = new InfoGame(); //object with the game data
       this.game.readGameFile("game.txt");
-      sfList = this.game.getInfo().getSeaFoods();
+      sfList = new java.util.ArrayList<SeaFood>(java.util.Arrays.asList(this.game.getInfo().getSeaFoods()));
     } catch(Exception e) {
       e.printStackTrace();
       System.err.println("Game NOT loaded ... [KO]");
@@ -158,24 +159,13 @@ public class CentralAgent extends Agent {
                     
                 }else if(request.getOntology().equalsIgnoreCase("BoatsPosition")){
                     showMessage("New positions recived");
-                    boats = (BoatsPosition)request.getContentObject();
+                    boatsPositions = (BoatsPosition)request.getContentObject();
+                    sfList = boatsPositions.getSeafoods();
                     refreshMap();
                     myAgent.doWait(500);
-                    reply.setContent("Map reloaded");
-                    
-                }else if(mt1.match(request)){
-                    SeaFood sf = (SeaFood)request.getContentObject();
-                    
-                    SeaFood[] sfs = game.getInfo().getSeaFoods();
-                    for(int i=0;i<sfs.length;i++){
-                        if(sf.getID() == sfs[i].getID()){
-                            sfs[i].block();
-                        }
-                    }
-                    
-                    reply.setContent("Received");
-                    
-                    
+                    reply.setOntology("Seafoods");
+                    reply.setContentObject(sfList);
+
                 }else if(sttmt.match(request)){
                     Stats stats = (Stats)request.getContentObject();
                     updatePortStats(stats);
@@ -197,11 +187,26 @@ public class CentralAgent extends Agent {
       }
   }
   
+  private boolean isSeafoodAlreadyCatched(SeaFood sf)
+  {
+      for (BoatPosition bp : boatsPositions.getBoatsPositions())
+      {
+          if (bp.getCatchedSeafood() != null && sf.equals(bp.getCatchedSeafood()))
+          {
+              return true;
+          }
+      }
+      
+      return false;
+  }
   
   //Move the fishes to a determined direction
   protected void moveFishes(){
-      for(int i = 0; i < this.sfList.length; i++){
-          sfList[i].move();
+  
+      for (SeaFood sf : sfList)
+      {
+          if (!isSeafoodAlreadyCatched(sf))
+            sf.move();
       }
   }
   
@@ -216,12 +221,9 @@ public class CentralAgent extends Agent {
       for(int i=0;i<rows;i++){
           for(int j=0;j<rows;j++) map[j][i].clean();
       }
-      
-      // Place fishes to map
-      
-      
+     
       // Place boats to map
-      BoatPosition[] boats = this.boats.getBoatsPositions();
+      BoatPosition[] boats = this.boatsPositions.getBoatsPositions();
       for(int i=0;i<boats.length;i++){
           try{
             BoatPosition boat = boats[i];  
@@ -241,10 +243,27 @@ public class CentralAgent extends Agent {
           }
       }
       
-      this.moveFishes();
+      // Place fishes to map
+     
+//      for (SeaFood sf : sfList)
+//      {
+//          int blocks = 0;
+//          for (BoatPosition bp : this.boats.getBoatsPositions())
+//           {
+//            if ( bp.isBlockingSeafood() && bp.getBlockedSeafood().getID() == sf.getID() )
+//              {
+//                  blocks++;
+//              }
+//          }
+//          if (blocks > 0)
+//              sf.block();
+//      }
       
-      for(int i = 0; i < this.sfList.length; i++){
-          SeaFood sf = this.sfList[i];
+
+      moveFishes();
+      
+      for(int i = 0; i < this.sfList.size(); i++){
+          SeaFood sf = this.sfList.get(i);
           if(sf.onTheMap()){
               map[sf.getPosX()][sf.getPosY()].setType(CellType.Seafood);
               map[sf.getPosX()][sf.getPosY()].setSeaFoodType(sf.getType());

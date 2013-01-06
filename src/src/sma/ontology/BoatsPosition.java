@@ -13,14 +13,21 @@ import java.util.ArrayList;
  * @author gaspercat
  */
 public class BoatsPosition implements java.io.Serializable{
-    List<BoatPosition> positions;
+    private List<BoatPosition> positions;
+    private ArrayList<SeaFood> seafoods;
+
+    private boolean allSeafoodsBlocked;
     
     public BoatsPosition(){
-        this.positions = new ArrayList<BoatPosition>();
+        this.positions = new ArrayList<>();
+        this.seafoods = new ArrayList<>();
+        allSeafoodsBlocked = false;
     }
     
     public BoatsPosition(List<BoatPosition> positions){
         this.positions = positions;
+        this.seafoods = new ArrayList<>();
+        allSeafoodsBlocked = false;
     }
     
     public BoatPosition[] getBoatsPositions(){
@@ -61,8 +68,9 @@ public class BoatsPosition implements java.io.Serializable{
         this.positions.remove(bp);
     }
     
+    @Override
     public String toString(){
-        String ret = "";
+        String ret = "BOATPOSITION and fish:";
         
         for(BoatPosition bp : positions){
             ret = ret + bp.toString();
@@ -82,4 +90,36 @@ public class BoatsPosition implements java.io.Serializable{
         
         return null;
     }
+    
+    public ArrayList<SeaFood> getSeafoods()
+    {
+        return this.seafoods;
+    }
+    
+    public void setSeafoods(ArrayList<SeaFood> seafoods)
+    {
+        this.seafoods = seafoods;
+    }
+    
+    public void declareAllSeafoodsBlocked()
+    {
+        this.allSeafoodsBlocked = true;
+    }
+                
+    public boolean areAllBoatsPositioned()
+    {
+        boolean allpositioned = true;
+        for (BoatPosition bp : positions)
+        {
+            if (!bp.isDestination())
+                return false;
+        }
+        return true;
+    }
+    
+    public boolean areAllSeafoodsBlocked()
+    {
+        return this.allSeafoodsBlocked;
+    }
+
 }

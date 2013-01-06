@@ -93,7 +93,13 @@ public class CoordinatorAgent extends Agent {
 
 
            if (turn == TURN_FISHING) {
-                boatMove.setContent("New fishing turn");
+                try {
+                    boatMove.setOntology("New fishing turn");
+                    ArrayList<SeaFood> seafoods = new ArrayList<>(Arrays.asList(this.gameInfo.getSeaFoods()));
+                    boatMove.setContentObject(seafoods);
+                } catch (IOException ex) {
+                    Logger.getLogger(CoordinatorAgent.class.getName()).log(Level.SEVERE, null, ex);
+                }
            } else if (turn == TURN_NEGOTIATION) {
                 boatMove.setContent("New negotiation turn");
              //   boatMove.addReceiver(portsCoordinator);
@@ -216,27 +222,10 @@ public class CoordinatorAgent extends Agent {
         protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException {
             ACLMessage reply = request.createReply();
             reply.setPerformative(ACLMessage.INFORM);
-            MessageTemplate mt1 = MessageTemplate.MatchOntology("SeaFood");
             MessageTemplate boat = MessageTemplate.MatchSender(boatsCoordinator);
             MessageTemplate port = MessageTemplate.MatchSender(portsCoordinator);
             
-            // If message to update boats positions
-            if(mt1.match(request)){
-                try{
-                    SeaFood obj = (SeaFood)request.getContentObject();
-
-                    ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-                    msg.addReceiver(centralAgent);
-                    msg.setSender(myAgent.getAID());
-                    msg.setOntology("SeaFood");
-                    msg.setContentObject(obj);
-                    
-                    myAgent.addBehaviour(new InitiatorBehaviour(myAgent, msg));
-                }catch(Exception e){
-                    showMessage(myAgent.getLocalName() + " - ERROR: Coordinator Agent ate the seafood!");
-                }
-                
-            }else if (boat.match(request)) {
+            if (boat.match(request)) {
                 try {
                     //prepare the message to send to centralagent
                     ACLMessage outMsg = new ACLMessage(ACLMessage.REQUEST);
@@ -249,6 +238,15 @@ public class CoordinatorAgent extends Agent {
 
                     //Add a behaviour to initiate a comunication with the centralagent
                     myAgent.addBehaviour(new InitiatorBehaviour(myAgent, outMsg));
+             
+                    // Seafood stopped in their correct place and all boats ready to start fishing.
+                    if (bp.areAllBoatsPositioned() && bp.areAllSeafoodsBlocked())
+                    {
+                        // IMPORTANT: Although the message to CentralAgent is sent (in the previous line,
+                        // reached this point the redrawn it is still not done. Be careful.
+                        System.out.println("Let's start fishing. Still needed the last redrawn."); 
+                    }
+                    
                 } catch (IOException e) {
                     showMessage(e.toString());
                 } catch (UnreadableException e) {
@@ -294,7 +292,7 @@ public class CoordinatorAgent extends Agent {
             if (msg.getSender().equals(centralAgent)) {
                 //TODO mt here
                 MessageTemplate sttmt = MessageTemplate.MatchContent("Port updated");
-                MessageTemplate mt1 = MessageTemplate.MatchContent("Map reloaded");
+                MessageTemplate mt1 = MessageTemplate.MatchOntology("Seafoods");
                 MessageTemplate mt2 = MessageTemplate.MatchOntology("AuxInfo");
                 
                 if (sttmt.match(msg)) {//Debugging purpouses
@@ -305,7 +303,22 @@ public class CoordinatorAgent extends Agent {
                     ACLMessage boatMove = new ACLMessage(ACLMessage.REQUEST);
                     boatMove.setSender(myAgent.getAID());
                     boatMove.addReceiver(boatsCoordinator);
-                    boatMove.setContent("Boat positions redrawn");
+                    // Seafoods moved and map redrawn
+                    try {
+                        ArrayList<SeaFood> seafoods = null;
+                        try {
+                            seafoods = (ArrayList<SeaFood>) msg.getContentObject();
+                        } catch (UnreadableException ex) {
+                            Logger.getLogger(CoordinatorAgent.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        boatMove.setOntology("Seafoods redrawn");
+                        boatMove.setContentObject(seafoods);
+                    } catch (IOException ex) {
+                        Logger.getLogger(CoordinatorAgent.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                    
+
 
                     // Add a behaviour to initiate a comunication with the boats coordinator
                     myAgent.addBehaviour(new InitiatorBehaviour(myAgent, boatMove));
@@ -321,6 +334,7 @@ public class CoordinatorAgent extends Agent {
                 
             } else if (msg.getSender().equals(boatsCoordinator)) {
                 showMessage("Message from Boats Coordinator: " + msg.getContent());
+                
             }
         }
     }

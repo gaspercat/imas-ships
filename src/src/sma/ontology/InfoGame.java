@@ -141,8 +141,8 @@ public class InfoGame implements java.io.Serializable {
         
         //Add fishes
         for (int fish = 0; fish < info.getNumSeafoodGroups(); fish++){
-            int rndRow = (int)  (rand.nextFloat() * ( (NROWS - 1) - 0 ));
-            int rndCol = (int)  (rand.nextFloat() * ( (NCOLS - 1) - 0 ));
+            int rndRow = 1 + rand.nextInt(18); //[1, 20)
+            int rndCol = 1 + rand.nextInt(18); //(int)  (rand.nextFloat() * ( (NCOLS - 1) - 0 ));
             
             int seaFoodType = rand.nextInt();
             seaFoodType = Math.abs(seaFoodType%4);
@@ -152,16 +152,16 @@ public class InfoGame implements java.io.Serializable {
             this.info.map[rndRow][rndCol].setType(CellType.Seafood);
             
             if (seaFoodType == 0){
-                sf = new SeaFood(SeaFoodType.Tuna, rndRow, rndCol, this.info.map.length, this.info.map[0].length, rand.nextFloat()*10+10);
+                sf = new SeaFood(fish, SeaFoodType.Tuna, rndRow, rndCol, this.info.map.length, this.info.map[0].length, rand.nextFloat()*10+10);
                 this.info.map[rndRow][rndCol].setSeaFoodType(SeaFoodType.Tuna);
             }else if (seaFoodType == 1){
-                sf = new SeaFood(SeaFoodType.Octopus, rndRow, rndCol, this.info.map.length, this.info.map[0].length, rand.nextFloat()*10+10);
+                sf = new SeaFood(fish, SeaFoodType.Octopus, rndRow, rndCol, this.info.map.length, this.info.map[0].length, rand.nextFloat()*10+10);
                 this.info.map[rndRow][rndCol].setSeaFoodType(SeaFoodType.Octopus);
             }else if (seaFoodType == 2){
-                sf = new SeaFood(SeaFoodType.Lobster, rndRow, rndCol, this.info.map.length, this.info.map[0].length, rand.nextFloat()*10+10);
+                sf = new SeaFood(fish, SeaFoodType.Lobster, rndRow, rndCol, this.info.map.length, this.info.map[0].length, rand.nextFloat()*10+10);
                 this.info.map[rndRow][rndCol].setSeaFoodType(SeaFoodType.Lobster);
             }else{
-                sf = new SeaFood(SeaFoodType.Shrimp, rndRow, rndCol, this.info.map.length, this.info.map[0].length, rand.nextFloat()*10+10);
+                sf = new SeaFood(fish, SeaFoodType.Shrimp, rndRow, rndCol, this.info.map.length, this.info.map[0].length, rand.nextFloat()*10+10);
                 this.info.map[rndRow][rndCol].setSeaFoodType(SeaFoodType.Shrimp);
             }
             sfList[fish] = sf;

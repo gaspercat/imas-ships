@@ -58,6 +58,8 @@ public class BoatAgent extends Agent {
     private double money;
     //First delivery generator of movement
     Random generator = new Random();
+    
+    private boolean bBlockedFish;
 
     public BoatAgent() {
         super();
@@ -119,7 +121,7 @@ public class BoatAgent extends Agent {
         this.boatCoordinator = UtilsAgents.searchAgent(this, searchBoatCoordCriteria);
 
         //Message Template Preformative filter
-        MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
+        MessageTemplate mt1 = MessageTemplate.MatchOntology("Move");
         MessageTemplate mt2 = MessageTemplate.MatchContent("Rank fish");
         MessageTemplate mt3 = MessageTemplate.MatchOntology("Ranking");
         MessageTemplate mt4 = MessageTemplate.MatchContent("Start negotiation");
@@ -230,19 +232,19 @@ public class BoatAgent extends Agent {
         //
         
         int minDistceptance = 20+20;
-        BoatPosition closestBoatPosition = null;
-        for (BoatPosition bp : boatsPosition.getBoatsPositions())
-        {
-            if (targetSeafood.isBlockable(bp))
-            {
-                int distToSeafood = Math.abs(bp.getRow() - targetSeafood.getPosX()) + Math.abs(bp.getColumn() - targetSeafood.getPosY());
-                if (distToSeafood < minDistceptance) 
-                {
-                    minDistceptance = distToSeafood;
-                    closestBoatPosition = bp;
-                }
-            }
-        }
+        BoatPosition closestBoatPosition = new BoatPosition(getAID(), getPosX(), getPosY()); // Leader!!
+//        for (BoatPosition bp : boatsPosition.getBoatsPositions())
+//        {
+//            if (targetSeafood.isBlockable(bp))
+//            {
+//                int distToSeafood = Math.abs(bp.getRow() - targetSeafood.getPosX()) + Math.abs(bp.getColumn() - targetSeafood.getPosY());
+//                if (distToSeafood < minDistceptance) 
+//                {
+//                    minDistceptance = distToSeafood;
+//                    closestBoatPosition = bp;
+//                }
+//            }
+//        }
 
         //
         // Calculate the position of the seafood in the catching instant.
@@ -528,7 +530,7 @@ public class BoatAgent extends Agent {
 
             String msgContent = request.getContent();
             
-            MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
+            MessageTemplate mt1 = MessageTemplate.MatchOntology("Move");
             MessageTemplate mt2 = MessageTemplate.MatchContent("Start negotiation");
             MessageTemplate mt3 = MessageTemplate.MatchContent("Rank fish");
             MessageTemplate mt4 = MessageTemplate.MatchOntology("Ranking");
@@ -560,7 +562,7 @@ public class BoatAgent extends Agent {
 
             String msgContent = request.getContent();
 
-            MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
+            MessageTemplate mt1 = MessageTemplate.MatchOntology("Move");
             MessageTemplate mt2 = MessageTemplate.MatchContent("Start negotiation");
             MessageTemplate mt3 = MessageTemplate.MatchContent("Rank fish");
             MessageTemplate mt4 = MessageTemplate.MatchOntology("Ranking");
@@ -571,7 +573,13 @@ public class BoatAgent extends Agent {
 
             // BoatCoordinator sent to the boat a request to move (to the fishing spot assigned by the team leader)
             if (mt1.match(request))
-            {                
+            {          
+                try {
+                    ArrayList<SeaFood> updatedSeafoods = (ArrayList<SeaFood>) request.getContentObject();
+                    updateTargetSeafoodPosition(updatedSeafoods);
+                } catch (UnreadableException ex) {
+                    Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 // Do the boat reached the assigned fishing spot up to now?
                 if (!reachedFishingSpot()){   
                     int prevPosX = getPosX(); // Log and debug purposes
@@ -593,20 +601,6 @@ public class BoatAgent extends Agent {
                 }
                 else
                 {
-                    // Block seafood when possible
-                    //if (isNextToSeafood(targetSeafood)){
-                        try {
-                            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-                            msg.addReceiver(boatCoordinator);
-                            msg.setSender(myAgent.getAID());
-                            msg.setOntology("SeaFood");
-                            msg.setContentObject(targetSeafood);
-                            myAgent.addBehaviour(new LeaderREInitiator(myAgent, msg));
-                        } catch (IOException ex) {
-                            Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    //}
-                    
                     // Prepare the reply content
                     reply.setOntology("Fishing position");
                     
@@ -614,9 +608,14 @@ public class BoatAgent extends Agent {
                 }
 
                 // Prepare the rest of the reply content: object
-                BoatPosition pb = new BoatPosition(myAgent.getAID(),getPosX(),getPosY());
+                BoatPosition bp; 
+                if (isNextToSeafood(targetSeafood) && isLeader)
+                    bp = new BoatPosition(myAgent.getAID(),getPosX(),getPosY(),reachedFishingSpot(),targetSeafood);
+                else
+                    bp = new BoatPosition(myAgent.getAID(),getPosX(),getPosY(),reachedFishingSpot(),null);
+                
                 try {  
-                    reply.setContentObject(pb);
+                    reply.setContentObject(bp);
                 } catch (IOException ex) {
                     Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -714,6 +713,19 @@ public class BoatAgent extends Agent {
             msg.setContent("Give me current position");
             return msg;
         }
+
+        
+        private void updateTargetSeafoodPosition(ArrayList<SeaFood> updatedSeafoods) {
+            
+            if (updatedSeafoods != null) // If null is the first turn movement, not needed.
+            {
+                for (SeaFood sf : updatedSeafoods)
+                {
+                    if (sf.equals(targetSeafood)) 
+                        targetSeafood = sf;
+                }
+            }
+        }
     }
 
         //Aimed to organize the group, the leader communicates with its subdits.
@@ -753,7 +765,7 @@ public class BoatAgent extends Agent {
                 MessageTemplate mt = MessageTemplate.MatchOntology("Subdit position");
 
                 boolean subditsPositionReceived = false;
-                boatsPositions.addPosition(new BoatPosition(getAID(), getPosX(), getPosY()));
+                boatsPositions.addPosition(new BoatPosition(getAID(), getPosX(), getPosY(),false));
                 while (itr.hasNext())
                 {
                     ACLMessage msg = (ACLMessage) itr.next();

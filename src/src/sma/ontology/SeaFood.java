@@ -6,6 +6,7 @@ package sma.ontology;
 
 import jade.core.*;
 import java.io.Serializable;
+import java.util.ArrayList;
 
 /**
  *
@@ -19,12 +20,10 @@ public class SeaFood implements java.io.Serializable{
     int posX, posY, mapX, mapY, movementDirection;
     float quantity;
     SeaFoodType type;
-    // Number of boats blocking the seafood. Must be 4 to start fishing.
-    int blocks;
-    
-    public SeaFood(SeaFoodType type, int posX, int posY, int mapX, int mapY, float quantity){
-        SeaFood.ids++;
-        this.id = ids;
+
+    public SeaFood(int id, SeaFoodType type, int posX, int posY, int mapX, int mapY, float quantity){
+        super();
+        this.id = id;
         
         this.type = type;
         this.posX = posX;
@@ -33,7 +32,24 @@ public class SeaFood implements java.io.Serializable{
         this.mapY = mapY-1;
         this.movementDirection = this.setMovementDirection();
         this.quantity = quantity;
-        this.blocks = 0;
+    }   
+    
+    @Override
+    public boolean equals(Object other)
+    {
+        if (other == null) return false;
+        if (this.getClass() != other.getClass()) return false;
+        
+        if (this.getID() != ((SeaFood) other).getID()) return false;
+        
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 89 * hash + this.id;
+        return hash;
     }
     
     public int getID(){
@@ -104,18 +120,17 @@ public class SeaFood implements java.io.Serializable{
     
     /**
      * Movements of the seafood. The next position depends on the movement 
-     * direction. 0 North, 1 East, 2 South, 3 West, and -1 no movement.
+     * direction. 0 North, 1 East, 2 South, 3 West, and otherwise no movement.
      */
     public void move(){
-        if(this.blocks > 0) return;
-        
+
         if(this.movementDirection == 0){
             this.posX -= 1;
         }else if(this.movementDirection == 1){
             this.posY += 1;
-        }else if(this.movementDirection ==2){
+        }else if(this.movementDirection == 2){
             this.posX += 1;
-        }else{
+        }else if(this.movementDirection == 3){
             this.posY -= 1;
         }
     }
@@ -146,27 +161,5 @@ public class SeaFood implements java.io.Serializable{
         return String.valueOf(posX) + " " + String.valueOf(posY)
                 + " " + this.getType().toString() 
                 + " " + String.valueOf(movementDirection);
-    }
-    
-    
-    /**
-     * A boat blocks the fish and it stops. The first block stops the fish
-     * setting the movement direction different from the defined directions.
-     * This method should be called from one of the 4 boats.
-     */
-    public void block()
-    {
-        this.blocks++; // Each boat trying to catch it blockes a way.
-        this.movementDirection = -1;
-    }      
-    
-    /**
-     * Is surrounded by the 4 corresponding boats. All boats blocked the fish on
-     * its particular one of the four ways.
-     * @return Is surrounded by the four corresponding4 boats.
-     */
-    public boolean isSurrounded()
-    {
-        return this.blocks == 4;
     }
 }

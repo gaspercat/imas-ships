@@ -13,6 +13,8 @@ import jade.proto.SimpleAchieveREInitiator;
 import jade.proto.SimpleAchieveREResponder;
 import java.io.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import sma.ontology.*;
 
 /**
@@ -28,6 +30,9 @@ public class BoatCoordinator extends Agent {
     private int actualGroups, organizedGroups, numGroups;
     // Boats in the fishing spot, ready to fish.
     private int positionedBoats;
+    
+    // Seafood with updated position in a given movement turn. Came from the central agent redrawn.
+    private ArrayList<SeaFood> seafoods;
 
     public BoatCoordinator() {
         super();
@@ -112,17 +117,23 @@ public class BoatCoordinator extends Agent {
             ACLMessage reply = request.createReply();
             reply.setPerformative(ACLMessage.INFORM);
             
-            MessageTemplate mt1 = MessageTemplate.MatchContent("New fishing turn");
+            MessageTemplate mt1 = MessageTemplate.MatchOntology("New fishing turn");
             MessageTemplate mt2 = MessageTemplate.MatchContent("Group formed");
             MessageTemplate mt3 = MessageTemplate.MatchContent("Downgrade group counter");
             MessageTemplate mt4 = MessageTemplate.MatchContent("New negotiation turn");
             MessageTemplate mt5 = MessageTemplate.MatchContent("Group organized");
             MessageTemplate mt6 = MessageTemplate.MatchContent("Boat destination reached");
-            MessageTemplate mt7 = MessageTemplate.MatchContent("Boat positions redrawn");
+            MessageTemplate mt7 = MessageTemplate.MatchOntology("Seafoods redrawn");
             MessageTemplate mt8 = MessageTemplate.MatchOntology("SeaFood");
             
             // New fishing turn
             if(mt1.match(request)){
+                try {
+                    seafoods = (ArrayList<SeaFood>) request.getContentObject(); // Need this info later.
+                } catch (UnreadableException ex) {
+                    Logger.getLogger(BoatCoordinator.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
                 reply.setContent("New fishing turn message received");
                 System.out.println("Number of groups Formed: "+actualGroups);
                 
@@ -169,6 +180,7 @@ public class BoatCoordinator extends Agent {
                     showMessage("All boat destinations assigned, starting ship movements");
                     // The BoatCoordinator asks to the boats (individually, not to the leaders) to move their asses.
                     // REMARK: Boat positions (after moving) came in the inform message of the following behaviour.
+                    
                     addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareMoveMessageToBoats()));
                 }
             
@@ -193,6 +205,11 @@ public class BoatCoordinator extends Agent {
             
             // Boat positions updated
             }else if(mt7.match(request)){
+                try {
+                    seafoods = (ArrayList<SeaFood>) request.getContentObject(); // Updated seafoods (came from CentralA)
+                } catch (UnreadableException ex) {
+                    Logger.getLogger(BoatCoordinator.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 addBehaviour(new boatsInitiatorBehaviour(myAgent, this.prepareMoveMessageToBoats()));
             
             // Block a seafood
@@ -256,7 +273,12 @@ public class BoatCoordinator extends Agent {
                 AID boat = (AID)itr.next();
                 msg.addReceiver(boat);
             }
-            msg.setContent("Move");
+            msg.setOntology("Move");
+            try {
+                msg.setContentObject(seafoods);
+            } catch (IOException ex) {
+                Logger.getLogger(BoatCoordinator.class.getName()).log(Level.SEVERE, null, ex);
+            }
             return msg;
         }
         
@@ -328,7 +350,7 @@ public class BoatCoordinator extends Agent {
         protected void handleAllResultNotifications(java.util.Vector resultNotifications){
             Iterator itr = resultNotifications.iterator();
             
-            MessageTemplate mt1 = MessageTemplate.MatchContent("Move");
+            MessageTemplate mt1 = MessageTemplate.MatchOntology("Move");
             MessageTemplate mt2 = MessageTemplate.MatchContent("Rank Fish");
             MessageTemplate mt3 = MessageTemplate.MatchContent("Initiate grouping");
             MessageTemplate mt4 = MessageTemplate.MatchContent("Organize groups");
@@ -337,8 +359,10 @@ public class BoatCoordinator extends Agent {
             if (mt1.match(msg)){
                 //Boats positions that we have to send to the Coordinator agent
                 BoatsPosition boatsPos = new BoatsPosition();
+                boatsPos.setSeafoods(seafoods);
                 //How many boats reached their fishing spots.
-                int fishingPos = 0;
+                int leadersCatches = 0;
+                
                 MessageTemplate mt = MessageTemplate.MatchOntology("Fishing position"); // Or Intermediate position.
                 //iterate over all the responses
                 while(itr.hasNext()){
@@ -347,14 +371,16 @@ public class BoatCoordinator extends Agent {
                        try{
                            BoatPosition bp = (BoatPosition) msg.getContentObject();
                            boatsPos.addPosition(bp);
-                           if (mt.match(msg)) // Current position is the fishing position
-                               fishingPos++;
+                           if (bp.getCatchedSeafood() != null) leadersCatches++;
                        }catch(UnreadableException e){
                            showMessage(e.toString());
                        }
                    }
                 }
-                
+               
+                if (leadersCatches == leaders.size())
+                    boatsPos.declareAllSeafoodsBlocked();
+                    
                 try{
                     //Prepare the message to the Coordinator agent
                     ACLMessage outMessage = new ACLMessage(ACLMessage.REQUEST);
