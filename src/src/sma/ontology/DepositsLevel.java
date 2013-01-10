@@ -164,6 +164,30 @@ public class DepositsLevel implements java.io.Serializable{
     public String toString() {
         return "DepositsLevel{" + "tunaLevel=" + tunaLevel + ", lobsterLevel=" + lobsterLevel + ", octopusLevel=" + octopusLevel + ", shrimpLevel=" + shrimpLevel + ", capacity=" + capacity + '}';
     }
+
+    public void store(SeaFood targetSeafood) {
+        double amount = targetSeafood.quantity/4.0;
+        switch(targetSeafood.type){
+            case Lobster:
+                this.lobsterLevel = this.lobsterLevel + amount;
+                if(this.lobsterLevel > this.capacity) this.lobsterLevel = this.capacity;
+                break;
+            case Octopus:
+                this.octopusLevel = this.octopusLevel + amount;
+                if(this.octopusLevel > this.capacity) this.octopusLevel = this.capacity;
+                break;
+            case Shrimp:
+                this.shrimpLevel = this.shrimpLevel + amount;
+                if(this.shrimpLevel > this.capacity) this.shrimpLevel = this.capacity;
+                break;
+            case Tuna:
+                this.tunaLevel = this.tunaLevel + amount;
+                if(this.tunaLevel > this.capacity) this.tunaLevel = this.capacity;
+                break;
+            default:
+                System.err.println("Unknown seafood type in DepositsLevel");
+        }
+    }
     
     
     

@@ -10,12 +10,12 @@ import jade.util.leap.Serializable;
  *
  * @author carles
  */
-public class Stat implements Serializable{
+public class InfoBox implements Serializable{
     private DepositsLevel deposit;
     private double euros;
     private String name;
     
-    public Stat(DepositsLevel deposit, double euros, String name) {
+    public InfoBox(DepositsLevel deposit, double euros, String name) {
         this.deposit = deposit;
         this.euros = euros;
         this.name = name;

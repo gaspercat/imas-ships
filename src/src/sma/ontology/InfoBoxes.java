@@ -13,11 +13,11 @@ import jade.util.leap.Serializable;
  *
  * @author carles
  */
-public class Stats implements Serializable{
+public class InfoBoxes implements Serializable{
     private ArrayList stats;
     private boolean isPort;
 
-    public Stats(boolean isPort) {
+    public InfoBoxes(boolean isPort) {
         stats = new ArrayList();
         this.isPort = isPort;
     }
@@ -30,7 +30,7 @@ public class Stats implements Serializable{
         return isPort;
     }
 
-    public void addStat(Stat stat) {
+    public void addStat(InfoBox stat) {
         this.stats.add(stat);
     }
 

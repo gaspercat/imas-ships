@@ -22,8 +22,8 @@ import jade.util.leap.ArrayList;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import sma.ontology.Stat;
-import sma.ontology.Stats;
+import sma.ontology.InfoBox;
+import sma.ontology.InfoBoxes;
 
 /**
  *
@@ -34,7 +34,7 @@ public class PortCoordinator extends Agent{
     private int nBoats = 20;
     private int boatCounter = 0;
     private ArrayList ports = new ArrayList();
-    private Stats stats = new Stats(true);
+    private InfoBoxes stats = new InfoBoxes(true);
             
     public PortCoordinator() {
         super();
@@ -104,6 +104,7 @@ public class PortCoordinator extends Agent{
     private void getStatPortInfo() {
         ACLMessage infoRqst = new ACLMessage(ACLMessage.REQUEST);
         infoRqst.setContent("Get stats"); 
+        this.stats = new InfoBoxes(true);
         if(this.ports.isEmpty()){
             searchPorts();
         }
@@ -264,7 +265,7 @@ public class PortCoordinator extends Agent{
                 ACLMessage rsult = (ACLMessage) resultNotifications.get(i);
                 if(mt.match(rsult)){
                     try {
-                        Stat stat = (Stat)rsult.getContentObject();
+                        InfoBox stat = (InfoBox)rsult.getContentObject();
                         stats.addStat(stat);
                         
                     } catch (UnreadableException ex) {

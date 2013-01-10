@@ -64,6 +64,10 @@ public class InfoGame implements java.io.Serializable {
     BufferedReader dis = new BufferedReader(fis);
     int NROWS = 0, NCOLS = 0;
     Random rand = new Random();
+    int fuck = 1362710043;//rand.nextInt();
+    rand.setSeed(fuck);
+    System.out.println("FUCK "+fuck);
+    
    // rand.setSeed(202);
     
 	String dades = dis.readLine(); 

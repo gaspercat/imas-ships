@@ -65,6 +65,14 @@ public class BoatAgent extends Agent {
         super();
     }
 
+    public DepositsLevel getDeposits() {
+        return deposits;
+    }
+
+    public double getMoney() {
+        return money;
+    }
+
     /**
      * A message is shown in the log area of the GUI
      *
@@ -129,6 +137,7 @@ public class BoatAgent extends Agent {
         MessageTemplate mt6 = MessageTemplate.MatchContent("Give me current position");
         MessageTemplate mt7 = MessageTemplate.MatchOntology("Fishing spots");
         MessageTemplate mt8 = MessageTemplate.MatchContent("Query group target seafood to leader");
+        MessageTemplate mt9 = MessageTemplate.MatchContent("Fish");
      
         MessageTemplate preformativeMT = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
         MessageTemplate mt = MessageTemplate.and(preformativeMT,
@@ -138,7 +147,8 @@ public class BoatAgent extends Agent {
                     MessageTemplate.or(mt4, 
                     MessageTemplate.or(mt5,
                     MessageTemplate.or(mt6, 
-                    MessageTemplate.or(mt7,mt8))))))));
+                    MessageTemplate.or(mt7,
+                    MessageTemplate.or(mt8,mt9)))))))));
         
         // Add a new behaviour to respond this particular message
         this.addBehaviour(new ResponderBehaviour(this, mt));
@@ -357,6 +367,14 @@ public class BoatAgent extends Agent {
             int y = catchPosY + relatives[perm[i]][1];
             destinations.addPosition( new BoatPosition(bpArrayList.get(i).getAID(), x, y) );
         }
+        
+        for (BoatPosition z : destinations.getBoatsPositions())
+        {
+            if (z == null)
+            {
+                System.out.println("MOLT MALO MALO");
+            }
+        }
 
         return destinations;
     }
@@ -377,6 +395,9 @@ public class BoatAgent extends Agent {
     {
         int x = getPosX();
         int y = getPosY();
+        if(null == fishingSpot){
+            System.out.println("MALO SUPREMO");
+        }
         int fsx = fishingSpot.getRow();
         int fsy = fishingSpot.getColumn();
         
@@ -510,6 +531,10 @@ public class BoatAgent extends Agent {
         }
     }
 
+    private void fish() {
+        deposits.store(targetSeafood);
+    }
+
     //Given a particular request, handles it;
     private class ResponderBehaviour extends SimpleAchieveREResponder {
 
@@ -538,13 +563,15 @@ public class BoatAgent extends Agent {
             MessageTemplate mt6 = MessageTemplate.MatchContent("Give me current position");
             MessageTemplate mt7 = MessageTemplate.MatchOntology("Fishing spots");
             MessageTemplate mt8 = MessageTemplate.MatchContent("Query group target seafood to leader");
+            MessageTemplate mt9 = MessageTemplate.MatchContent("Fish");
             MessageTemplate mt = MessageTemplate.or(mt1, 
                     MessageTemplate.or(mt2,
                     MessageTemplate.or(mt3, 
                     MessageTemplate.or(mt4, 
                     MessageTemplate.or(mt5,
                     MessageTemplate.or(mt6, 
-                    MessageTemplate.or(mt7,mt8)))))));
+                    MessageTemplate.or(mt7,
+                    MessageTemplate.or(mt8, mt9))))))));
             
             if (mt.match(request)) {
                 reply.setPerformative(ACLMessage.AGREE);
@@ -570,6 +597,7 @@ public class BoatAgent extends Agent {
             MessageTemplate mt6 = MessageTemplate.MatchContent("Give me current position");
             MessageTemplate mt7 = MessageTemplate.MatchOntology("Fishing spots");
             MessageTemplate mt8 = MessageTemplate.MatchContent("Query group target seafood to leader");
+            MessageTemplate mt9 = MessageTemplate.MatchContent("Fish");
 
             // BoatCoordinator sent to the boat a request to move (to the fishing spot assigned by the team leader)
             if (mt1.match(request))
@@ -696,7 +724,18 @@ public class BoatAgent extends Agent {
                     Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-
+            else if(mt9.match(request))
+            {
+                myAgent.fish();
+                showMessage("Sending stats");
+                reply.setOntology("Stat");
+                InfoBox stat = new InfoBox(myAgent.getDeposits(), myAgent.getMoney(), myAgent.getLocalName());
+                try {
+                    reply.setContentObject(stat);
+                } catch (IOException ex) {
+                    reply.setPerformative(ACLMessage.FAILURE);
+                }
+            }
 
             return reply;
         }
@@ -721,7 +760,7 @@ public class BoatAgent extends Agent {
             {
                 for (SeaFood sf : updatedSeafoods)
                 {
-                    if (sf.equals(targetSeafood)) 
+                    if (sf.equals(targetSeafood)) // Check id equality between the maintained copy of the target seafood and the updated version from upper agents.
                         targetSeafood = sf;
                 }
             }
@@ -787,6 +826,9 @@ public class BoatAgent extends Agent {
                 {
                     this.destinations = setBoatsDestinations(boatsPositions);
                     fishingSpot = this.destinations.get(getAID());
+                    if(fishingSpot == null){
+                        System.out.println("REMALO MALO");
+                    }
                     myAgent.addBehaviour(new BoatAgent.leadSubditsInitiatorBehaviour(myAgent, this.fishingSpotMessageToSubdits()));
                 }
             }
@@ -795,25 +837,25 @@ public class BoatAgent extends Agent {
             {
                 MessageTemplate mt = MessageTemplate.MatchContent("Fishing spot set");   
                 
-                int counter = 0;
-                while (itr.hasNext())
-                {
-                    ACLMessage msg = (ACLMessage) itr.next();
-
-                    if (mt.match(msg))
-                    {
-                        counter++;
-                    }
-                    if (counter == 2) // Always fulfilled, DEBUG purposes.
-                    {
+//                int counter = 0;
+//                while (itr.hasNext())
+//                {
+//                    ACLMessage msg = (ACLMessage) itr.next();
+//
+//                    if (mt.match(msg))
+//                    {
+//                        counter++;
+//                    }
+//                    if (counter == 2) // Always fulfilled, DEBUG purposes.
+//                    {
                         System.out.println(myAgent.getLocalName() + ": the leader have told the destination to its subdits!");
                            
                         ACLMessage msgFormed = new ACLMessage(ACLMessage.REQUEST);
                         msgFormed.addReceiver(boatCoordinator);
                         msgFormed.setContent("Group organized");
                         myAgent.addBehaviour(new SInitiatorBehaviour(myAgent, msgFormed));
-                    } 
-                }
+//                    } 
+//                }
             }
         }
         

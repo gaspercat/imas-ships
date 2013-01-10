@@ -189,7 +189,7 @@ public class GraphicInterface extends JFrame {
             }
 
         }
-        for (int boatCounter = 1; boatCounter <= boats; boatCounter++) {
+        for (int boatCounter = 0; boatCounter < boats; boatCounter++) {
             GraphicAgentPanelInfo boat = new GraphicAgentPanelInfo(AgentPanelType.Boat);
             boat.setName("Boat" + boatCounter);
             boat.setMaxQuantityOfSeafood(info.getCapacityBoats());
@@ -226,15 +226,19 @@ public class GraphicInterface extends JFrame {
 
     public void updateBoatsPanelInfo(ArrayList stats) {
         for (int i = 0; i < stats.size(); i++) {
-            Stat port = (Stat) stats.get(i);
-            GraphicAgentPanelInfo panel = this.portPanels.get(port.getName());
-            panel.setName(port.getName());
-            panel.setMoneyAvailable(port.getEuros());
-            DepositsLevel levels = port.getDeposit();
-            panel.setCurrentQuantityOfSeafood(levels.getTunaLevel(),
+            InfoBox boat = (InfoBox) stats.get(i);
+            GraphicAgentPanelInfo panel = this.boatPanels.get(boat.getName());
+            if(panel != null){
+                panel.setName(boat.getName());
+            //panel.setMoneyAvailable(port.getEuros());
+                DepositsLevel levels = boat.getDeposit();
+                panel.setCurrentQuantityOfSeafood(levels.getTunaLevel(),
                     levels.getOctopusLevel(), levels.getShrimpLevel(), levels.getLobsterLevel());
             //Set the values in the labels
-            panel.setInfo();
+                panel.setInfo();
+            }else{
+                System.out.println("MALO MALO");
+            }
         }
     }
 
@@ -242,7 +246,7 @@ public class GraphicInterface extends JFrame {
 
     public void updatePortsPanelInfo(ArrayList ports) {
         for (int i = 0; i < ports.size(); i++) {
-            Stat port = (Stat) ports.get(i);
+            InfoBox port = (InfoBox) ports.get(i);
             GraphicAgentPanelInfo panel = this.portPanels.get(port.getName());
             panel.setName(port.getName());
             panel.setMoneyAvailable(port.getEuros());

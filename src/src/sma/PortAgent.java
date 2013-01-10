@@ -19,13 +19,12 @@ import jade.lang.acl.UnreadableException;
 import jade.proto.ContractNetResponder;
 import jade.proto.SimpleAchieveREInitiator;
 import jade.proto.SimpleAchieveREResponder;
-import jade.tools.gui.ACLAIDDialog;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import sma.ontology.DepositsLevel;
 import sma.ontology.PortType;
-import sma.ontology.Stat;
+import sma.ontology.InfoBox;
 import sma.strategies.PortStrategy;
 
 /**
@@ -252,7 +251,7 @@ public class PortAgent extends Agent {
             if (mt.match(request)) {
                 showMessage("Sending stats");
                 reply.setOntology("Stat");
-                Stat stat = new Stat(myAgent.getDeposits(), myAgent.getMoney(), myAgent.getLocalName());
+                InfoBox stat = new InfoBox(myAgent.getDeposits(), myAgent.getMoney(), myAgent.getLocalName());
                 try {
                     reply.setContentObject(stat);
                 } catch (IOException ex) {

@@ -19,14 +19,14 @@ public class BoatsPosition implements java.io.Serializable{
     private boolean allSeafoodsBlocked;
     
     public BoatsPosition(){
-        this.positions = new ArrayList<>();
-        this.seafoods = new ArrayList<>();
+        this.positions = new ArrayList<BoatPosition>();
+        this.seafoods = new ArrayList<SeaFood>();
         allSeafoodsBlocked = false;
     }
     
     public BoatsPosition(List<BoatPosition> positions){
         this.positions = positions;
-        this.seafoods = new ArrayList<>();
+        this.seafoods = new ArrayList<SeaFood>();
         allSeafoodsBlocked = false;
     }
     
