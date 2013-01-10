@@ -18,6 +18,7 @@ import java.util.*;
 import java.io.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Random;
 
 /**
  *
@@ -533,6 +534,20 @@ public class BoatAgent extends Agent {
 
     private void fish() {
         deposits.store(targetSeafood);
+        
+    }
+    
+    private void resetAgent(){
+        this.seaFoodRanking = new ArrayList<FishRank>();
+        this.isLeader = false;
+        this.boatsRanking = new ArrayList<FishRank>();
+        this.boatsGroup = new ArrayList<AID>();
+        this.bestFishRank = null;
+        this.messagePendent = false;
+        this.leader = null;
+
+        this.posX = new Random().nextInt(this.mapDimX+1);
+        this.posX = new Random().nextInt(this.mapDimX+2);
     }
 
     //Given a particular request, handles it;
@@ -727,6 +742,7 @@ public class BoatAgent extends Agent {
             else if(mt9.match(request))
             {
                 myAgent.fish();
+                myAgent.resetAgent();
                 showMessage("Sending stats");
                 reply.setOntology("Stat");
                 InfoBox stat = new InfoBox(myAgent.getDeposits(), myAgent.getMoney(), myAgent.getLocalName());
