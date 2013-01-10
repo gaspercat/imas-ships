@@ -178,11 +178,11 @@ public class CentralAgent extends Agent {
                     if (stats.isPort()) {
                         updatePortStats(stats);
 
-                        reply.setContent("Port updated");
+                        reply.setContent("Ports updated");
                     } else {
                         updateBoatStats(stats);
 
-                        reply.setContent("Boat updated");
+                        reply.setContent("Boats updated");
                     }
                 } else {
                     reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);

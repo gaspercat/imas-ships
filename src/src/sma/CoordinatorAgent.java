@@ -281,10 +281,10 @@ public class CoordinatorAgent extends Agent {
             // If message comes from centralAgent
             if (msg.getSender().equals(centralAgent)) {
                 //TODO mt here
-                MessageTemplate sttmt = MessageTemplate.MatchContent("Port updated");
+                MessageTemplate sttmt = MessageTemplate.MatchContent("Ports updated");
                 MessageTemplate mt1 = MessageTemplate.MatchOntology("Seafoods");
                 MessageTemplate mt2 = MessageTemplate.MatchOntology("AuxInfo");
-
+                MessageTemplate mt3 = MessageTemplate.MatchContent("Boats updated");
                 if (sttmt.match(msg)) {//Debugging purpouses
                     showMessage("Port updated!");
 
@@ -318,6 +318,9 @@ public class CoordinatorAgent extends Agent {
                     showMessage("AuxInfo recived from central Agent");
                     myAgent.nextTurn();
 
+                } else if(mt3.match(msg)){
+                    showMessage("INITIATING next fishing turn");
+                    nextTurn();
                 } else {
                     showMessage("Message From Central Agent: " + msg.getContent());
                 }
