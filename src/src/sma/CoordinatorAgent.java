@@ -319,7 +319,7 @@ public class CoordinatorAgent extends Agent {
                     myAgent.nextTurn();
 
                 } else if(mt3.match(msg)){
-                    showMessage("INITIATING next fishing turn");
+                    showMessage("INITIATING next turn");
                     nextTurn();
                 } else {
                     showMessage("Message From Central Agent: " + msg.getContent());
