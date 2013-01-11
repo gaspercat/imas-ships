@@ -92,17 +92,12 @@ public class BoatAgent extends Agent {
         this.mapDimX = new Integer(arguments[2].toString());
         this.mapDimY = new Integer(arguments[3].toString());
         this.capacityBoats = (Double) arguments[4];
-        this.seaFoods = (SeaFood[]) arguments[5];
 
         // Read ports list
-        this.ports = (ArrayList<AID>) arguments[6];
+        this.ports = (ArrayList<AID>) arguments[5];
 
         this.deposits = new DepositsLevel(this.capacityBoats);
         this.money = 0;
-
-        for (int i = 0; i < this.seaFoods.length; i++) {
-            this.seaFoodRanking.add(new FishRank(this.seaFoods[i], this));
-        }
 
         //Accept jade objects as messages
         this.setEnabledO2ACommunication(true, 0);
@@ -131,7 +126,7 @@ public class BoatAgent extends Agent {
 
         //Message Template Preformative filter
         MessageTemplate mt1 = MessageTemplate.MatchOntology("Move");
-        MessageTemplate mt2 = MessageTemplate.MatchContent("Rank fish");
+        MessageTemplate mt2 = MessageTemplate.MatchOntology("ArrayList<SeaFood>");
         MessageTemplate mt3 = MessageTemplate.MatchOntology("Ranking");
         MessageTemplate mt4 = MessageTemplate.MatchContent("Start negotiation");
         MessageTemplate mt5 = MessageTemplate.MatchContent("Organize group");
@@ -572,7 +567,7 @@ public class BoatAgent extends Agent {
             
             MessageTemplate mt1 = MessageTemplate.MatchOntology("Move");
             MessageTemplate mt2 = MessageTemplate.MatchContent("Start negotiation");
-            MessageTemplate mt3 = MessageTemplate.MatchContent("Rank fish");
+            MessageTemplate mt3 = MessageTemplate.MatchOntology("ArrayList<SeaFood>");
             MessageTemplate mt4 = MessageTemplate.MatchOntology("Ranking");
             MessageTemplate mt5 = MessageTemplate.MatchContent("Organize group");
             MessageTemplate mt6 = MessageTemplate.MatchContent("Give me current position");
@@ -606,7 +601,7 @@ public class BoatAgent extends Agent {
 
             MessageTemplate mt1 = MessageTemplate.MatchOntology("Move");
             MessageTemplate mt2 = MessageTemplate.MatchContent("Start negotiation");
-            MessageTemplate mt3 = MessageTemplate.MatchContent("Rank fish");
+            MessageTemplate mt3 = MessageTemplate.MatchOntology("ArrayList<SeaFood>");
             MessageTemplate mt4 = MessageTemplate.MatchOntology("Ranking");
             MessageTemplate mt5 = MessageTemplate.MatchContent("Organize group");
             MessageTemplate mt6 = MessageTemplate.MatchContent("Give me current position");
@@ -670,9 +665,21 @@ public class BoatAgent extends Agent {
             } else if (mt3.match(request)) {
                 try {
                     showMessage("Fish rank send to BoatCoordinator");
+                    
+                    ArrayList<SeaFood> seaFoods;
+                    seaFoods = (ArrayList<SeaFood>) request.getContentObject();
+                  
+                    
+                    for (SeaFood sf : seaFoods) {
+                        seaFoodRanking.add(new FishRank(sf, myAgent));
+                    }
+                    
                     reply.setContentObject(getFishRank());
                 } catch (IOException e) {
                     showMessage(e.toString());
+                }
+                  catch (UnreadableException ex) {
+                  Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
             // Promotion to leader request
