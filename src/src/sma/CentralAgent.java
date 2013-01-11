@@ -185,7 +185,8 @@ public class CentralAgent extends Agent {
                         updateBoatStats(stats);
                         spawnFishes();
                         reply.setOntology("Boats updated");
-                        reply.setContentObject((SeaFood[])sfList.toArray());
+                        
+                        reply.setContentObject(sfList);
                     }
                 } else {
                     reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);

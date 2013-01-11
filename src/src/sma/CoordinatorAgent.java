@@ -256,10 +256,14 @@ public class CoordinatorAgent extends Agent {
                         showMessage("Unable to read stats");
                     }
             } else if (boatsUpMT.match(request)){
-                SeaFood[] sf;
+                ArrayList<SeaFood> sfList;
                 try {
-                    sf = (SeaFood[]) request.getContentObject();
-                    myAgent.gameInfo.setSeaFoods(sf);
+                    sfList = (ArrayList<SeaFood>) request.getContentObject();
+                    SeaFood[] sfArray = new SeaFood[sfList.size()];
+                        for (int i = 0; i < sfList.size(); i++){
+                            sfArray[i] = sfList.get(i);
+                    }
+                    myAgent.gameInfo.setSeaFoods(sfArray);
                 } catch (UnreadableException ex) {
                     Logger.getLogger(CoordinatorAgent.class.getName()).log(Level.SEVERE, null, ex);
                 }
