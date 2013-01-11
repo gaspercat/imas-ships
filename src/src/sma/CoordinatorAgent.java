@@ -224,7 +224,6 @@ public class CoordinatorAgent extends Agent {
             reply.setPerformative(ACLMessage.INFORM);
             MessageTemplate boatPositionMt = MessageTemplate.MatchOntology("BoatsPosition");
             MessageTemplate statsMt = MessageTemplate.MatchOntology("Stats");
-            MessageTemplate boatsUpMT = MessageTemplate.MatchOntology("Boats updated");
 
             if (boatPositionMt.match(request)) {
                 //TODO POSAR SWITCH ENTER BOATSPOSITIONS I STATS
@@ -255,19 +254,6 @@ public class CoordinatorAgent extends Agent {
                     } catch (UnreadableException ex) {
                         showMessage("Unable to read stats");
                     }
-            } else if (boatsUpMT.match(request)){
-                ArrayList<SeaFood> sfList;
-                try {
-                    sfList = (ArrayList<SeaFood>) request.getContentObject();
-                    SeaFood[] sfArray = new SeaFood[sfList.size()];
-                        for (int i = 0; i < sfList.size(); i++){
-                            sfArray[i] = sfList.get(i);
-                    }
-                    myAgent.gameInfo.setSeaFoods(sfArray);
-                } catch (UnreadableException ex) {
-                    Logger.getLogger(CoordinatorAgent.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                
             }
             return reply;
         }
@@ -298,7 +284,7 @@ public class CoordinatorAgent extends Agent {
                 MessageTemplate sttmt = MessageTemplate.MatchContent("Ports updated");
                 MessageTemplate mt1 = MessageTemplate.MatchOntology("Seafoods");
                 MessageTemplate mt2 = MessageTemplate.MatchOntology("AuxInfo");
-                MessageTemplate mt3 = MessageTemplate.MatchContent("Boats updated");
+                MessageTemplate mt3 = MessageTemplate.MatchOntology("Boats updated");
                 if (sttmt.match(msg)) {//Debugging purpouses
                     showMessage("Port updated!");
 
@@ -334,6 +320,19 @@ public class CoordinatorAgent extends Agent {
 
                 } else if(mt3.match(msg)){
                     showMessage("INITIATING next turn");
+                    
+                    ArrayList<SeaFood> sfList;
+                    try {
+                        sfList = (ArrayList<SeaFood>) msg.getContentObject();
+                        SeaFood[] sfArray = new SeaFood[sfList.size()];
+                            for (int i = 0; i < sfList.size(); i++){
+                                sfArray[i] = sfList.get(i);
+                        }
+                        myAgent.gameInfo.setSeaFoods(sfArray);
+                    } catch (UnreadableException ex) {
+                        Logger.getLogger(CoordinatorAgent.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    
                     nextTurn();
                 } else {
                     showMessage("Message From Central Agent: " + msg.getContent());
