@@ -416,7 +416,7 @@ public class BoatCoordinator extends Agent {
             Iterator itr = resultNotifications.iterator();
 
             MessageTemplate mt1 = MessageTemplate.MatchOntology("Move");
-            MessageTemplate mt2 = MessageTemplate.MatchContent("Rank Fish");
+            MessageTemplate mt2 = MessageTemplate.MatchOntology("ArrayList<SeaFood>");
             MessageTemplate mt3 = MessageTemplate.MatchContent("Initiate grouping");
             MessageTemplate mt4 = MessageTemplate.MatchContent("Organize groups");
             MessageTemplate mt5 = MessageTemplate.MatchContent("Fish");
@@ -473,7 +473,7 @@ public class BoatCoordinator extends Agent {
                 }
             } else if (mt2.match(msg)) {
                 ArrayList<ArrayList<FishRank>> fishRanks = new ArrayList();
-
+                
                 while (itr.hasNext()) {
                     ACLMessage msg = (ACLMessage) itr.next();
                     if (msg.getPerformative() == ACLMessage.INFORM) {
@@ -485,6 +485,7 @@ public class BoatCoordinator extends Agent {
                         }
                     }
                 }
+                
                 setUPleaders(fishRanks);
                 // Initiate grouping
             } else if (mt3.match(msg)) {
@@ -569,7 +570,7 @@ public class BoatCoordinator extends Agent {
     private void setUPleaders(ArrayList<ArrayList<FishRank>> frList) {
         ArrayList<Rankings> rankings = this.getSeaFoodsBoatsRanking(frList);
         int l = 0;
-
+        
         while (l < rankings.size()) {
             //Initial Best
             int bestRankIndex = -1;
