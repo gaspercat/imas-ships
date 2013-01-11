@@ -224,6 +224,7 @@ public class CoordinatorAgent extends Agent {
             reply.setPerformative(ACLMessage.INFORM);
             MessageTemplate boatPositionMt = MessageTemplate.MatchOntology("BoatsPosition");
             MessageTemplate statsMt = MessageTemplate.MatchOntology("Stats");
+            MessageTemplate boatsUpMT = MessageTemplate.MatchOntology("Boats updated");
 
             if (boatPositionMt.match(request)) {
                 //TODO POSAR SWITCH ENTER BOATSPOSITIONS I STATS
@@ -254,6 +255,15 @@ public class CoordinatorAgent extends Agent {
                     } catch (UnreadableException ex) {
                         showMessage("Unable to read stats");
                     }
+            } else if (boatsUpMT.match(request)){
+                SeaFood[] sf;
+                try {
+                    sf = (SeaFood[]) request.getContentObject();
+                    myAgent.gameInfo.setSeaFoods(sf);
+                } catch (UnreadableException ex) {
+                    Logger.getLogger(CoordinatorAgent.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
             }
             return reply;
         }
