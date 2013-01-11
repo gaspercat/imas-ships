@@ -47,6 +47,10 @@ public class BoatCoordinator extends Agent {
     public BoatsPosition getBoatsPosition() {
         return this.boatsPosition;
     }
+    
+    public ArrayList<SeaFood> getSeaFoods(){
+        return this.seafoods;
+    }
 
     public void setBoatPosition(BoatPosition boat) {
         this.boatsPosition.setBoatPosition(boat);
@@ -120,10 +124,10 @@ public class BoatCoordinator extends Agent {
     //Behaviour to deal with the requestes from the coordinator agent
     class ResponderBehaviour extends SimpleAchieveREResponder {
 
-        Agent myAgent;
+        BoatCoordinator myAgent;
         MessageTemplate mt;
 
-        public ResponderBehaviour(Agent myAgent, MessageTemplate mt) {
+        public ResponderBehaviour(BoatCoordinator myAgent, MessageTemplate mt) {
             super(myAgent, mt);
             this.myAgent = myAgent;
             this.mt = mt;
@@ -260,14 +264,24 @@ public class BoatCoordinator extends Agent {
         }
 
         private ACLMessage prepareRankFishMessageToBoats() {
-            jade.util.leap.List boats = buscarAgents("boat", null);
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-            Iterator itr = boats.iterator();
+            
+            // Set message receivers
+            Iterator itr = buscarAgents("boat", null).iterator();
             while (itr.hasNext()) {
                 AID boat = (AID) itr.next();
                 msg.addReceiver(boat);
             }
-            msg.setContent("Rank Fish");
+            
+            // Set message ontology
+            msg.setOntology("ArrayList<SeaFood>");
+            
+            try{
+                msg.setContentObject(myAgent.getSeaFoods());
+            }catch(IOException e){
+                showMessage(myAgent.getLocalName() + " - ERROR: Couldn't sent new seafood positions!");
+            }
+            
             return msg;
         }
 

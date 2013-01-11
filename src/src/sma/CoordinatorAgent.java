@@ -364,16 +364,15 @@ public class CoordinatorAgent extends Agent {
                     showMessage("Agent ID: " + ia.getName());
                     if (ia.getAgentType() == AgentType.Boat) {
                         showMessage("Agent type: " + ia.getAgentType().toString());
-                        Object[] arguments = new Object[7];
+                        Object[] arguments = new Object[6];
                         // Add position arguments
                         arguments[0] = info.getAgentsInitialPosition().get(ia).getRow();
                         arguments[1] = info.getAgentsInitialPosition().get(ia).getColumn();
                         arguments[2] = info.getMap()[0].length;
                         arguments[3] = info.getMap().length;
                         arguments[4] = info.getCapacityBoats();
-                        arguments[5] = info.getSeaFoods();
                         // Add ports AID
-                        arguments[6] = port_aids;
+                        arguments[5] = port_aids;
                         // Create boat agent
                         UtilsAgents.createAgent(this.getContainerController(), ia.getName(), "sma.BoatAgent", arguments);
                     } else {
