@@ -137,10 +137,13 @@ public class InfoGame implements java.io.Serializable {
 		initialPositions.add(this.info.map[rndRow][rndCol]);
 	}
         this.info.fillAgentsInitialPositions(initialPositions);
-
-        SeaFood[] sfList = new SeaFood[info.getNumSeafoodGroups()];
         
-        //Add fishes
+        spawnFishes(rand);
+  }
+  
+  public ArrayList<SeaFood> spawnFishes(Random rand){
+        SeaFood[] sfList = new SeaFood[info.getNumSeafoodGroups()];
+  
         for (int fish = 0; fish < info.getNumSeafoodGroups(); fish++){
             int rndRow = 1 + rand.nextInt(18); //[1, 20)
             int rndCol = 1 + rand.nextInt(18); //(int)  (rand.nextFloat() * ( (NCOLS - 1) - 0 ));
@@ -168,5 +171,12 @@ public class InfoGame implements java.io.Serializable {
             sfList[fish] = sf;
         }
         this.info.setSeaFoods(sfList);
+        
+        ArrayList<SeaFood> ret = new ArrayList<SeaFood>();
+        for(SeaFood sf: sfList){
+            ret.add(sf);
+        }
+        
+        return ret;
   }
 }

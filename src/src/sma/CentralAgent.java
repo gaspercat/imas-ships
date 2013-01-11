@@ -10,6 +10,8 @@ import jade.util.leap.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import java.util.Random;
+
 import sma.ontology.*;
 import sma.gui.*;
 import sma.ontology.SeaFood;
@@ -181,8 +183,9 @@ public class CentralAgent extends Agent {
                         reply.setContent("Ports updated");
                     } else {
                         updateBoatStats(stats);
-
-                        reply.setContent("Boats updated");
+                        spawnFishes();
+                        reply.setOntology("Boats updated");
+                        reply.setContentObject((SeaFood[])sfList.toArray());
                     }
                 } else {
                     reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
@@ -300,5 +303,9 @@ public class CentralAgent extends Agent {
 
         }
         gui.updateBoatsPanelInfo(stats.getStats());
+    }
+    
+    private void spawnFishes() {
+        this.sfList = game.spawnFishes(new Random());
     }
 } //endof class AgentCentral
