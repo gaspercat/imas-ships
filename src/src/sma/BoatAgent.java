@@ -60,8 +60,6 @@ public class BoatAgent extends Agent {
     //First delivery generator of movement
     Random generator = new Random();
     
-    private boolean bBlockedFish;
-
     public BoatAgent() {
         super();
     }

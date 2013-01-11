@@ -169,6 +169,9 @@ public class BoatCoordinator extends Agent {
                 setMovementPhaseFinished(false);
 
                 // Ask boats to rank the utility of the fishes
+                actualGroups = 0;
+                organizedGroups = 0;
+                positionedBoats = 0;
                 myAgent.addBehaviour(new BoatsInitiatorBehaviour(myAgent, prepareRankFishMessageToBoats()));
                 leaders = new ArrayList<AID>();
 
