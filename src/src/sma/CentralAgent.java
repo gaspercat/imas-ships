@@ -168,7 +168,7 @@ public class CentralAgent extends Agent {
                     boatsPositions = (BoatsPosition) request.getContentObject();
                     sfList = boatsPositions.getSeafoods();
                     refreshMap();
-                    myAgent.doWait(500);
+                    myAgent.doWait(100);
                     reply.setOntology("Seafoods");
                     reply.setContentObject(sfList);
 
