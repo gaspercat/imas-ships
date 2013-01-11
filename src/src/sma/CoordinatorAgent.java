@@ -74,10 +74,12 @@ public class CoordinatorAgent extends Agent {
             // If negotiation turn
             case 5:
                 turn = TURN_NEGOTIATION;
+                break;
 
             // If fishing turn
             default:
                 turn = TURN_FISHING;
+                break;
         }
 
         this.currentTurn++;
@@ -287,6 +289,7 @@ public class CoordinatorAgent extends Agent {
                 MessageTemplate mt3 = MessageTemplate.MatchOntology("Boats updated");
                 if (sttmt.match(msg)) {//Debugging purpouses
                     showMessage("Port updated!");
+                    nextTurn();
 
                 // Send boat positions redrawn message
                 } else if(mt1.match(msg)) {
