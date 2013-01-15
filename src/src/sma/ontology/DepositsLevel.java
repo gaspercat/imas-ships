@@ -122,6 +122,9 @@ public class DepositsLevel implements java.io.Serializable{
     
     public void add(DepositsLevel deposits){
         this.lobsterLevel += deposits.lobsterLevel;
+        if(this.capacity > 100){
+            System.out.println("MALO DE LAS PELOTAS");
+        }
         if(this.lobsterLevel > this.capacity) this.lobsterLevel = this.capacity;
         
         this.octopusLevel += deposits.octopusLevel;

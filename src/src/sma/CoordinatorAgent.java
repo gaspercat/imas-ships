@@ -366,8 +366,10 @@ public class CoordinatorAgent extends Agent {
                 for (InfoAgent ia : info.getPorts()) {
                     showMessage("Agent ID: " + ia.getName());
                     if (ia.getAgentType() == AgentType.Port) {
-                        Object[] arguments = new Object[1];
+                        Object[] arguments = new Object[3];
                         arguments[0] = ia.getPortType();
+                        arguments[1] = new Double(this.gameInfo.getCapacityPorts());
+                        arguments[2] = new Double(this.gameInfo.getMoneyPorts());
                         showMessage("Agent type: " + ia.getAgentType().toString());
                         UtilsAgents.createAgent(this.getContainerController(), ia.getName(), "sma.PortAgent", arguments);
                     } else {

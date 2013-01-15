@@ -43,7 +43,6 @@ public class PortAgent extends Agent {
     public PortAgent() {
         super();
 
-        this.deposits = new DepositsLevel(1000);
         this.euros = 1000;
     }
 
@@ -51,6 +50,8 @@ public class PortAgent extends Agent {
         // Read port type argument
         Object[] arguments = this.getArguments();
         this.strategy = (PortType) arguments[0];
+        this.deposits = new DepositsLevel((Double)arguments[1]);
+        this.euros = ((Double)arguments[2]).doubleValue();
 
         if (this.portCoordinator == null) {
             ServiceDescription searchBoatCoordCriteria = new ServiceDescription();
