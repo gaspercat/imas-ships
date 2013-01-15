@@ -16,6 +16,9 @@ import sma.ontology.*;
 import sma.gui.*;
 import sma.ontology.SeaFood;
 
+import sma.statistics.BoatStatistics;
+import sma.statistics.PortStatistics;
+
 /**
  * <p><B>Title:</b> IA2-SMA</p> <p><b>Description:</b> Practical exercise
  * 2011-12. Recycle swarm.</p> <p><b>Copyright:</b> Copyright (c) 2011</p>
@@ -26,7 +29,9 @@ import sma.ontology.SeaFood;
  * @version 2.0
  */
 public class CentralAgent extends Agent {
-
+    BoatStatistics bStats;
+    PortStatistics pStats;
+    
     private sma.gui.GraphicInterface gui;
     private sma.ontology.InfoGame game;
     private BoatsPosition boatsPositions;
@@ -293,6 +298,7 @@ public class CentralAgent extends Agent {
 
     private void updatePortStats(InfoBoxes stats) {
         gui.updatePortsPanelInfo(stats.getStats());
+        pStats.addStatistics(stats);
     }
 
     private void updateBoatStats(InfoBoxes stats) {
@@ -301,7 +307,7 @@ public class CentralAgent extends Agent {
         for (int i = 0; i < lel.size(); i++) {
             InfoBox s = (InfoBox) lel.get(i);
             showMessage("Boat Stat " + i + ", " + s);
-
+            bStats.addStatistics(stats);
         }
         gui.updateBoatsPanelInfo(stats.getStats());
     }

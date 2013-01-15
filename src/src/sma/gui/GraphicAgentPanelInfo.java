@@ -177,11 +177,10 @@ public class GraphicAgentPanelInfo extends JPanel {
 	public void setInfo()
 	{
 		lblName.setText(getName());
-		
-		lblTunaStatus.setText("T: " + getCurrentQuantityOfTuna() + "/" + this._maxQty);
-		lblOctopusStatus.setText("O: " + getCurrentQuantityOfOctopus() + "/" + this._maxQty);
-		lblLobsterStatus.setText("L: " + getCurrentQuantityOfLobster() + "/" + this._maxQty);
-		lblShrimpStatus.setText("S: " + getCurrentQuantityOfShrimp() + "/" + this._maxQty);
+		lblTunaStatus.setText("T: " + String.format("%.3g%n", getCurrentQuantityOfTuna()) + "/" + this._maxQty);
+		lblOctopusStatus.setText("O: " + String.format("%.3g%n", getCurrentQuantityOfOctopus()) + "/" + this._maxQty);
+		lblLobsterStatus.setText("L: " + String.format("%.3g%n", getCurrentQuantityOfLobster()) + "/" + this._maxQty);
+		lblShrimpStatus.setText("S: " + String.format("%.3g%n", getCurrentQuantityOfShrimp()) + "/" + this._maxQty);
 		
 		if (_isPort)
 		{

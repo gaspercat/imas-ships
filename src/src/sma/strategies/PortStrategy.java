@@ -112,7 +112,7 @@ public abstract class PortStrategy {
         
         ret += this.levels.getTunaLevel() * (MIN_TUNA + MAX_TUNA) / 2;
         ret += this.levels.getOctopusLevel() * (MIN_OCTOPUS + MAX_OCTOPUS) / 2;
-        ret += this.levels.getLobsterLevel() * (MIN_LOBSTER + MAX_OCTOPUS) / 2;
+        ret += this.levels.getLobsterLevel() * (MIN_LOBSTER + MAX_LOBSTER) / 2;
         ret += this.levels.getShrimpLevel() * (MIN_SHRIMP + MAX_SHRIMP) / 2;
         
         return ret;

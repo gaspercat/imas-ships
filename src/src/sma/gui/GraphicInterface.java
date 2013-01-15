@@ -234,6 +234,7 @@ public class GraphicInterface extends JFrame {
                 DepositsLevel levels = boat.getDeposit();
                 panel.setCurrentQuantityOfSeafood(levels.getTunaLevel(),
                     levels.getOctopusLevel(), levels.getShrimpLevel(), levels.getLobsterLevel());
+                panel.setMoneyAvailable(boat.getEuros());
             //Set the values in the labels
                 panel.setInfo();
             }else{
