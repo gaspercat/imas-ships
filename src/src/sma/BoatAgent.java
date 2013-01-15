@@ -47,7 +47,7 @@ public class BoatAgent extends Agent {
     //Best fishRank so far.
     private FishRank bestFishRank;
     //List of messages pendents to response
-    private ArrayList<CandidateLeader> pendentOfAcceptance = new ArrayList<CandidateLeader>();
+    private CandidateLeader pendentOfAcceptance = null;
     //Are there any message pendent?
     private Boolean messagePendent = false;
     // Agent AID's
@@ -694,8 +694,9 @@ public class BoatAgent extends Agent {
                 MessageTemplate mtL1 = MessageTemplate.MatchContent("Initiate grouping");
                 MessageTemplate mtL2 = MessageTemplate.MatchContent("No longer interested in form part of the group");
                 MessageTemplate mtL3 = MessageTemplate.MatchContent("Pendent request accepted");
+                MessageTemplate mtL4 = MessageTemplate.MatchContent("Pendent message rejected");
 
-                MessageTemplate mt = MessageTemplate.or(mtL1, MessageTemplate.or(mtL3, mtL2));
+                MessageTemplate mt = MessageTemplate.or(mtL1, MessageTemplate.or(mtL3, MessageTemplate.or(mtL2, mtL4)));
 
                 myAgent.addBehaviour(new LeaderREResponder(myAgent, mt));
 
@@ -1035,6 +1036,7 @@ public class BoatAgent extends Agent {
             MessageTemplate mt1 = MessageTemplate.MatchContent("Initiate grouping");
             MessageTemplate mt2 = MessageTemplate.MatchContent("No longer interested in form part of the group");
             MessageTemplate mt3 = MessageTemplate.MatchContent("Pendent request accepted");
+            MessageTemplate mt4 = MessageTemplate.MatchContent("Pendent message rejected");
 
             if (mt1.match(request)) {
                 reply.setContent("Grouping...");
@@ -1066,6 +1068,9 @@ public class BoatAgent extends Agent {
                     myAgent.addBehaviour(new SInitiatorBehaviour(myAgent, msgFormed));
                 }
                 reply.setContent("Added to group");
+            } else if (mt4.match(request)){
+                System.out.println("PENDENT REJEEEEEEEEEECTED!!!!!Recived");
+                sendOffer();
             }
 
             return reply;
@@ -1109,12 +1114,11 @@ public class BoatAgent extends Agent {
 
             if (mt1.match(msg)) {
                 ACLMessage acceptanceMessage = new ACLMessage(ACLMessage.REQUEST);
-                Collections.sort(pendentOfAcceptance, Collections.reverseOrder());
-                CandidateLeader cl = pendentOfAcceptance.remove(0);
-                acceptanceMessage.addReceiver(cl.candidateAID);
+                acceptanceMessage.addReceiver(pendentOfAcceptance.candidateAID);
                 acceptanceMessage.setContent("Pendent request accepted");
-                leader = cl.candidateAID;
-                bestFishRank = cl.candidateRank;
+                leader = pendentOfAcceptance.candidateAID;
+                bestFishRank = pendentOfAcceptance.candidateRank;
+                pendentOfAcceptance = null;
                 myAgent.addBehaviour(new SInitiatorBehaviour(myAgent, acceptanceMessage));
             }
         }
@@ -1160,22 +1164,21 @@ public class BoatAgent extends Agent {
                     } else {
                         boolean isNotBest = false;
 
-                        for (CandidateLeader cl : pendentOfAcceptance) {
-                            if (cl.candidateRank.compareTo(candidateRank) == 1) {
-                                isNotBest = true;
-                                break;
-                            }
-                        }
-
-                        if (bestFishRank.compareTo(candidateRank) == 1 || isNotBest) {
+                        if ((pendentOfAcceptance != null && pendentOfAcceptance.candidateRank.compareTo(candidateRank)==1)||bestFishRank.compareTo(candidateRank) == 1 || isNotBest) {
                             reply.setContent("No accept proposal");
                         } else {
                             ACLMessage msgToPrevLeader = new ACLMessage(ACLMessage.REQUEST);
-                            msgToPrevLeader.setContent("No longer interested in form part of the group");
-                            msgToPrevLeader.addReceiver(leader);
+                            if(pendentOfAcceptance != null){
+                                System.out.println("PENDENT REJEEEEEEEEEECTED");
+                                msgToPrevLeader.setContent("Pendent message rejected");
+                                msgToPrevLeader.addReceiver(pendentOfAcceptance.candidateAID);
+                            }else{
+                                msgToPrevLeader.setContent("No longer interested in form part of the group");
+                                msgToPrevLeader.addReceiver(leader);
+                            }
                             myAgent.addBehaviour(new NOLeaderREInitiator(myAgent, msgToPrevLeader));
                             CandidateLeader cl = new CandidateLeader(request.getSender(), candidateRank);
-                            pendentOfAcceptance.add(cl);
+                            pendentOfAcceptance = cl;
                             reply.setContent("Pendent to response");
                         }
                     }
