@@ -417,6 +417,7 @@ public class BoatCoordinator extends Agent {
         //Handle all the messages from boats in order to send that result to the CoordinatorAgent
         protected void handleAllResultNotifications(java.util.Vector resultNotifications) {
             Iterator itr = resultNotifications.iterator();
+            System.out.println("BoatsPosition number of responses: " + resultNotifications.size());
 
             MessageTemplate mt1 = MessageTemplate.MatchOntology("Move");
             MessageTemplate mt2 = MessageTemplate.MatchOntology("ArrayList<SeaFood>");

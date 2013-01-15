@@ -23,6 +23,9 @@ public class InfoGame implements java.io.Serializable {
   private int turn=0;
   private int gameDuration;
   private long timeout;
+  
+  // Map dimensions
+  int NROWS = 0, NCOLS = 0;
  
   static private boolean DEBUG = false;
 
@@ -62,7 +65,6 @@ public class InfoGame implements java.io.Serializable {
   public void readGameFile (String file) throws IOException,Exception {
 	FileReader fis = new FileReader(file);
     BufferedReader dis = new BufferedReader(fis);
-    int NROWS = 0, NCOLS = 0;
     Random rand = new Random();
     
    // rand.setSeed(202);
@@ -145,8 +147,8 @@ public class InfoGame implements java.io.Serializable {
         SeaFood[] sfList = new SeaFood[info.getNumSeafoodGroups()];
   
         for (int fish = 0; fish < info.getNumSeafoodGroups(); fish++){
-            int rndRow = 1 + rand.nextInt(18); //[1, 20)
-            int rndCol = 1 + rand.nextInt(18); //(int)  (rand.nextFloat() * ( (NCOLS - 1) - 0 ));
+            int rndRow = 1 + rand.nextInt((NROWS-1)-1); //[1, 20)
+            int rndCol = 1 + rand.nextInt((NCOLS-1)-1); //(int)  (rand.nextFloat() * ( (NCOLS - 1) - 0 ));
             
             int seaFoodType = rand.nextInt();
             seaFoodType = Math.abs(seaFoodType%4);

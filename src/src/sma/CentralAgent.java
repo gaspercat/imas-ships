@@ -307,6 +307,14 @@ public class CentralAgent extends Agent {
     }
     
     private void spawnFishes() {
+        for (int y = 0; y < 20; y++)
+        {
+            for (int x = 0; x < 20; x++)
+            {
+                game.getInfo().getMap()[y][x].setType(CellType.Sea);
+            }
+        }
         this.sfList = game.spawnFishes(new Random());
+
     }
 } //endof class AgentCentral

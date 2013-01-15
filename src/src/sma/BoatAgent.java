@@ -540,7 +540,7 @@ public class BoatAgent extends Agent {
         this.leader = null;
 
         this.posX = new Random().nextInt(this.mapDimX+1);
-        this.posX = new Random().nextInt(this.mapDimX+2);
+        this.posY = new Random().nextInt(this.mapDimY+1);
     }
 
     //Given a particular request, handles it;
