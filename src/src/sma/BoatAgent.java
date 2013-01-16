@@ -262,8 +262,21 @@ public class BoatAgent extends Agent {
         int[][] relatives;
         if(d % 2 == 0) // Vertical displacement
         {
-            catchPosX = catcherDestination.getRow();
+            if (catcherDestination.getRow() == 0)
+            {
+                catcherDestination.setRow(catcherDestination.getRow() + 1);
+                catchPosX = catcherDestination.getRow() + 1;
+            }
+            else if (catcherDestination.getRow() == 19)
+            {
+                catcherDestination.setRow(catcherDestination.getRow() - 1);
+                catchPosX = catcherDestination.getRow() - 1;
+            }
+            else
+                catchPosX = catcherDestination.getRow();
+            
             catchPosY = targetSeafood.getPosY();
+            
             if (catcherDestination.getColumn() < targetSeafood.getPosY())
             {
                 catcherDestination.setColumn(targetSeafood.getPosY() - 1);
@@ -285,8 +298,21 @@ public class BoatAgent extends Agent {
         }
         else
         {
+            if (catcherDestination.getColumn() == 0)
+            {
+                catcherDestination.setColumn(catcherDestination.getColumn() + 1);
+                catchPosY = catcherDestination.getColumn() + 1;
+            }
+            else if (catcherDestination.getColumn() == 19)
+            {
+                catcherDestination.setColumn(catcherDestination.getColumn() - 1);
+                catchPosY = catcherDestination.getColumn() - 1;
+            }
+            else
+                catchPosY = catcherDestination.getColumn();
+            
             catchPosX = targetSeafood.getPosX();
-            catchPosY = catcherDestination.getColumn();
+            
             if (catcherDestination.getRow() < targetSeafood.getPosX())
             {
                 catcherDestination.setRow(targetSeafood.getPosX() - 1);
