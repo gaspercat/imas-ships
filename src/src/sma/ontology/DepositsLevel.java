@@ -16,6 +16,15 @@ public class DepositsLevel implements java.io.Serializable{
     private double octopusLevel;
     private double shrimpLevel;
     private double capacity;
+
+    public DepositsLevel(){
+        this.capacity = 10000;
+        
+        this.tunaLevel = 0;
+        this.lobsterLevel = 0;
+        this.octopusLevel = 0;
+        this.shrimpLevel = 0;
+    }
     
     public DepositsLevel(double capacity){
         this.capacity = capacity;
@@ -122,9 +131,6 @@ public class DepositsLevel implements java.io.Serializable{
     
     public void add(DepositsLevel deposits){
         this.lobsterLevel += deposits.lobsterLevel;
-        if(this.capacity > 100){
-            System.out.println("MALO DE LAS PELOTAS");
-        }
         if(this.lobsterLevel > this.capacity) this.lobsterLevel = this.capacity;
         
         this.octopusLevel += deposits.octopusLevel;
@@ -135,6 +141,13 @@ public class DepositsLevel implements java.io.Serializable{
         
         this.tunaLevel += deposits.tunaLevel;
         if(this.tunaLevel > this.capacity) this.tunaLevel = this.capacity;
+    }
+    
+    public void divide(int n){
+        this.lobsterLevel /= n;
+        this.octopusLevel /= n;
+        this.shrimpLevel  /= n;
+        this.tunaLevel    /= n;
     }
     
     public void empty(){
@@ -158,6 +171,25 @@ public class DepositsLevel implements java.io.Serializable{
         if(ret.shrimpLevel > ret.capacity) ret.shrimpLevel = ret.capacity;
         
         ret.tunaLevel = this.tunaLevel + deposits.tunaLevel;
+        if(ret.tunaLevel > ret.capacity) ret.tunaLevel = ret.capacity;
+        
+        return ret;
+    }
+    
+    public DepositsLevel subtraction(DepositsLevel deposits){
+        double capacity = (this.capacity > deposits.capacity) ? this.capacity : deposits.capacity;
+        DepositsLevel ret = new DepositsLevel(capacity);
+        
+        ret.lobsterLevel = this.lobsterLevel - deposits.lobsterLevel;
+        if(ret.lobsterLevel > ret.capacity) ret.lobsterLevel = ret.capacity;
+        
+        ret.octopusLevel = this.octopusLevel - deposits.octopusLevel;
+        if(ret.octopusLevel > ret.capacity) ret.octopusLevel = ret.capacity;
+        
+        ret.shrimpLevel = this.shrimpLevel - deposits.shrimpLevel;
+        if(ret.shrimpLevel > ret.capacity) ret.shrimpLevel = ret.capacity;
+        
+        ret.tunaLevel = this.tunaLevel - deposits.tunaLevel;
         if(ret.tunaLevel > ret.capacity) ret.tunaLevel = ret.capacity;
         
         return ret;

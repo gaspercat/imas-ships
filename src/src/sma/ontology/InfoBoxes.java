@@ -42,4 +42,15 @@ public class InfoBoxes implements Serializable{
         return this.stats.size();
     }
 
+    
+    public java.util.ArrayList<String> collectNames(){
+        java.util.ArrayList<String> ret = new java.util.ArrayList<String>();
+        
+        for(int i=0;i<stats.size();i++){
+            InfoBox box = (InfoBox)stats.get(i);
+            ret.add(box.getName());
+        }
+        
+        return ret;
+    }
 }

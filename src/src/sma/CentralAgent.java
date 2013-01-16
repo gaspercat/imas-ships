@@ -39,7 +39,7 @@ public class CentralAgent extends Agent {
     private AID coordinatorAgent;
 
     public CentralAgent() {
-        super();
+        super();        
     }
 
     public void setBoatsPosition(BoatsPosition positions) {
@@ -297,8 +297,14 @@ public class CentralAgent extends Agent {
     }
 
     private void updatePortStats(InfoBoxes stats) {
-        gui.updatePortsPanelInfo(stats.getStats());
+        // Save info to statistics
+        if(pStats == null){
+            pStats = new PortStatistics(game, gui, stats.collectNames());
+        }
         pStats.addStatistics(stats);
+        
+        // Update ports panel info
+        gui.updatePortsPanelInfo(stats.getStats());
     }
 
     private void updateBoatStats(InfoBoxes stats) {
@@ -307,8 +313,15 @@ public class CentralAgent extends Agent {
         for (int i = 0; i < lel.size(); i++) {
             InfoBox s = (InfoBox) lel.get(i);
             showMessage("Boat Stat " + i + ", " + s);
-            bStats.addStatistics(stats);
         }
+        
+        // Save info to statistics
+        if(bStats == null){
+            bStats = new BoatStatistics(game, gui, stats.collectNames());
+        }
+        bStats.addStatistics(stats);
+        
+        // Update boats panel info
         gui.updateBoatsPanelInfo(stats.getStats());
     }
     

@@ -40,6 +40,7 @@ public class BoatAgent extends Agent {
     private SeaFood targetSeafood;
     // Assigned fishing spot in the current fishing turn. It have been established by the team leader.
     private BoatPosition fishingSpot;
+    private int manhattanDistance;
     //Ranking of the boats, only used by the leaders
     private ArrayList<FishRank> boatsRanking = new ArrayList<FishRank>();
     //Boats Group, only used by the leaders
@@ -70,6 +71,15 @@ public class BoatAgent extends Agent {
 
     public double getMoney() {
         return money;
+    }
+    
+    public void setFishingSpot(BoatPosition pos){
+        fishingSpot = pos;
+        manhattanDistance = Math.abs(pos.getColumn() - posY) + Math.abs(pos.getRow() - posX);
+    }
+    
+    public int getNumMovements(){
+        return manhattanDistance;
     }
 
     /**
@@ -756,7 +766,7 @@ public class BoatAgent extends Agent {
             {
                 try {
                     BoatsPosition boatsPositions = (BoatsPosition) request.getContentObject();
-                    fishingSpot = boatsPositions.get(getAID());
+                    setFishingSpot(boatsPositions.get(getAID()));
                     reply.setContent("Fishing spot set");
                 } catch (UnreadableException ex) {
                     Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
@@ -777,7 +787,7 @@ public class BoatAgent extends Agent {
                 myAgent.resetAgent();
                 showMessage("Sending stats");
                 reply.setOntology("Stat");
-                InfoBox stat = new InfoBox(myAgent.getDeposits(), myAgent.getMoney(), myAgent.getLocalName());
+                InfoBox stat = new InfoBox(myAgent.getDeposits(), myAgent.getMoney(), myAgent.getNumMovements(), myAgent.getLocalName());
                 try {
                     reply.setContentObject(stat);
                 } catch (IOException ex) {
@@ -873,7 +883,7 @@ public class BoatAgent extends Agent {
                 if (subditsPositionReceived)
                 {
                     this.destinations = setBoatsDestinations(boatsPositions);
-                    fishingSpot = this.destinations.get(getAID());
+                    setFishingSpot(this.destinations.get(getAID()));
                     if(fishingSpot == null){
                         System.out.println("REMALO MALO");
                     }

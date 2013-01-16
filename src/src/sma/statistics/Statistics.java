@@ -6,19 +6,34 @@ package sma.statistics;
 
 import java.util.ArrayList;
 
+import sma.gui.GraphicInterface;
 import sma.ontology.InfoBoxes;
 import sma.ontology.InfoBox;
+import sma.ontology.InfoGame;
 
 /**
  *
- * @author gaspercat
+ * @author Marc
  */
-public abstract class Statistics {
-    ArrayList<String> names;
-    ArrayList<ArrayList<InfoBox>> info;
+public abstract class Statistics{
+    protected InfoGame game;
+    protected GraphicInterface gui;
+    protected ArrayList<String> names;
+    protected ArrayList<ArrayList<InfoBox>> info;
     
-    public Statistics(ArrayList<String> names){
+    public Statistics(InfoGame game, GraphicInterface gui, ArrayList<String> names){
+        this.game = game;
+        this.gui = gui;
         this.names = names;
+        
+        this.info = new ArrayList<ArrayList<InfoBox>>();
+        for(int i=0;i<names.size();i++){
+            this.info.add(new ArrayList<InfoBox>());
+        }
+    }
+    
+    public ArrayList<String> getNames(){
+        return this.names;
     }
     
     public void addStatistics(InfoBoxes info){
@@ -36,5 +51,34 @@ public abstract class Statistics {
                 }
             }
         }
+        
+        analyzeStatistics();
     }
+    
+    public int getNumIndividuals(){
+        return this.info.size();
+    }
+    
+    public String getName(int i){
+        if(i<0 || i>=this.names.size()) return null;
+        return this.names.get(i);
+    }
+    
+    public int getIndex(String name){
+        for(int i=0;i<names.size();i++){
+            if(names.get(i).equals(name)){
+                return i;
+            }
+        }
+        
+        return -1;
+    }
+    
+    public int getNumCycles(){
+        if(this.info.size() == 0) return 0;
+        return this.info.get(0).size();
+    }
+    
+    
+    abstract protected void analyzeStatistics();
 }
