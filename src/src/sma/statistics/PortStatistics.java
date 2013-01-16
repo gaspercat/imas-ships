@@ -128,12 +128,34 @@ public class PortStatistics extends Statistics{
         this.gui.showStatistics("\nFinal statistics - Ports:\n");
          double mean_money = 0;
         double std_money = 0;
+        double totalBought = 0;
+        double totalSpent = 0;
+        int n = this.names.size();
 
+        double[] meanPortDep = new double[n];
         DepositsLevel mean_dep = new DepositsLevel();
         for(CycleStats cy : this.cycles){
             mean_money += cy.mean_money;
             mean_dep.add(cy.mean_deposits);
-        }        
+            for(int i = 0; i<n ; i++){
+                totalBought += cy.deposits[i].getTotalAmount();
+            }
+        }   
+        totalSpent = mean_money;
+        
+        CycleStats last = this.cycles.get(this.cycles.size()-1);
+        for (int i = 0; i<n; i++){
+            double spent = this.cycles.get(0).money[i] - last.money[i];
+            double bought = last.deposits[i].getTotalAmount(); 
+            gui.showStatistics("  For " + this.names.get(i) + ":\tSpent = ");
+            gui.showStatistics(spent+"€");
+            gui.showStatistics(", Amount bought = ");
+            gui.showStatistics(bought+"u.");
+            gui.showStatistics(", Price/unit = ");
+            gui.showStatistics(((bought > 0) ? (spent / bought) : 0)+"€/u.");
+            gui.showStatistics("\n");
+        }
+        
         mean_money /= this.cycles.size();
         for(CycleStats cy : this.cycles){
             std_money += Math.pow((cy.mean_money - mean_money), 2);
@@ -141,6 +163,15 @@ public class PortStatistics extends Statistics{
         std_money = Math.sqrt(std_money / this.cycles.size());
       
         mean_dep.divide(this.cycles.size());
+        
+        
+        
+        
+        
+        gui.showStatistics("  Total money spent = " + (totalSpent * n) + "€\n");
+        gui.showStatistics("  Total amount bought = " + (totalBought * n) + "u.\n");
+        gui.showStatistics("  Mean buy price = " + (totalSpent / totalBought) + "€/u.\n");
+    
              
         
         this.gui.showStatistics("  Mean ports benefit:\t" + mean_money + "\n");

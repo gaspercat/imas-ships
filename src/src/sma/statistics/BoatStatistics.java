@@ -44,8 +44,7 @@ public class BoatStatistics extends Statistics{
                 mean_fished.add(boat.get(boat.size()-2).getDeposit());
                 mean_movements += boat.get(boat.size()-2).getNumMovements();
             }
-            stdev_movements /= turns.size();
-            stdev_movements = Math.sqrt(stdev_movements);
+
             mean_fished.divide(turns.size());
             mean_movements /= turns.size();
              stdev_movements = 0;
@@ -53,6 +52,8 @@ public class BoatStatistics extends Statistics{
                 double mov = boat.get(boat.size()-2).getNumMovements();
                 stdev_movements += (mov - mean_movements) * (mov - mean_movements);
             }
+            stdev_movements /= turns.size();
+            stdev_movements = Math.sqrt(stdev_movements);
         }
 
         
