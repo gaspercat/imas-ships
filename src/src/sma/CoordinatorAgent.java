@@ -66,23 +66,24 @@ public class CoordinatorAgent extends Agent {
         // Get type of turn
         // ****************************************
 
-        if (this.currentTurn >= 30) {
+        int n = (this.gameInfo.getNumFishingPhasesToNegotiate()+1) * (this.gameInfo.getNumNegotiationPhases());
+        if (this.currentTurn >= n) {
             turn = TURN_END;
+        }else{
+            switch (this.currentTurn % (this.gameInfo.getNumFishingPhasesToNegotiate()+1)) {
+                // If negotiation turn
+                case 5:
+                    turn = TURN_NEGOTIATION;
+                    break;
+
+                // If fishing turn
+                default:
+                    turn = TURN_FISHING;
+                    break;
+            }
+
+            this.currentTurn++;
         }
-
-        switch (this.currentTurn % 6) {
-            // If negotiation turn
-            case 5:
-                turn = TURN_NEGOTIATION;
-                break;
-
-            // If fishing turn
-            default:
-                turn = TURN_FISHING;
-                break;
-        }
-
-        this.currentTurn++;
 
         //
         // ****************************************

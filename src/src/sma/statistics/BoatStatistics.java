@@ -26,7 +26,6 @@ public class BoatStatistics extends Statistics{
             mean_money = 0;
             for(ArrayList<InfoBox> boat: turns){
                 mean_money += boat.get(boat.size()-1).getEuros();
-                boat.remove(boat.size()-1);
             }
             mean_money /= turns.size();
             
@@ -34,8 +33,8 @@ public class BoatStatistics extends Statistics{
             mean_fished = new DepositsLevel();
             mean_movements = 0;
             for(ArrayList<InfoBox> boat: turns){
-                mean_fished.add(boat.get(boat.size()-1).getDeposit());
-                mean_movements += boat.get(boat.size()-1).getNumMovements();
+                mean_fished.add(boat.get(boat.size()-2).getDeposit());
+                mean_movements += boat.get(boat.size()-2).getNumMovements();
             }
             mean_fished.divide(turns.size());
             mean_movements /= turns.size();
@@ -85,16 +84,18 @@ public class BoatStatistics extends Statistics{
     protected void analyzeStatistics(){
         // If last turn was a negotiation turn
         ArrayList<InfoBox> ship = this.info.get(0);
-        if(ship.size() == 6){
+        if(ship.size() == game.getInfo().getNumFishingPhasesToNegotiate() + 1){
             // Build cycle statistics and remove turns data
             cycles.add(new CycleStats(this.info));
             for(ArrayList<InfoBox> boat: this.info){
+                InfoBox tmp = boat.get(boat.size()-1);
                 boat.clear();
+                boat.add(tmp);
             }
             
             // Print cycle statistics
             this.showTurnStatistics();
-            if(this.cycles.size() == 5){
+            if(this.cycles.size() == game.getInfo().getNumNegotiationPhases()){
                 showFinalStatistics();
             }
         }

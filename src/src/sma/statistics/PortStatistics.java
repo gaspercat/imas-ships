@@ -86,7 +86,7 @@ public class PortStatistics extends Statistics{
 
         // Print cycle statistics
         this.showTurnStatistics();
-        if(this.cycles.size() == 6){
+        if(this.cycles.size() == game.getInfo().getNumNegotiationPhases() + 1){
             showFinalStatistics();
         }
     }
