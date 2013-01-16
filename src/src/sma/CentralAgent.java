@@ -182,16 +182,20 @@ public class CentralAgent extends Agent {
                 } else if (sttmt.match(request)) {
                     InfoBoxes stats = (InfoBoxes) request.getContentObject();
                     myAgent.doWait(500);
+                    
                     if (stats.isPort()) {
                         updatePortStats(stats);
 
                         reply.setContent("Ports updated");
                     } else {
                         updateBoatStats(stats);
-                        spawnFishes();
-                        reply.setOntology("Boats updated");
-                        
-                        reply.setContentObject(sfList);
+                        if(!bStats.hasFinished()){
+                            spawnFishes();
+                            reply.setOntology("Boats updated");
+                            reply.setContentObject(sfList);
+                        }else{
+                            reply.setContent("(ex)terminate!");
+                        }
                     }
                 } else {
                     reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);

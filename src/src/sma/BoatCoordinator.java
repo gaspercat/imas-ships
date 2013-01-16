@@ -153,6 +153,7 @@ public class BoatCoordinator extends Agent {
             MessageTemplate mt5 = MessageTemplate.MatchContent("Group organized");
             MessageTemplate mt6 = MessageTemplate.MatchContent("Boat destination reached");
             MessageTemplate mt7 = MessageTemplate.MatchOntology("Seafoods redrawn");
+            MessageTemplate mt8 = MessageTemplate.MatchContent("Get final infoboxes");
 //            MessageTemplate mt8 = MessageTemplate.MatchOntology("SeaFood");
 
             // New fishing turn
@@ -250,18 +251,25 @@ public class BoatCoordinator extends Agent {
                     resetInfoBoxes();
                     addBehaviour(new BoatsInitiatorBehaviour(myAgent, this.prepareFishMessageToBoats()));
                 }
-                // Block a seafood
+            } else if(mt8.match(request)){
+                jade.util.leap.List boats = buscarAgents("boat", null);
+                ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+                Iterator itr = boats.iterator();
+                while (itr.hasNext()) {
+                    AID boat = (AID) itr.next();
+                    msg.addReceiver(boat);
+                }
+                msg.setContent("Get final infobox");
+                showMessage("PREPARING MSG FINAL INFO");
+                /*try {
+                 msg.setContentObject(seafoods);
+                 } catch (IOException ex) {
+                 Logger.getLogger(BoatCoordinator.class.getName()).log(Level.SEVERE, null, ex);
+                 }*/
+                resetInfoBoxes();
+                addBehaviour(new BoatsInitiatorBehaviour(myAgent, msg));              //showMessage(myAgent.getLocalName() + " - ERROR: Fire falls from the sky! As a result, your seafood has a terrible death in hands of the boats coordinator!");
+                
             }
-//            else if(mt8.match(request)){
-//                reply.setContent("Received");
-//
-//                try{
-//                    SeaFood content = (SeaFood)request.getContentObject();
-//                    addBehaviour(new SInitiatorBehaviour(myAgent, this.prepareBlockSeafoodMessageToCoordinator(content)));
-//                }catch(UnreadableException e){
-//                    showMessage(myAgent.getLocalName() + " - ERROR: Fire falls from the sky! As a result, your seafood has a terrible death in hands of the boats coordinator!");
-//                }
-//            }
 
             return reply;
         }
@@ -417,13 +425,12 @@ public class BoatCoordinator extends Agent {
         //Handle all the messages from boats in order to send that result to the CoordinatorAgent
         protected void handleAllResultNotifications(java.util.Vector resultNotifications) {
             Iterator itr = resultNotifications.iterator();
-            System.out.println("BoatsPosition number of responses: " + resultNotifications.size());
-
             MessageTemplate mt1 = MessageTemplate.MatchOntology("Move");
             MessageTemplate mt2 = MessageTemplate.MatchOntology("ArrayList<SeaFood>");
             MessageTemplate mt3 = MessageTemplate.MatchContent("Initiate grouping");
             MessageTemplate mt4 = MessageTemplate.MatchContent("Organize groups");
             MessageTemplate mt5 = MessageTemplate.MatchContent("Fish");
+            MessageTemplate mt6 = MessageTemplate.MatchContent("Get final infobox");
 
             // Move
             if (mt1.match(msg)) {
@@ -496,7 +503,7 @@ public class BoatCoordinator extends Agent {
             } // Set boats destinations
             else if (mt4.match(msg)) {
                 // Don't care
-            } else if (mt5.match(msg)) {
+            } else if (mt5.match(msg) || mt6.match(msg)) {
                 showMessage("FIGH REVIED");
                 jade.util.leap.List boats = buscarAgents("boat", null);
                 int nBoats = boats.size();
@@ -547,7 +554,7 @@ public class BoatCoordinator extends Agent {
                 ServiceDescription service = null;
                 while (services.hasNext() && !found) {
                     service = (ServiceDescription) services.next();
-                    showMessage("SERVICE " + service.getType() + " , " + service.getName());
+                    //showMessage("SERVICE " + service.getType() + " , " + service.getName());
                     found = (service.getType().equals(type) || service.getName().equals(name));
                 }
                 if (found) {

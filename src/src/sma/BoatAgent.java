@@ -142,6 +142,7 @@ public class BoatAgent extends Agent {
         MessageTemplate mt7 = MessageTemplate.MatchOntology("Fishing spots");
         MessageTemplate mt8 = MessageTemplate.MatchContent("Query group target seafood to leader");
         MessageTemplate mt9 = MessageTemplate.MatchContent("Fish");
+        MessageTemplate mt10 = MessageTemplate.MatchContent("Get final infobox");
      
         MessageTemplate preformativeMT = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
         MessageTemplate mt = MessageTemplate.and(preformativeMT,
@@ -152,7 +153,8 @@ public class BoatAgent extends Agent {
                     MessageTemplate.or(mt5,
                     MessageTemplate.or(mt6, 
                     MessageTemplate.or(mt7,
-                    MessageTemplate.or(mt8,mt9)))))))));
+                    MessageTemplate.or(mt8,
+                    MessageTemplate.or(mt9,mt10))))))))));
         
         // Add a new behaviour to respond this particular message
         this.addBehaviour(new ResponderBehaviour(this, mt));
@@ -608,6 +610,7 @@ public class BoatAgent extends Agent {
             MessageTemplate mt7 = MessageTemplate.MatchOntology("Fishing spots");
             MessageTemplate mt8 = MessageTemplate.MatchContent("Query group target seafood to leader");
             MessageTemplate mt9 = MessageTemplate.MatchContent("Fish");
+            MessageTemplate mt10 = MessageTemplate.MatchContent("Get final infobox");
             MessageTemplate mt = MessageTemplate.or(mt1, 
                     MessageTemplate.or(mt2,
                     MessageTemplate.or(mt3, 
@@ -615,7 +618,8 @@ public class BoatAgent extends Agent {
                     MessageTemplate.or(mt5,
                     MessageTemplate.or(mt6, 
                     MessageTemplate.or(mt7,
-                    MessageTemplate.or(mt8, mt9))))))));
+                    MessageTemplate.or(mt8, 
+                    MessageTemplate.or(mt9,mt10)))))))));
             
             if (mt.match(request)) {
                 reply.setPerformative(ACLMessage.AGREE);
@@ -641,8 +645,10 @@ public class BoatAgent extends Agent {
             MessageTemplate mt6 = MessageTemplate.MatchContent("Give me current position");
             MessageTemplate mt7 = MessageTemplate.MatchOntology("Fishing spots");
             MessageTemplate mt8 = MessageTemplate.MatchContent("Query group target seafood to leader");
-            MessageTemplate mt9 = MessageTemplate.MatchContent("Fish");
+            MessageTemplate mt9 = MessageTemplate.MatchContent("Fish");                         
+            MessageTemplate mt10 = MessageTemplate.MatchContent("Get final infobox");
 
+            
             // BoatCoordinator sent to the boat a request to move (to the fishing spot assigned by the team leader)
             if (mt1.match(request))
             {          
@@ -785,6 +791,17 @@ public class BoatAgent extends Agent {
             {
                 myAgent.fish();
                 myAgent.resetAgent();
+                showMessage("Sending stats");
+                reply.setOntology("Stat");
+                InfoBox stat = new InfoBox(myAgent.getDeposits(), myAgent.getMoney(), myAgent.getNumMovements(), myAgent.getLocalName());
+                try {
+                    reply.setContentObject(stat);
+                } catch (IOException ex) {
+                    reply.setPerformative(ACLMessage.FAILURE);
+                }
+            }
+            else if(mt10.match(request))
+            {
                 showMessage("Sending stats");
                 reply.setOntology("Stat");
                 InfoBox stat = new InfoBox(myAgent.getDeposits(), myAgent.getMoney(), myAgent.getNumMovements(), myAgent.getLocalName());

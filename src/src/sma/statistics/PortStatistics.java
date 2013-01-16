@@ -18,7 +18,6 @@ public class PortStatistics extends Statistics{
     private class CycleStats{
         double[] money;
         DepositsLevel[] deposits;
-                
         private double mean_money;
         private DepositsLevel mean_deposits;
         
@@ -127,6 +126,30 @@ public class PortStatistics extends Statistics{
     
     private void showFinalStatistics(){
         this.gui.showStatistics("\nFinal statistics - Ports:\n");
-        // TODO
+         double mean_money = 0;
+        double std_money = 0;
+
+        DepositsLevel mean_dep = new DepositsLevel();
+        for(CycleStats cy : this.cycles){
+            mean_money += cy.mean_money;
+            mean_dep.add(cy.mean_deposits);
+        }        
+        mean_money /= this.cycles.size();
+        for(CycleStats cy : this.cycles){
+            std_money += Math.pow((cy.mean_money - mean_money), 2);
+        }  
+        std_money = Math.sqrt(std_money / this.cycles.size());
+      
+        mean_dep.divide(this.cycles.size());
+             
+        
+        this.gui.showStatistics("  Mean ports benefit:\t" + mean_money + "\n");
+        
+        this.gui.showStatistics("  Stdev ports benefit:\t" + std_money + "\n");
+        
+        this.gui.showStatistics("  Mean ports fished lobster:\t" + mean_dep.getLobsterLevel() + "\n");
+        this.gui.showStatistics("  Mean ports fished octopus:\t" + mean_dep.getOctopusLevel() + "\n");
+        this.gui.showStatistics("  Mean ports fished shrimp:\t" + mean_dep.getShrimpLevel() + "\n");
+        this.gui.showStatistics("  Mean ports fished tuna:\t" + mean_dep.getTunaLevel() + "\n"); 
     }
 }

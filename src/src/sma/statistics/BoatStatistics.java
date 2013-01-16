@@ -18,7 +18,9 @@ import sma.ontology.InfoGame;
 public class BoatStatistics extends Statistics{
     private class CycleStats{
         private double mean_money;
+        private double stdev_money;
         private double mean_movements;
+        private double stdev_movements;
         private DepositsLevel mean_fished;
         
         public CycleStats(ArrayList<ArrayList<InfoBox>> turns){
@@ -28,7 +30,13 @@ public class BoatStatistics extends Statistics{
                 mean_money += boat.get(boat.size()-1).getEuros();
             }
             mean_money /= turns.size();
-            
+            stdev_money = 0;
+            for(ArrayList<InfoBox> boat: turns){
+                double eur = boat.get(boat.size()-1).getEuros();
+                stdev_money += (eur - mean_money) * (eur - mean_money);
+            }
+            stdev_money /= turns.size();
+            stdev_money = Math.sqrt(stdev_money);
             // Get mean amount of fished seafood & movements
             mean_fished = new DepositsLevel();
             mean_movements = 0;
@@ -36,9 +44,18 @@ public class BoatStatistics extends Statistics{
                 mean_fished.add(boat.get(boat.size()-2).getDeposit());
                 mean_movements += boat.get(boat.size()-2).getNumMovements();
             }
+            stdev_movements /= turns.size();
+            stdev_movements = Math.sqrt(stdev_movements);
             mean_fished.divide(turns.size());
             mean_movements /= turns.size();
+             stdev_movements = 0;
+            for(ArrayList<InfoBox> boat: turns){
+                double mov = boat.get(boat.size()-2).getNumMovements();
+                stdev_movements += (mov - mean_movements) * (mov - mean_movements);
+            }
         }
+
+        
     }
     
     private ArrayList<CycleStats> cycles;
@@ -75,6 +92,11 @@ public class BoatStatistics extends Statistics{
     public double getCycleMeanMovements(){
         if(cycles.isEmpty()) return 0;
         return cycles.get(cycles.size()-1).mean_movements;
+    }
+    
+    
+    public boolean hasFinished() {
+        return this.cycles.size() == this.game.getInfo().getNumNegotiationPhases();
     }
     
     // Private anaysis & printing methods
@@ -118,7 +140,35 @@ public class BoatStatistics extends Statistics{
     }
     
     private void showFinalStatistics(){
+        double mean_money = 0;
+        double std_money = 0;
+        double mean_mov = 0;
+        double std_mov = 0;
+        DepositsLevel mean_dep = new DepositsLevel();
+        for(CycleStats cy : this.cycles){
+            mean_money += cy.mean_money;
+            std_money += cy.stdev_money;
+            mean_mov += cy.mean_movements;
+            std_mov += cy.stdev_movements;
+            mean_dep.add(cy.mean_fished);
+        }        
+        mean_money /= this.cycles.size();
+        std_money /= this.cycles.size();
+        mean_mov /= this.cycles.size();
+        std_mov /= this.cycles.size();
+        mean_dep.divide(this.cycles.size());
+             
         this.gui.showStatistics("\nFinal statistics - Boats:\n");
-        // TODO
+        
+        this.gui.showStatistics("  Mean boats benefit:\t" + mean_money + "\n");
+        this.gui.showStatistics("  Mean boats movments:\t" + mean_mov+ "\n");
+        
+        this.gui.showStatistics("  Stdev boats benefit:\t" + std_money + "\n");
+        this.gui.showStatistics("  Stdev boats movments:\t" + std_mov+ "\n");
+        
+        this.gui.showStatistics("  Mean boats fished lobster:\t" + mean_dep.getLobsterLevel() + "\n");
+        this.gui.showStatistics("  Mean boats fished octopus:\t" + mean_dep.getOctopusLevel() + "\n");
+        this.gui.showStatistics("  Mean boats fished shrimp:\t" + mean_dep.getShrimpLevel() + "\n");
+        this.gui.showStatistics("  Mean boats fished tuna:\t" + mean_dep.getTunaLevel() + "\n");       
     }
 }

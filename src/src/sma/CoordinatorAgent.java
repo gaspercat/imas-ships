@@ -110,6 +110,12 @@ public class CoordinatorAgent extends Agent {
 
             // Add a behaviour to initiate a comunication with the boats coordinator
             this.addBehaviour(new InitiatorBehaviour(this, boatMove));
+        }else{
+            ACLMessage infoRequest = new ACLMessage(ACLMessage.REQUEST);
+            infoRequest.addReceiver(boatsCoordinator);
+            infoRequest.setSender(this.getAID());
+            infoRequest.setContent("Get final infoboxes");
+            this.addBehaviour(new InitiatorBehaviour(this, infoRequest));
         }
     }
 
