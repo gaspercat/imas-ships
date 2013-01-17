@@ -267,7 +267,7 @@ public class BoatCoordinator extends Agent {
                  Logger.getLogger(BoatCoordinator.class.getName()).log(Level.SEVERE, null, ex);
                  }*/
                 resetInfoBoxes();
-                addBehaviour(new BoatsInitiatorBehaviour(myAgent, msg));              //showMessage(myAgent.getLocalName() + " - ERROR: Fire falls from the sky! As a result, your seafood has a terrible death in hands of the boats coordinator!");
+                addBehaviour(new BoatsInitiatorBehaviour(myAgent, msg));
                 
             }
 
