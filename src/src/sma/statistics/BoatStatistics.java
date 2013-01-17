@@ -131,7 +131,8 @@ public class BoatStatistics extends Statistics{
         // ********************************
 
         this.gui.showStatistics("  Mean boats benefit:\t" + this.getCycleMeanBenefit() + "\n");
-        this.gui.showStatistics("  Mean boats movments:\t" + this.getCycleMeanMovements() + "\n");
+        this.gui.showStatistics("  Mean boats movements:\t" + this.getCycleMeanMovements() + "\n");
+        this.gui.showStatistics("  Mean boats benefit/movement: " + this.getCycleMeanBenefit()/this.getCycleMeanMovements() + "\n");
 
         DepositsLevel levels = this.getCycleMeanFished();
         this.gui.showStatistics("  Mean boats fished lobster:\t" + levels.getLobsterLevel() + "\n");
@@ -162,10 +163,11 @@ public class BoatStatistics extends Statistics{
         this.gui.showStatistics("\nFinal statistics - Boats:\n");
         
         this.gui.showStatistics("  Mean boats benefit:\t" + mean_money + "\n");
-        this.gui.showStatistics("  Mean boats movments:\t" + mean_mov+ "\n");
+        this.gui.showStatistics("  Mean boats movements:\t" + mean_mov+ "\n");
+        this.gui.showStatistics("  Mean boats benefit/movement:\t" + mean_money/mean_mov+ "\n");
         
         this.gui.showStatistics("  Stdev boats benefit:\t" + std_money + "\n");
-        this.gui.showStatistics("  Stdev boats movments:\t" + std_mov+ "\n");
+        this.gui.showStatistics("  Stdev boats movements:\t" + std_mov+ "\n");
         
         this.gui.showStatistics("  Mean boats fished lobster:\t" + mean_dep.getLobsterLevel() + "\n");
         this.gui.showStatistics("  Mean boats fished octopus:\t" + mean_dep.getOctopusLevel() + "\n");
