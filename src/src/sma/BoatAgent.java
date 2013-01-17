@@ -399,14 +399,6 @@ public class BoatAgent extends Agent {
             int y = catchPosY + relatives[perm[i]][1];
             destinations.addPosition( new BoatPosition(bpArrayList.get(i).getAID(), x, y) );
         }
-        
-        for (BoatPosition z : destinations.getBoatsPositions())
-        {
-            if (z == null)
-            {
-                System.out.println("MOLT MALO MALO");
-            }
-        }
 
         return destinations;
     }
@@ -427,9 +419,7 @@ public class BoatAgent extends Agent {
     {
         int x = getPosX();
         int y = getPosY();
-        if(null == fishingSpot){
-            System.out.println("MALO SUPREMO");
-        }
+
         int fsx = fishingSpot.getRow();
         int fsy = fishingSpot.getColumn();
         
@@ -748,7 +738,7 @@ public class BoatAgent extends Agent {
                 //setBoatsDestinations();
                 reply.setContent("Organizing groups");
                 
-                System.out.println(myAgent.getLocalName() + "(" + getPosX() + "," + getPosY() + "): " + targetSeafood.toString());
+                showMessage(myAgent.getLocalName() + "(" + getPosX() + "," + getPosY() + "): " + targetSeafood.toString());
                 myAgent.addBehaviour(new leadSubditsInitiatorBehaviour(myAgent, this.askForCurrentPositionMessageToSubdits()));
             }
             else if (mt6.match(request))
@@ -758,8 +748,6 @@ public class BoatAgent extends Agent {
                 reply.setOntology("Subdit position");
                 try {
                     reply.setContentObject(new BoatPosition(getAID(), getPosX(), getPosY()));
-                    
-                    //System.out.println(myAgent.getLocalName() + ": " + bestFishRank.getSf().toString());
                 } catch (IOException ex) {
                     Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -860,7 +848,7 @@ public class BoatAgent extends Agent {
         
         
         public void handleAgree(ACLMessage msg){
-            System.out.println("AGREE message recived from "+msg.getSender().getLocalName());
+            showMessage("AGREE message recived from "+msg.getSender().getLocalName());
         }
         
         
@@ -890,7 +878,7 @@ public class BoatAgent extends Agent {
                         try {
                             BoatPosition subditPosition = (BoatPosition) msg.getContentObject();
                             boatsPositions.addPosition(subditPosition);
-                            System.out.println("Should be the current position");
+                            showMessage("Should be the current position");
                         } catch (UnreadableException ex) {
                             Logger.getLogger(BoatAgent.class.getName()).log(Level.SEVERE, null, ex);
                         }
@@ -901,9 +889,6 @@ public class BoatAgent extends Agent {
                 {
                     this.destinations = setBoatsDestinations(boatsPositions);
                     setFishingSpot(this.destinations.get(getAID()));
-                    if(fishingSpot == null){
-                        System.out.println("REMALO MALO");
-                    }
                     myAgent.addBehaviour(new BoatAgent.leadSubditsInitiatorBehaviour(myAgent, this.fishingSpotMessageToSubdits()));
                 }
             }
@@ -923,7 +908,7 @@ public class BoatAgent extends Agent {
 //                    }
 //                    if (counter == 2) // Always fulfilled, DEBUG purposes.
 //                    {
-                        System.out.println(myAgent.getLocalName() + ": the leader have told the destination to its subdits!");
+                        showMessage(myAgent.getLocalName() + ": the leader has told the destination to its subdits!");
                            
                         ACLMessage msgFormed = new ACLMessage(ACLMessage.REQUEST);
                         msgFormed.addReceiver(boatCoordinator);
@@ -1122,7 +1107,7 @@ public class BoatAgent extends Agent {
                 }
                 reply.setContent("Added to group");
             } else if (mt4.match(request)){
-                System.out.println("PENDENT REJEEEEEEEEEECTED!!!!!Recived");
+                showMessage(myAgent.getLocalName() + ": Pendant message rejection received!");
                 sendOffer();
             }
 
@@ -1222,7 +1207,6 @@ public class BoatAgent extends Agent {
                         } else {
                             ACLMessage msgToPrevLeader = new ACLMessage(ACLMessage.REQUEST);
                             if(pendentOfAcceptance != null){
-                                System.out.println("PENDENT REJEEEEEEEEEECTED");
                                 msgToPrevLeader.setContent("Pendent message rejected");
                                 msgToPrevLeader.addReceiver(pendentOfAcceptance.candidateAID);
                             }else{
@@ -1294,18 +1278,18 @@ public class BoatAgent extends Agent {
                         }
                         //System.out.println(myAgent.getLocalName() + ": Received offer from " + msg.getSender().getLocalName() + ", value is " + String.valueOf(offer));
                     } catch (UnreadableException e) {
-                        System.out.println(myAgent.getLocalName() + ": Failed to read offer from " + msg.getSender().getLocalName() + "!!");
+                        showMessage(myAgent.getLocalName() + ": Failed to read offer from " + msg.getSender().getLocalName() + "!!");
                     }
 
                    // ACLMessage rsp = new ACLMessage(ACLMessage.REJECT_PROPOSAL);
                    // rsp.addReceiver(msg.getSender());
                 } else if (msg.getPerformative() == ACLMessage.NOT_UNDERSTOOD) {
-                    System.out.println(myAgent.getLocalName() + ": Message from " + msg.getSender().getLocalName() + " not understood!!");
+                    showMessage(myAgent.getLocalName() + ": Message from " + msg.getSender().getLocalName() + " not understood!!");
                 }
             }
 
             if (bestPortIdx == -1) {
-                System.out.println(myAgent.getLocalName() + ": All boats rejected the proposals, failed to sell the seafoods!!");
+                showMessage(myAgent.getLocalName() + ": All boats rejected the proposals, failed to sell the seafoods!!");
             } else {
                 // Set acceptance response to best offer
                 ACLMessage response = (ACLMessage) accepted.get(bestPortIdx);
@@ -1366,7 +1350,7 @@ public class BoatAgent extends Agent {
                 
                 rsp.setContentObject(myAgent.deposits);
             } catch (Exception e) {
-                System.out.println(myAgent.getLocalName() + ": Failed to build sale request message (at newIteration)!!");
+                showMessage(myAgent.getLocalName() + ": Failed to build sale request message (at newIteration)!!");
             }
 
             // Prepare new iteration receivers

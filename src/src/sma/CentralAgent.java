@@ -193,8 +193,6 @@ public class CentralAgent extends Agent {
                             spawnFishes();
                             reply.setOntology("Boats updated");
                             reply.setContentObject(sfList);
-                        }else{
-                            reply.setContent("(ex)terminate!");
                         }
                     }
                 } else {

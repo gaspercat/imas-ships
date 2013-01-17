@@ -192,7 +192,6 @@ public class BoatCoordinator extends Agent {
                 actualGroups++;
                 if (actualGroups == numGroups) {
                     showMessage("Groups Formed");
-                    System.out.println("AAAAAAAAAAALLLLL");
                     // The task of the leader now is to plan how to position the group around the target seafood.
                     // One this task is accomplished, each leader sends a message "Group organized"
                     // back here (BoatCoordinator).
@@ -233,8 +232,6 @@ public class BoatCoordinator extends Agent {
                 } else {
                     // Finished moving, all reached their corresponding destination (fishing spot).
                     showMessage("All boats reached their destination (fishing spot)!");
-
-                    System.out.println("DAMN, NIGAS! GO FISHING MUTHAFOCASSSS");
                     // TODO: Start fishing phase
                 }
 
@@ -504,7 +501,6 @@ public class BoatCoordinator extends Agent {
             else if (mt4.match(msg)) {
                 // Don't care
             } else if (mt5.match(msg) || mt6.match(msg)) {
-                showMessage("FIGH REVIED");
                 jade.util.leap.List boats = buscarAgents("boat", null);
                 int nBoats = boats.size();
                 MessageTemplate mt = MessageTemplate.MatchOntology("Stat");
